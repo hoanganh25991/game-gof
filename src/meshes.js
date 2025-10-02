@@ -11,8 +11,8 @@ export function createGoTMesh() {
   // Torso
   const torsoGeo = new THREE.CapsuleGeometry(0.75, 1.25, 6, 14);
   const torsoMat = new THREE.MeshStandardMaterial({
-    color: COLOR.midBlue,
-    emissive: 0x0a2a5a,
+    color: COLOR.midFire,
+    emissive: 0x5a2a0a,
     metalness: 0.2,
     roughness: 0.55,
   });
@@ -22,7 +22,7 @@ export function createGoTMesh() {
   // Head
   const head = new THREE.Mesh(
     new THREE.SphereGeometry(0.52, 20, 20),
-    new THREE.MeshStandardMaterial({ color: 0xdbe8ff, emissive: 0x102b5a, roughness: 0.45 })
+    new THREE.MeshStandardMaterial({ color: 0xffe8db, emissive: 0x5a2b10, roughness: 0.45 })
   );
   head.position.y = 1.75;
   body.add(head);
@@ -30,7 +30,7 @@ export function createGoTMesh() {
   // Beard (cone)
   const beard = new THREE.Mesh(
     new THREE.ConeGeometry(0.38, 0.7, 16),
-    new THREE.MeshStandardMaterial({ color: 0xe6f4ff, emissive: 0x123a6b, roughness: 0.4 })
+    new THREE.MeshStandardMaterial({ color: 0xfff4e6, emissive: 0x6b3a12, roughness: 0.4 })
   );
   beard.position.set(0, 1.35, 0.28);
   beard.rotation.x = Math.PI * 0.05;
@@ -39,14 +39,14 @@ export function createGoTMesh() {
   // Laurel crown (thin torus)
   const crown = new THREE.Mesh(
     new THREE.TorusGeometry(0.55, 0.06, 10, 28),
-    new THREE.MeshStandardMaterial({ color: 0xcfe8ff, emissive: 0x2da0ff, metalness: 0.4, roughness: 0.3 })
+    new THREE.MeshStandardMaterial({ color: 0xffe8cf, emissive: 0xffa02d, metalness: 0.4, roughness: 0.3 })
   );
   crown.position.y = 1.78;
   crown.rotation.x = Math.PI / 2;
   body.add(crown);
 
   // Shoulder pads
-  const shoulderMat = new THREE.MeshStandardMaterial({ color: COLOR.darkBlue, emissive: 0x0a1e3e, metalness: 0.35, roughness: 0.45 });
+  const shoulderMat = new THREE.MeshStandardMaterial({ color: COLOR.darkFire, emissive: 0x3e1e0a, metalness: 0.35, roughness: 0.45 });
   const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), shoulderMat);
   shoulderL.position.set(-0.7, 1.45, 0.1);
   const shoulderR = shoulderL.clone();
@@ -56,16 +56,16 @@ export function createGoTMesh() {
   // Cloak (simple plane)
   const cloak = new THREE.Mesh(
     new THREE.PlaneGeometry(1.6, 2.4, 1, 3),
-    new THREE.MeshStandardMaterial({ color: 0x0a1f3e, emissive: 0x06152a, side: THREE.DoubleSide, roughness: 0.8 })
+    new THREE.MeshStandardMaterial({ color: 0x3e1f0a, emissive: 0x2a1506, side: THREE.DoubleSide, roughness: 0.8 })
   );
   cloak.position.set(0, 1.2, -0.45);
   cloak.rotation.x = Math.PI;
   body.add(cloak);
 
-  // Right hand thunder (no weapon)
+  // Right hand fire (no weapon)
   const arm = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.14, 0.6, 6, 10),
-    new THREE.MeshStandardMaterial({ color: COLOR.midBlue, emissive: 0x0a2a5a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: 0x5a2a0a, roughness: 0.55 })
   );
   arm.position.set(0.65, 1.3, 0.15);
   arm.rotation.z = -Math.PI * 0.25;
@@ -81,22 +81,22 @@ export function createGoTMesh() {
   leftHandAnchor.position.set(-0.85, 1.15, 0.25);
   root.add(leftHandAnchor);
 
-  // Left hand thunder orb + light (for FP two-hands effect)
+  // Left hand fire orb + light (for FP two-hands effect)
   const leftThunderOrb = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.2, 0),
-    new THREE.MeshStandardMaterial({ color: COLOR.blue, emissive: 0x2da0ff, emissiveIntensity: 2.0, roughness: 0.15, metalness: 0.1 })
+    new THREE.MeshStandardMaterial({ color: COLOR.fire, emissive: 0xffa02d, emissiveIntensity: 2.0, roughness: 0.15, metalness: 0.1 })
   );
   leftHandAnchor.add(leftThunderOrb);
-  const leftHandLight = new THREE.PointLight(0x66b3ff, 1.0, 18, 2);
+  const leftHandLight = new THREE.PointLight(0xffb366, 1.0, 18, 2);
   leftHandAnchor.add(leftHandLight);
 
   const thunderOrb = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.2, 0),
-    new THREE.MeshStandardMaterial({ color: COLOR.blue, emissive: 0x2da0ff, emissiveIntensity: 2.2, roughness: 0.15, metalness: 0.1 })
+    new THREE.MeshStandardMaterial({ color: COLOR.fire, emissive: 0xffa02d, emissiveIntensity: 2.2, roughness: 0.15, metalness: 0.1 })
   );
   handAnchor.add(thunderOrb);
 
-  const handLight = new THREE.PointLight(0x66b3ff, 1.3, 20, 2);
+  const handLight = new THREE.PointLight(0xffb366, 1.3, 20, 2);
   handAnchor.add(handLight);
   // expose for idle pulse control
   root.userData.handLight = handLight;
@@ -108,7 +108,7 @@ export function createGoTMesh() {
   // Left arm (symmetric)
   const armL = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.14, 0.6, 6, 10),
-    new THREE.MeshStandardMaterial({ color: COLOR.midBlue, emissive: 0x0a2a5a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: 0x5a2a0a, roughness: 0.55 })
   );
   armL.position.set(-0.65, 1.3, 0.15);
   armL.rotation.z = Math.PI * 0.25;
@@ -120,7 +120,7 @@ export function createGoTMesh() {
   // Biceps bulges
   const bicepR = new THREE.Mesh(
     new THREE.SphereGeometry(0.18, 14, 14),
-    new THREE.MeshStandardMaterial({ color: COLOR.midBlue, emissive: 0x0a2a5a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: 0x5a2a0a, roughness: 0.55 })
   );
   bicepR.position.set(0.55, 1.45, 0.12);
   const bicepL = bicepR.clone();
@@ -130,7 +130,7 @@ export function createGoTMesh() {
   // Tunic (waist cloth)
   const tunic = new THREE.Mesh(
     new THREE.CylinderGeometry(0.95, 0.9, 1.0, 28, 1, true),
-    new THREE.MeshStandardMaterial({ color: COLOR.midBlue, emissive: 0x0a1f3e, metalness: 0.2, roughness: 0.7, side: THREE.DoubleSide })
+    new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: 0x3e1f0a, metalness: 0.2, roughness: 0.7, side: THREE.DoubleSide })
   );
   tunic.position.set(0, 0.6, 0);
   body.add(tunic);
@@ -138,7 +138,7 @@ export function createGoTMesh() {
   // Belt
   const belt = new THREE.Mesh(
     new THREE.TorusGeometry(0.95, 0.06, 12, 32),
-    new THREE.MeshStandardMaterial({ color: 0x9fd8ff, emissive: 0x2da0ff, metalness: 0.5, roughness: 0.2 })
+    new THREE.MeshStandardMaterial({ color: 0xffd89f, emissive: 0xffa02d, metalness: 0.5, roughness: 0.2 })
   );
   belt.position.y = 1.0;
   body.add(belt);
@@ -146,7 +146,7 @@ export function createGoTMesh() {
   // Hair cap
   const hairCap = new THREE.Mesh(
     new THREE.SphereGeometry(0.56, 20, 20, 0, Math.PI * 2, 0, Math.PI / 2),
-    new THREE.MeshStandardMaterial({ color: 0x13233a, emissive: 0x091529, roughness: 0.65 })
+    new THREE.MeshStandardMaterial({ color: 0x3a2313, emissive: 0x291509, roughness: 0.65 })
   );
   hairCap.position.set(0, 0.18, 0); // relative to head
   head.add(hairCap);
@@ -154,7 +154,7 @@ export function createGoTMesh() {
   // Small ponytail
   const pony = new THREE.Mesh(
     new THREE.ConeGeometry(0.15, 0.35, 12),
-    new THREE.MeshStandardMaterial({ color: 0x13233a, emissive: 0x091529 })
+    new THREE.MeshStandardMaterial({ color: 0x3a2313, emissive: 0x291509 })
   );
   pony.position.set(0, -0.2, -0.25);
   pony.rotation.x = Math.PI * 0.9;
@@ -333,14 +333,14 @@ export function createHouse() {
   const house = new THREE.Group();
   const base = new THREE.Mesh(
     new THREE.BoxGeometry(6, 3, 6),
-    new THREE.MeshStandardMaterial({ color: 0x15315c })
+    new THREE.MeshStandardMaterial({ color: 0x5c2515 })
   );
   base.position.y = 1.5;
   house.add(base);
 
   const roof = new THREE.Mesh(
     new THREE.ConeGeometry(4.5, 2.5, 4),
-    new THREE.MeshStandardMaterial({ color: 0x0a1f3e })
+    new THREE.MeshStandardMaterial({ color: 0x3e1f0a })
   );
   roof.position.y = 4.1;
   roof.rotation.y = Math.PI / 4;
@@ -524,8 +524,8 @@ export function createVilla(options = {}) {
     width = 12,
     depth = 8,
     height = 4,
-    colorBase = 0x15315c,
-    colorRoof = 0x0a1f3e,
+    colorBase = 0x5c3115,
+    colorRoof = 0x3e1f0a,
   } = options;
 
   const g = new THREE.Group();
@@ -557,7 +557,7 @@ export function createVilla(options = {}) {
 
   const colOffX = width * 0.22;
   const colZ = depth / 2 + porchDepth * 0.25;
-  const c1 = createGreekColumn({ height: height * 0.85, radius: 0.18, color: 0xe8eef4 });
+  const c1 = createGreekColumn({ height: height * 0.85, radius: 0.18, color: 0xf4eee8 });
   c1.position.set(-colOffX, 0.3, colZ);
   const c2 = c1.clone();
   c2.position.x = colOffX;

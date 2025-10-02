@@ -72,15 +72,15 @@ export function initEnvironment(scene, options = {}) {
   scene.add(root);
   const rng = createSeededRNG(cfg.seed);
 
-  // atmospheric fog tuned for thunder/blue theme
-  scene.fog = scene.fog || new THREE.FogExp2(0x081827, 0.0009);
+  // atmospheric fog tuned for fire/volcanic theme
+  scene.fog = scene.fog || new THREE.FogExp2(0x1a0a05, 0.0009);
 
-  // Ambient & directional light to match thunder / blue theme (complements existing lights)
-  const ambient = new THREE.AmbientLight(0x0f2633, 0.68);
+  // Ambient & directional light to match fire / volcanic theme (complements existing lights)
+  const ambient = new THREE.AmbientLight(0x331a0f, 0.68);
   root.add(ambient);
 
-  // warm rim directional light to contrast cool ambient (soft)
-  const sun = new THREE.DirectionalLight(0xffeebb, 0.36);
+  // warm directional light to enhance fire ambiance (soft)
+  const sun = new THREE.DirectionalLight(0xffaa66, 0.36);
   sun.position.set(60, 80, -40);
   sun.castShadow = false;
   root.add(sun);
@@ -134,17 +134,17 @@ export function initEnvironment(scene, options = {}) {
 
     const h = 1.6 + Math.random() * 1.2;
     const trunkGeo = new THREE.CylinderGeometry(0.12 * (0.85 + Math.random() * 0.6), 0.12 * (0.85 + Math.random() * 0.6), h * 0.45, 6);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x332a22 });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x2a1a12 });
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
     trunk.position.y = h * 0.225;
     trunk.castShadow = true;
     g.add(trunk);
 
     const foliageGeo = new THREE.ConeGeometry(h * 0.6, h * 0.9, 8);
-    // shift foliage color slightly toward cyan/teal to match thunder theme
-    const hueBase = 0.52 + (Math.random() - 0.5) * 0.04;
+    // shift foliage color toward burnt orange/red to match fire theme
+    const hueBase = 0.05 + (Math.random() - 0.5) * 0.04;
     const foliageMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color().setHSL(hueBase, 0.45 + Math.random() * 0.12, 0.18 + Math.random() * 0.06)
+      color: new THREE.Color().setHSL(hueBase, 0.65 + Math.random() * 0.15, 0.25 + Math.random() * 0.08)
     });
     const foliage = new THREE.Mesh(foliageGeo, foliageMat);
     foliage.position.y = h * 0.9;
@@ -164,7 +164,7 @@ export function initEnvironment(scene, options = {}) {
   function createRock() {
     const s = 0.6 + Math.random() * 1.4;
     const geo = new THREE.DodecahedronGeometry(s, 0);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x223344 });
+    const mat = new THREE.MeshStandardMaterial({ color: 0x3a2520 });
     const m = new THREE.Mesh(geo, mat);
     m.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
     m.castShadow = true;
@@ -173,10 +173,10 @@ export function initEnvironment(scene, options = {}) {
 
   function createFlower() {
     const g = new THREE.Group();
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.24), new THREE.MeshStandardMaterial({ color: 0x1a7a3e }));
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.24), new THREE.MeshStandardMaterial({ color: 0x4a2a1a }));
     stem.position.y = 0.12;
     g.add(stem);
-    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshStandardMaterial({ color: 0xffcc66, emissive: 0xffb86b }));
+    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshStandardMaterial({ color: 0xff6347, emissive: 0xff4500 }));
     petal.position.y = 0.28;
     g.add(petal);
     g.scale.setScalar(0.9 + Math.random() * 0.6);
@@ -200,9 +200,9 @@ export function initEnvironment(scene, options = {}) {
   // Scatter props via InstancedMesh batching (reduce draw calls significantly)
   // Trees: trunk + foliage instanced
   const trunkGeo = new THREE.CylinderGeometry(0.12, 0.12, 1, 6);
-  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x332a22 });
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x2a1a12 });
   const foliageGeo = new THREE.ConeGeometry(1, 1, 8);
-  const foliageMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.52, 0.5, 0.22) });
+  const foliageMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.05, 0.7, 0.27) });
 
   const trunkInst = new THREE.InstancedMesh(trunkGeo, trunkMat, cfg.treeCount);
   const foliageInst = new THREE.InstancedMesh(foliageGeo, foliageMat, cfg.treeCount);
@@ -211,15 +211,15 @@ export function initEnvironment(scene, options = {}) {
 
   // Rocks
   const rockGeo = new THREE.DodecahedronGeometry(1, 0);
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0x223344 });
+  const rockMat = new THREE.MeshStandardMaterial({ color: 0x3a2520 });
   const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, cfg.rockCount);
   rockInst.castShadow = true; rockInst.receiveShadow = true;
 
   // Flowers (stems + petals)
   const stemGeo = new THREE.CylinderGeometry(0.02, 0.02, 1);
-  const stemMat = new THREE.MeshStandardMaterial({ color: 0x1a7a3e });
+  const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a2a1a });
   const petalGeo = new THREE.SphereGeometry(1, 6, 6);
-  const petalMat = new THREE.MeshStandardMaterial({ color: 0xffcc66, emissive: 0xffb86b });
+  const petalMat = new THREE.MeshStandardMaterial({ color: 0xff6347, emissive: 0xff4500 });
   const stemInst = new THREE.InstancedMesh(stemGeo, stemMat, cfg.flowerCount);
   const petalInst = new THREE.InstancedMesh(petalGeo, petalMat, cfg.flowerCount);
 
@@ -351,7 +351,7 @@ export function initEnvironment(scene, options = {}) {
         // small ground decoration near house entrance
         const peb = new THREE.Mesh(
           new THREE.DodecahedronGeometry(0.22, 0),
-          new THREE.MeshStandardMaterial({ color: 0x3b4850, roughness: 0.95 })
+          new THREE.MeshStandardMaterial({ color: 0x4a2a1a, roughness: 0.95 })
         );
         peb.position.set(0.9, 0.02, 0.2);
         peb.scale.setScalar(0.8 + Math.random() * 0.6);
@@ -413,7 +413,7 @@ export function initEnvironment(scene, options = {}) {
   if (cfg.enableWater) {
     const geo = new THREE.CircleGeometry(cfg.waterRadius, 64);
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x083b5d,
+      color: 0xff4500,
       metalness: 0.35,
       roughness: 0.35,
       transparent: true,
@@ -449,7 +449,7 @@ export function initEnvironment(scene, options = {}) {
     }
     const geom = new THREE.BufferGeometry();
     geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const mat = new THREE.PointsMaterial({ color: 0xbfdcff, size: 0.08, transparent: true, opacity: 0.8 });
+    const mat = new THREE.PointsMaterial({ color: 0xff6347, size: 0.08, transparent: true, opacity: 0.8 });
     const pts = new THREE.Points(geom, mat);
     pts.name = "rain";
     root.add(pts);
@@ -474,7 +474,7 @@ export function initEnvironment(scene, options = {}) {
     // simple water shimmer: slightly change rotation/scale or material roughness
     if (water && water.material) {
       const m = water.material;
-      m.emissive = m.emissive || new THREE.Color(0x001a2b);
+      m.emissive = m.emissive || new THREE.Color(0x8b0000);
       m.emissiveIntensity = 0.02 + Math.sin(t * 0.8) * 0.02;
       // gentle animated offset if material map exists
       if (m.map) {
