@@ -131,7 +131,9 @@ const __perf = {
   fps: 0,
   fpsLow1: 0,
   ms: 0,
-  avgMs: 0
+  avgMs: 0,
+  targetFPS: 90, // Target FPS for optimization
+  autoAdjust: true // Enable auto-adjustment of quality settings
 };
 
 // Tiny reusable object pool to avoid allocations in hot loops.
@@ -215,6 +217,37 @@ function __computePerf(nowMs) {
       __perf.fpsLow1 = 1000 / ms99;
     } catch (e) {
       // keep previous fpsLow1 on error
+    }
+    
+    // Auto-adjust quality settings to maintain target FPS
+    if (__perf.autoAdjust && __perf.hist.length > 120) {
+      try {
+        const currentFPS = __perf.fps;
+        const targetFPS = __perf.targetFPS || 90;
+        
+        // If FPS is consistently below target, reduce quality
+        if (currentFPS < targetFPS * 0.85 && window.__vfxQuality !== "low") {
+          if (window.__vfxQuality === "high") {
+            window.__vfxQuality = "medium";
+            console.info(`[Performance] Auto-adjusted VFX quality to medium (FPS: ${currentFPS.toFixed(1)})`);
+          } else if (window.__vfxQuality === "medium") {
+            window.__vfxQuality = "low";
+            console.info(`[Performance] Auto-adjusted VFX quality to low (FPS: ${currentFPS.toFixed(1)})`);
+          }
+        }
+        // If FPS is consistently above target, increase quality
+        else if (currentFPS > targetFPS * 1.15 && window.__vfxQuality !== "high") {
+          if (window.__vfxQuality === "low") {
+            window.__vfxQuality = "medium";
+            console.info(`[Performance] Auto-adjusted VFX quality to medium (FPS: ${currentFPS.toFixed(1)})`);
+          } else if (window.__vfxQuality === "medium") {
+            window.__vfxQuality = "high";
+            console.info(`[Performance] Auto-adjusted VFX quality to high (FPS: ${currentFPS.toFixed(1)})`);
+          }
+        }
+      } catch (e) {
+        console.warn("Auto-adjust error:", e);
+      }
     }
   }
 }

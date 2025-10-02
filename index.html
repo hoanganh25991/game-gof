@@ -70,6 +70,28 @@
     .splash-active #bottomMiddle {
       opacity: 0;
     }
+    
+    /* Notification animations */
+    @keyframes notifFadeIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    @keyframes notifFadeOut {
+      from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+    }
   </style>
   
   <!-- Defer non-critical stylesheets to avoid blocking LCP -->
