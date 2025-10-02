@@ -13,6 +13,7 @@
 @import "uplift.css";
 @import "preview.css";
 @import "bottom-middle.css";
+@import "guide.css";
 
 /* NOTE:
    - The component files will live alongside this file in the css/ directory.

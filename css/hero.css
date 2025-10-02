@@ -1,0 +1,269 @@
+/* Hero screen styles - skills, info, skillbook, maps, marks */
+
+.hero-skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+#heroSkillsLeft,
+#heroSkillsRight {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-skill-item {
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 107, 53, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.hero-skill-item:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 107, 53, 0.5);
+  transform: translateY(-2px);
+}
+
+.hero-skill-item.locked {
+  opacity: 0.5;
+  filter: grayscale(0.8);
+}
+
+.hero-skill-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hero-skill-icon {
+  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 107, 53, 0.2);
+  border: 2px solid rgba(255, 107, 53, 0.4);
+  border-radius: 8px;
+}
+
+.hero-skill-info {
+  flex: 1;
+}
+
+.hero-skill-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ff8c42;
+  margin-bottom: 4px;
+}
+
+.hero-skill-key {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.hero-skill-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.hero-skill-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 12px;
+}
+
+.hero-skill-stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+.hero-skill-stat-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hero-skill-stat-value {
+  color: #ff8c42;
+  font-weight: bold;
+}
+
+.hero-skill-upgrade {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-skill-level {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.hero-skill-level-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.hero-skill-level-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.hero-skill-level-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.hero-skill-level-dot.filled {
+  background: #ff8c42;
+  border-color: #ffa552;
+  box-shadow: 0 0 8px rgba(255, 140, 66, 0.6);
+}
+
+.hero-skill-upgrade-btn {
+  width: 100%;
+  padding: 8px;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hero-skill-upgrade-btn:hover {
+  background: linear-gradient(135deg, #ff8c42 0%, #ffa552 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+.hero-skill-upgrade-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.hero-skill-unlock-info {
+  font-size: 12px;
+  color: rgba(255, 170, 0, 0.8);
+  text-align: center;
+  padding: 8px;
+  background: rgba(255, 170, 0, 0.1);
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+/* Hero info tab */
+#heroTabInfo {
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+#heroTabInfo h3 {
+  color: #ff8c42;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* Skillbook tab */
+.skillbook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.skillbook-item {
+  aspect-ratio: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 107, 53, 0.3);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.skillbook-item:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 107, 53, 0.5);
+  transform: scale(1.05);
+}
+
+.skillbook-item.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.skillbook-item-icon {
+  font-size: 32px;
+}
+
+.skillbook-item-name {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+/* Maps and marks tabs */
+.map-list,
+.mark-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.map-item,
+.mark-item {
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 107, 53, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-item:hover,
+.mark-item:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 107, 53, 0.5);
+  transform: translateX(4px);
+}
+
+.map-item-name,
+.mark-item-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ff8c42;
+  margin-bottom: 4px;
+}
+
+.map-item-desc,
+.mark-item-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}

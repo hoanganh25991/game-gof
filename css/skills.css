@@ -1,0 +1,204 @@
+/* Skills UI - skill buttons and cooldowns */
+
+#bottomLeftGroup {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+#skillBar {
+  display: flex;
+  gap: 8px;
+}
+
+.skill-btn {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 3px solid rgba(255, 107, 53, 0.4);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  overflow: hidden;
+}
+
+.skill-btn:hover {
+  border-color: rgba(255, 107, 53, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+.skill-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.skill-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.skill-btn.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.skill-btn .icon {
+  font-size: 24px;
+  margin-bottom: 2px;
+}
+
+.skill-btn .key {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.skill-btn .name {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.skill-btn .cooldown {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.skill-btn .cooldown.active {
+  opacity: 1;
+}
+
+/* Skill-specific colors */
+.skill-btn.basic {
+  border-color: rgba(255, 170, 0, 0.4);
+}
+
+.skill-btn.basic:hover {
+  border-color: rgba(255, 170, 0, 0.8);
+  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.4);
+}
+
+.skill-btn.q {
+  border-color: rgba(255, 68, 68, 0.4);
+}
+
+.skill-btn.q:hover {
+  border-color: rgba(255, 68, 68, 0.8);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+}
+
+.skill-btn.w {
+  border-color: rgba(68, 136, 255, 0.4);
+}
+
+.skill-btn.w:hover {
+  border-color: rgba(68, 136, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(68, 136, 255, 0.4);
+}
+
+.skill-btn.e {
+  border-color: rgba(102, 255, 102, 0.4);
+}
+
+.skill-btn.e:hover {
+  border-color: rgba(102, 255, 102, 0.8);
+  box-shadow: 0 4px 12px rgba(102, 255, 102, 0.4);
+}
+
+.skill-btn.r {
+  border-color: rgba(204, 102, 255, 0.4);
+}
+
+.skill-btn.r:hover {
+  border-color: rgba(204, 102, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(204, 102, 255, 0.4);
+}
+
+/* Square skill buttons (for bottom-middle) */
+.square-skill {
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 107, 53, 0.4);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.square-skill:hover {
+  border-color: rgba(255, 107, 53, 0.8);
+  transform: scale(1.05);
+}
+
+.square-skill .icon {
+  font-size: 20px;
+}
+
+.square-skill .key {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 8px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+.square-skill .name {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+}
+
+.square-skill .cooldown {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 6px;
+}
+
+.square-skill .cooldown.active {
+  opacity: 1;
+}
