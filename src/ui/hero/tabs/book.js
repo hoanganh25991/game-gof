@@ -44,14 +44,14 @@ export function renderBookTab(panelEl, ctx = {}) {
     aoe: "Ground-targeted area. Damages enemies within its radius.",
     aura: "Toggle aura around hero. Ticks damage periodically while draining mana.",
     storm: "Multiple random strikes in a radius over time.",
-    beam: "Instant zap to nearest enemy in range.",
+    beam: "Instant fire blast to nearest enemy in range.",
     nova: "Radial burst around hero.",
     heal: "Restores hero HP instantly.",
     mana: "Restores hero MP instantly.",
     buff: "Temporarily increases damage and speed.",
     dash: "Quickly dash forward.",
     blink: "Teleport toward direction/point.",
-    clone: "Summons a lightning image that periodically zaps nearby foes.",
+    clone: "Summons a fire image that periodically burns nearby foes.",
     shield: "Reduces incoming damage for a short time; may grant brief invulnerability on cast.",
   };
 

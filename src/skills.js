@@ -1045,7 +1045,7 @@ export class SkillsSystem {
       this.player.spend(SKILLS.E.manaPerTick);
       this.player.staticField.nextTick = t + SKILLS.E.tick;
 
-      // Visual ring and zap
+      // Visual ring and fire burst
       const fx = this._fx(SKILLS.E);
       this.effects.spawnStrike(this.player.pos(), SKILLS.E.radius, fx.ring);
       audio.sfx("aura_tick");
@@ -1137,7 +1137,7 @@ export class SkillsSystem {
     }
   }
 
-  // Shadow clone processing (periodic zaps near player while active)
+  // Shadow clone processing (periodic fire bursts near player while active)
   runClones() {
     const t = now();
     for (let i = this.clones.length - 1; i >= 0; i--) {
@@ -1162,7 +1162,7 @@ export class SkillsSystem {
           target.takeDamage(c.dmg);
           if (!c.shook) { this._requestShake(0.2); c.shook = true; }
         }
-        // schedule next zap
+        // schedule next fire burst
         c.next = t + (c.rate || 0.5);
       }
     }

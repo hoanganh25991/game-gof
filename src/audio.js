@@ -1,6 +1,6 @@
 /* Minimal, dependency-free WebAudio system for SFX and ambient music
    - Autoplay-safe: resume AudioContext on first user interaction
-   - Procedural SFX (free): zaps, booms, hits, strikes, aura blips, etc.
+   - Procedural SFX (free): fire bursts, booms, hits, strikes, aura blips, etc.
    - Gentle, relaxing generative background music (focus preset)
 */
 export const audio = (() => {
