@@ -317,7 +317,7 @@ export class SkillsSystem {
     // Uplift: AOE explosion around the hit target
     try {
       if (up.aoeRadius && up.aoeRadius > 0) {
-        this.effects.spawnStrike(target.pos(), up.aoeRadius, 0xffee88);
+        this.effects.spawnStrike(target.pos(), up.aoeRadius, COLOR.ember);
         const r = up.aoeRadius + 2.5;
         this.enemies.forEach((en) => {
           if (!en.alive || en === target) return;
@@ -340,7 +340,7 @@ export class SkillsSystem {
         hitSet.add(nxt);
         const from = __vA.copy(current.pos()).add(__vB.set(0,1.2,0)).clone();
         const to = __vC.copy(nxt.pos()).add(__vB.set(0,1.2,0)).clone();
-        try { this.effects.spawnElectricBeamAuto(from, to, 0xffee88, 0.08); } catch(_) {}
+        try { this.effects.spawnElectricBeamAuto(from, to, COLOR.ember, 0.08); } catch(_) {}
         nxt.takeDamage(Math.max(1, Math.floor(dmg * 0.85)));
         current = nxt;
       }
