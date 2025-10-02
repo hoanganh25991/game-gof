@@ -1,17 +1,22 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 export const COLOR = {
-  blue: 0x1e90ff,
-  darkBlue: 0x0b1a2b,
-  midBlue: 0x123a6b,
-  white: 0xe6f4ff,
-  hp: 0x4ec3ff,
-  mp: 0x1a73e8,
-  xp: 0x9ad1ff,
-  enemy: 0xff5050,
-  enemyDark: 0x7a1c1c,
-  portal: 0x7c4dff,
-  village: 0x5aff8b,
+  // Fire theme colors
+  fire: 0xff4500,        // Orange-red fire
+  darkFire: 0x8b0000,    // Dark red/crimson
+  midFire: 0xff6347,     // Tomato red
+  white: 0xfff5e6,       // Warm white
+  hp: 0xff6b6b,          // Warm red for HP
+  mp: 0xff8c00,          // Dark orange for mana (fire energy)
+  xp: 0xffd700,          // Gold for XP
+  enemy: 0x4a0e0e,       // Dark burnt color for enemies
+  enemyDark: 0x2b0505,   // Very dark burnt
+  portal: 0xff1493,      // Hot pink/magenta portal
+  village: 0xffb347,     // Warm orange for village
+  lava: 0xff4500,        // Lava orange-red
+  ember: 0xffa500,       // Ember orange
+  ash: 0x696969,         // Ash gray
+  volcano: 0x8b4513,     // Volcanic brown
 };
 
 export const WORLD = {
@@ -50,11 +55,11 @@ export const STATS_BASE = {
 };
 
 export const SKILLS = {
-  // Significantly boosted skills for mass-clear gameplay.
-  Q: { name: "Chain Lightning", cd: 4, mana: 20, range: 60, jumps: 8, jumpRange: 30, dmg: 120 },
-  W: { name: "Lightning Bolt (AOE)", cd: 6, mana: 40, radius: 18, dmg: 220 },
-  E: { name: "Static Field (Aura)", cd: 12, mana: 0, radius: 18, tick: 0.6, dmg: 18, duration: 12, manaPerTick: 3 },
-  R: { name: "Thunderstorm", cd: 18, mana: 70, radius: 36, strikes: 40, dmg: 90, duration: 8 },
+  // Fire-themed skills for mass-clear gameplay.
+  Q: { name: "Flame Chain", cd: 4, mana: 20, range: 60, jumps: 8, jumpRange: 30, dmg: 120 },
+  W: { name: "Inferno Blast (AOE)", cd: 6, mana: 40, radius: 18, dmg: 220 },
+  E: { name: "Burning Aura", cd: 12, mana: 0, radius: 18, tick: 0.6, dmg: 18, duration: 12, manaPerTick: 3 },
+  R: { name: "Meteor Storm", cd: 18, mana: 70, radius: 36, strikes: 40, dmg: 90, duration: 8 },
 };
  
 // Progression and balancing knobs (tweak for desired pacing)

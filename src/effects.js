@@ -4,7 +4,7 @@ import { now } from "./utils.js";
 import { handWorldPos, leftHandWorldPos } from "./entities.js";
 
 // Normalize color inputs from various formats ("0x66ffc2", "#66ffc2", 0x66ffc2, 6750146)
-function normalizeColor(c, fallback = COLOR.blue) {
+function normalizeColor(c, fallback = COLOR.fire) {
   try {
     if (typeof c === "number" && Number.isFinite(c)) return c >>> 0;
     if (typeof c === "string") {
@@ -63,7 +63,7 @@ export class EffectsManager {
   }
 
   // ----- Indicator helpers -----
-  spawnMovePing(point, color = COLOR.blue) {
+  spawnMovePing(point, color = COLOR.fire) {
     const ring = createGroundRing(0.6, 0.85, color, 0.8);
     ring.position.set(point.x, 0.02, point.z);
     this.indicators.add(ring);
@@ -80,17 +80,17 @@ export class EffectsManager {
   }
 
   showNoTargetHint(player, radius) {
-    const ring = createGroundRing(Math.max(0.1, radius - 0.2), radius + 0.2, 0x8fd3ff, 0.35);
+    const ring = createGroundRing(Math.max(0.1, radius - 0.2), radius + 0.2, 0xffa500, 0.35);
     const p = player.pos();
     ring.position.set(p.x, 0.02, p.z);
     this.indicators.add(ring);
     this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material });
     // subtle spark at player for feedback
-    this.spawnStrike(player.pos(), 1.2, 0x8fd3ff);
+    this.spawnStrike(player.pos(), 1.2, 0xffa500);
   }
 
   // ----- Beam helpers -----
-  spawnBeam(from, to, color = COLOR.blue, life = 0.12) {
+  spawnBeam(from, to, color = COLOR.fire, life = 0.12) {
     // Avoid allocating temporary vectors for simple two-point lines by reusing instance temps.
     const p0 = this._tmpVecA.copy(from);
     const p1 = this._tmpVecB.copy(to);
@@ -102,8 +102,8 @@ export class EffectsManager {
     this.queue.push({ obj: line, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: material });
   }
 
-  // Jagged electric beam with small fork
-  spawnElectricBeam(from, to, color = COLOR.blue, life = 0.12, segments = 10, amplitude = 0.6) {
+  // Jagged fire beam with small fork
+  spawnElectricBeam(from, to, color = COLOR.fire, life = 0.12, segments = 10, amplitude = 0.6) {
     // Use temporaries to compute dir/normal/up without allocations.
     const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
     const normal = this._tmpVecC.set(-dir.z, 0, dir.x).normalize();
@@ -146,7 +146,7 @@ export class EffectsManager {
   }
 
   // Auto-scaling multi-pass beam for thickness by distance
-  spawnElectricBeamAuto(from, to, color = COLOR.blue, life = 0.12) {
+  spawnElectricBeamAuto(from, to, color = COLOR.fire, life = 0.12) {
     const dir = to.clone().sub(from);
     const length = dir.length() || 1;
     const normal = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
@@ -192,21 +192,21 @@ export class EffectsManager {
     }
   }
 
-  spawnArcNoisePath(from, to, color = 0xbfe9ff, life = 0.08, passes = 2) {
+  spawnArcNoisePath(from, to, color = 0xff6347, life = 0.08, passes = 2) {
     for (let i = 0; i < passes; i++) {
       this.spawnElectricBeam(from, to, color, life, 6, 0.2);
     }
   }
 
   // ----- Impact helpers -----
-  spawnHitDecal(center, color = 0xbfe9ff) {
+  spawnHitDecal(center, color = 0xff6347) {
     const ring = createGroundRing(0.2, 0.55, color, 0.5);
     ring.position.set(center.x, 0.02, center.z);
     this.indicators.add(ring);
     this.queue.push({ obj: ring, until: now() + 0.22 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.3 });
   }
 
-  spawnStrike(point, radius = 2, color = COLOR.blue) {
+  spawnStrike(point, radius = 2, color = COLOR.fire) {
     // Vertical strike
     const from = point.clone().add(new THREE.Vector3(0, 14, 0));
     const to = point.clone().add(new THREE.Vector3(0, 0.2, 0));
@@ -222,7 +222,7 @@ export class EffectsManager {
   }
   
   // Expanding ground ring pulse (scales and fades)
-  spawnRingPulse(center, radius = 6, color = COLOR.blue, duration = 0.35, width = 0.6, opacity = 0.55) {
+  spawnRingPulse(center, radius = 6, color = COLOR.fire, duration = 0.35, width = 0.6, opacity = 0.55) {
     try {
       const ring = createGroundRing(Math.max(0.05, radius - width * 0.5), radius + width * 0.5, color, opacity);
       ring.position.set(center.x, 0.02, center.z);
@@ -232,8 +232,8 @@ export class EffectsManager {
     } catch (_) {}
   }
 
-  // Cage of vertical bars for "Static Prison" and similar effects
-  spawnCage(center, radius = 12, color = COLOR.blue, duration = 0.6, bars = 12, height = 2.2) {
+  // Cage of vertical bars for "Fire Prison" and similar effects
+  spawnCage(center, radius = 12, color = COLOR.fire, duration = 0.6, bars = 12, height = 2.2) {
     try {
       const g = new THREE.Group();
       const mats = [];
@@ -264,7 +264,7 @@ export class EffectsManager {
   }
 
   // Shield bubble that follows an entity and gently pulses
-  spawnShieldBubble(entity, color = COLOR.blue, duration = 6, radius = 1.7) {
+  spawnShieldBubble(entity, color = COLOR.fire, duration = 6, radius = 1.7) {
     try {
       const mat = new THREE.MeshBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.22, wireframe: true });
       const bubble = new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 16), mat);
@@ -286,7 +286,7 @@ export class EffectsManager {
   }
 
   // Storm cloud disc hovering over an area (rotates and fades)
-  spawnStormCloud(center, radius = 12, color = COLOR.blue, duration = 6, height = 3.6) {
+  spawnStormCloud(center, radius = 12, color = COLOR.fire, duration = 6, height = 3.6) {
     try {
       const thick = Math.max(0.6, radius * 0.08);
       const torus = new THREE.Mesh(
@@ -301,7 +301,7 @@ export class EffectsManager {
   }
 
   // Orbiting energy orbs around an entity for a short duration
-  spawnOrbitingOrbs(entity, color = COLOR.blue, opts = {}) {
+  spawnOrbitingOrbs(entity, color = COLOR.fire, opts = {}) {
     try {
       const count = Math.max(1, opts.count ?? 4);
       const r = Math.max(0.4, opts.radius ?? 1.2);
@@ -340,7 +340,7 @@ export class EffectsManager {
     const p = left ? leftHandWorldPos(player) : handWorldPos(player);
     const s = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 12, 12),
-      new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.9 })
+      new THREE.MeshBasicMaterial({ color: 0xff6347, transparent: true, opacity: 0.9 })
     );
     s.position.copy(p);
     this.transient.add(s);
@@ -348,7 +348,7 @@ export class EffectsManager {
   }
 
   // Colored variant for skill-tinted flashes
-  spawnHandFlashColored(player, color = 0x9fd8ff, left = false) {
+  spawnHandFlashColored(player, color = 0xff6347, left = false) {
     const p = left ? leftHandWorldPos(player) : handWorldPos(player);
     const s = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 12, 12),
@@ -421,7 +421,7 @@ export class EffectsManager {
       const dir = new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.2), (Math.random() - 0.5)).normalize();
       const len = 0.35 + Math.random() * 0.5 * strength;
       const to = origin.clone().add(dir.multiplyScalar(len));
-      this.spawnElectricBeam(origin.clone(), to, 0x9fd8ff, 0.06);
+      this.spawnElectricBeam(origin.clone(), to, 0xff6347, 0.06);
     }
   }
 
@@ -430,7 +430,7 @@ export class EffectsManager {
     if (!player) return;
     const a = handWorldPos(player);
     const b = leftHandWorldPos(player);
-    this.spawnElectricBeamAuto(a, b, 0x9fd8ff, life);
+    this.spawnElectricBeamAuto(a, b, 0xff6347, life);
   }
 
   // ----- Frame update -----
