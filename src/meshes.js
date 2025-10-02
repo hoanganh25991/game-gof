@@ -387,7 +387,7 @@ export function createGreekColumn(options = {}) {
     height = 5,
     radius = 0.28,
     order = "doric", // "doric" | "ionic" | "corinthian" (visual differences are subtle here)
-    color = 0xf2f2f2,
+    color = 0xf4e8dc, // Warm sandstone for fire theme
     roughness = 0.55,
     metalness = 0.04,
   } = options;
@@ -451,7 +451,7 @@ export function createGreekTemple(options = {}) {
     colSpacingZ = 2.6,
     columnHeight = 5.6,
     baseMargin = 0.9,
-    color = 0xf2f2f2,
+    color = 0xf4e8dc, // Warm sandstone for fire theme
   } = options;
 
   const g = new THREE.Group();
@@ -572,7 +572,7 @@ export function createCypressTree() {
   const trunkH = 1.6 + Math.random() * 0.8;
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(0.06, 0.08, trunkH, 6),
-    new THREE.MeshStandardMaterial({ color: 0x2a2119 })
+    new THREE.MeshStandardMaterial({ color: 0x2a1a12 }) // Burnt wood for fire theme
   );
   trunk.position.y = trunkH / 2;
   g.add(trunk);
@@ -582,7 +582,7 @@ export function createCypressTree() {
     const h = 1.0 + (levels - i) * 0.5;
     const cone = new THREE.Mesh(
       new THREE.ConeGeometry(0.4 + (levels - i) * 0.18, h, 8),
-      new THREE.MeshStandardMaterial({ color: 0x3c6f52 })
+      new THREE.MeshStandardMaterial({ color: 0x8f4a3c }) // Burnt orange-red foliage for fire theme
     );
     cone.position.y = trunkH + (i * h * 0.55);
     g.add(cone);
@@ -597,12 +597,12 @@ export function createOliveTree() {
   const trunkH = 1.3 + Math.random() * 0.7;
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(0.12, 0.16, trunkH, 8),
-    new THREE.MeshStandardMaterial({ color: 0x5a4a3a })
+    new THREE.MeshStandardMaterial({ color: 0x4a2a1a }) // Burnt brown trunk for fire theme
   );
   trunk.position.y = trunkH / 2;
   g.add(trunk);
 
-  const canopyMat = new THREE.MeshStandardMaterial({ color: 0x7a8f6a });
+  const canopyMat = new THREE.MeshStandardMaterial({ color: 0x8f6a4a }); // Burnt orange canopy for fire theme
   const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), canopyMat);
   const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 12), canopyMat);
   const s3 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), canopyMat);
@@ -616,7 +616,7 @@ export function createOliveTree() {
 
 export function createGreekStatue(options = {}) {
   const {
-    color = 0xf4f4f4
+    color = 0xf4e8dc // Warm sandstone for fire theme
   } = options;
 
   const mat = new THREE.MeshStandardMaterial({ color });
@@ -656,7 +656,7 @@ export function createObelisk(options = {}) {
   const {
     height = 6,
     baseSize = 1.2,
-    color = 0xece8dc
+    color = 0xf4e8dc // Warm sandstone for fire theme
   } = options;
 
   const g = new THREE.Group();
