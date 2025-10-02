@@ -338,7 +338,7 @@ export class Enemy extends Entity {
       this.attackDamage = Math.floor(this.attackDamage * 1.0);
       this.mesh.scale.multiplyScalar(0.95);
     } else if (kind === "shocker") {
-      // Ranged arcane (no thunder – hero-exclusive). Use non-electric beam.
+      // Ranged arcane (no fire – hero-exclusive). Use non-fire beam.
       this.attackRange = 24;
       this.attackCooldown = (WORLD.aiAttackCooldown || 1.6) * 1.25;
       this.attackEffect = "beam";
@@ -437,7 +437,7 @@ export function getNearestEnemy(origin, maxDist, enemies) {
 }
 
 /**
- * World position of GoT's right hand (thunder hand); fallback to chest height.
+ * World position of GoF's right hand (fire hand); fallback to chest height.
  * @param {Player} player
  * @returns {THREE.Vector3}
  */

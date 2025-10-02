@@ -48,11 +48,11 @@ export class SkillsSystem {
 
     this.cooldowns = { Q: 0, W: 0, E: 0, R: 0, Basic: 0 };
     this.cdState = { Q: 0, W: 0, E: 0, R: 0, Basic: 0 }; // for ready flash timing
-    this.storms = []; // queued thunderstorm strikes
+    this.storms = []; // queued meteor/lava storm strikes
     // Temporary damage buff (applies to basic + skills)
     this.damageBuffUntil = 0;
     this.damageBuffMult = 1;
-    // Clone-like scheduled strikes (thunder image)
+    // Clone-like scheduled strikes (fire image)
     this.clones = [];
     this.totems = [];
     this._pendingShake = 0;
@@ -240,7 +240,7 @@ export class SkillsSystem {
 
   // ----- Combat -----
   /**
-   * Attempt a basic electric attack if in range and off cooldown.
+   * Attempt a basic fire attack if in range and off cooldown.
    * Returns true on success, false otherwise.
    * @param {import("./entities.js").Entity} attacker
    * @param {import("./entities.js").Entity} target
@@ -739,7 +739,7 @@ export class SkillsSystem {
     try { this.effects.spawnRingPulse(center, Math.max(6, (SK.radius || 12) * 0.85), fx.ring, 0.6, 1.4, 0.5); } catch (_) {}
 
     const rate = Math.max(0, (SK.strikes || 8) / Math.max(0.1, (SK.duration || 7)));
-    const strikeRadius = SK.strikeRadius || ((SK.id === "thunderdome" || SK.id === "maelstrom") ? 3.0 : 2.5);
+    const strikeRadius = SK.strikeRadius || ((SK.id === "fire_dome" || SK.id === "meteor_storm") ? 3.0 : 2.5);
     const dmg = this.scaleSkillDamage(SK.dmg || 0);
 
     // Accumulator-based scheduling
@@ -981,7 +981,7 @@ export class SkillsSystem {
     const radius = Math.max(10, SK.radius || 26);
     const dmg = this.scaleSkillDamage(SK.dmg || 16);
     const anchor = this.player.pos().clone();
-    // schedule a thunder image that periodically zaps nearby enemies
+    // schedule a fire image that periodically burns nearby enemies
     this.clones.push({ until: now() + duration, next: 0, rate, radius, dmg, pos: anchor, shook: false });
     try { this.effects.spawnHandFlash(this.player); audio.sfx("aura_on"); } catch(e) {}
     try {

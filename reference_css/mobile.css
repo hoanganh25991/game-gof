@@ -1,0 +1,120 @@
+/* css/mobile.css
+   Mobile touch controls and joystick styling, plus responsive UI scaling.
+*/
+
+/* Overlay container for touch controls (bottom-left joystick, etc.) */
+#bottomLeftGroup {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* Joystick cluster (bottom-left) */
+#joystick {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  width: 180px;
+  height: 180px;
+  pointer-events: auto;
+}
+
+#joyBase {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(90px 90px at 50% 50%, rgba(124, 196, 255, 0.15), rgba(10, 25, 48, 0.6) 70%);
+  border: 1px solid rgba(124, 196, 255, 0.35);
+  box-shadow: inset 0 0 12px rgba(124, 196, 255, 0.25);
+  pointer-events: auto;
+}
+
+#joyKnob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 80px;
+  height: 80px;
+  margin-left: -40px;
+  margin-top: -40px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(22, 44, 78, 0.8), rgba(10, 25, 48, 0.7));
+  border: 1px solid rgba(124, 196, 255, 0.35);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  will-change: transform;
+}
+
+/* Disable native touch gestures so pointer events stream smoothly while dragging */
+#joystick,
+#joyBase,
+#joyKnob {
+  touch-action: none;
+  -ms-touch-action: none; /* older Edge */
+  user-select: none;
+  -webkit-user-select: none; /* iOS */
+}
+
+/* Small cancel aim button positioned above joystick */
+#btnCancelAim.small {
+  position: absolute;
+  left: calc(50% - 16px);
+  top: -8px;
+  width: 48px;
+  height: 28px;
+  font-size: 12px;
+  background: rgba(255, 80, 80, 0.8);
+  border: 1px solid rgba(255, 120, 120, 0.8);
+  color: #fff;
+  border-radius: 6px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+@media (max-height: 500px) {
+  #hud {
+    transform: scale(0.7);
+    transform-origin: top left;
+  }
+
+  #topRightGroup {
+    transform: scale(0.7);
+    transform-origin: top right;
+  }
+
+  #bottomLeftGroup {
+    transform: scale(0.8);
+    transform-origin: bottom left;
+  }
+
+  #bottomRightGroup {
+    transform: scale(0.7);
+    transform-origin: bottom right;
+  }
+}
+
+@media (max-height: 420px) {
+  #minimap {
+    max-height: 160px;
+  }
+}
+
+@media (pointer: coarse) {
+  /* Mobile: ensure bottom-middle hidden and original mobile UI visible */
+  #bottomMiddle {
+    display: none !important;
+  }
+
+  #bottomLeftGroup {
+    display: flex;
+  }
+
+  #bottomRightGroup {
+    display: flex;
+  }
+}

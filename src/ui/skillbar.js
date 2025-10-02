@@ -39,20 +39,20 @@ export function getSkillIcon(short) {
   // Chain / fork / tether
   if (any("chain", "fork", "tether")) return "🔗";
 
-  // Beams / bolts / spears / sky spear
-  if (any("bolt", "beam", "spear", "spear", "spear", "sky")) return "⚡";
+  // Beams / bolts / spears / fire spear / flame
+  if (any("bolt", "beam", "spear", "flame", "fire")) return "🔥";
 
-  // AOEs / circles / rings / nova / pulse / burst / shockwave
-  if (any("nova", "ring", "circle", "pulse", "burst", "aoe", "shock")) return "💥";
+  // AOEs / circles / rings / nova / pulse / burst / shockwave / inferno / blast
+  if (any("nova", "ring", "circle", "pulse", "burst", "aoe", "shock", "inferno", "blast", "ember")) return "💥";
 
-  // Storms / tempest / wrath / dome / mael / thunder
-  if (any("storm", "tempest", "wrath", "dome", "mael", "thunder")) return "⛈️";
+  // Storms / tempest / wrath / dome / meteor / lava / volcanic
+  if (any("storm", "tempest", "wrath", "dome", "meteor", "lava", "volcanic", "pyro")) return "🌋";
 
-  // Prison / root / lock / static prison / conduct(ive) ground / rumble field
-  if (any("prison", "root", "lock", "conduct", "ground", "rumble", "field")) return "⛓️";
+  // Aura / field / burning / scorching / blazing
+  if (any("aura", "field", "burn", "scorch", "blaze", "heat")) return "🔥";
 
-  // Ball lightning
-  if (any("ball", "orb", "sphere")) return "🧿";
+  // Ball / orb / sphere / fireball
+  if (any("ball", "orb", "sphere")) return "🔮";
 
   // Exotic/ultimates
   if (any("judg")) return "⚖️";
@@ -62,23 +62,32 @@ export function getSkillIcon(short) {
   if (any("roar")) return "🗣️";
   if (any("rider", "cloud")) return "☁️";
 
-  // Static / electric / battery
+  // Static / magnet (legacy support for non-fire skills)
   if (any("static")) return "🔌";
   if (any("magnet", "magneto")) return "🧲";
 
   // Fallbacks
   const k = s.slice(0, 3);
   const map = {
-    chn: "🔗",
-    bol: "⚡",
-    stc: "🔌",
-    str: "⛈️",
-    bam: "🔋",
-    nov: "✴️",
-    aoe: "💥",
-    atk: "⚡",
+    cha: "🔗",  // chain
+    fla: "🔥",  // flame
+    fir: "🔥",  // fire
+    inf: "💥",  // inferno
+    bur: "🔥",  // burning
+    met: "🌋",  // meteor
+    lav: "🌋",  // lava
+    vol: "🌋",  // volcanic
+    sco: "🔥",  // scorching
+    bla: "🔥",  // blazing
+    hea: "🔥",  // heatwave
+    nov: "💥",  // nova
+    aoe: "💥",  // aoe
+    atk: "🔥",  // attack
+    ove: "🔥",  // overload
+    pyr: "🌋",  // pyroclasm
+    emb: "💥",  // ember
   };
-  return map[k] || "⚡";
+  return map[k] || "🔥";
 }
 
 /**

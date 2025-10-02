@@ -673,12 +673,12 @@ function updateFlagActive() {
       if (!el) return;
       // Keep class for any theme CSS that may target it
       try { el.classList.toggle("active", !!isActive); } catch (_) {}
-      // Inline highlight to match checkbox (thunder yellow) so it's always visible
+      // Inline highlight to match checkbox (fire orange) so it's always visible
       if (isActive) {
-        el.style.background = "linear-gradient(180deg, #ffe98a, #ffd94a)";
+        el.style.background = "linear-gradient(180deg, #ffb366, #ff8c42)";
         el.style.color = "var(--theme-dark-blue)";
-        el.style.borderColor = "rgba(255,217,74,0.6)";
-        el.style.boxShadow = "0 6px 18px rgba(0,0,0,0.35), 0 0 10px rgba(255,217,74,0.28)";
+        el.style.borderColor = "rgba(255,140,66,0.6)";
+        el.style.boxShadow = "0 6px 18px rgba(0,0,0,0.35), 0 0 10px rgba(255,140,66,0.28)";
       } else {
         el.style.background = "rgba(10,25,48,0.6)";
         el.style.color = "#fff";
@@ -1633,7 +1633,7 @@ function animate() {
     const mid = __tempVecC.copy(left).add(right).multiplyScalar(0.5);
     const forward = __tempVecA.set(0, 0, 1).applyQuaternion(player.mesh.quaternion).normalize();
 
-    // FP hand VFX and gestures (two hands, thunder-in-hand, move/attack animations)
+    // FP hand VFX and gestures (two hands, fire-in-hand, move/attack animations)
     try {
       const ud2 = player.mesh.userData || {};
       const speed = lastMoveDir.length();
@@ -1649,11 +1649,11 @@ function animate() {
 
       // Boost orb/light intensity based on movement and a small flicker
       const flick = Math.sin(tnow * 10) * 0.2;
-      if (ud2.thunderOrb && ud2.thunderOrb.material) {
-        ud2.thunderOrb.material.emissiveIntensity = 2.1 + speed * 0.6 + flick;
+      if (ud2.fireOrb && ud2.fireOrb.material) {
+        ud2.fireOrb.material.emissiveIntensity = 2.1 + speed * 0.6 + flick;
       }
-      if (ud2.leftThunderOrb && ud2.leftThunderOrb.material) {
-        ud2.leftThunderOrb.material.emissiveIntensity = 1.9 + speed * 0.5 + flick * 0.8;
+      if (ud2.leftFireOrb && ud2.leftFireOrb.material) {
+        ud2.leftFireOrb.material.emissiveIntensity = 1.9 + speed * 0.5 + flick * 0.8;
       }
       if (ud2.handLight) ud2.handLight.intensity = 1.2 + speed * 0.8;
       if (ud2.leftHandLight) ud2.leftHandLight.intensity = 1.0 + speed * 0.7;
@@ -1998,8 +1998,8 @@ function updatePlayer(dt) {
   // Idle glow pulse and brief brace squash
   const ud = player.mesh.userData || {};
   if (ud.handLight) ud.handLight.intensity = 1.2 + Math.sin((player.idlePhase || 0) * 2.2) * 0.22;
-  if (ud.thunderOrb && ud.thunderOrb.material) {
-    ud.thunderOrb.material.emissiveIntensity = 2.2 + Math.sin((player.idlePhase || 0) * 2.2) * 0.35;
+  if (ud.fireOrb && ud.fireOrb.material) {
+    ud.fireOrb.material.emissiveIntensity = 2.2 + Math.sin((player.idlePhase || 0) * 2.2) * 0.35;
   }
   if (player.braceUntil && now() < player.braceUntil) {
     const n = Math.max(0, (player.braceUntil - now()) / 0.18);
@@ -2129,10 +2129,10 @@ function updateEnemies(dt) {
             if (en.attackEffect === "melee") {
               // impact strike at player (light-weight)
               try { effects.spawnStrike(player.pos(), 0.9, 0xff9955); } catch (_) {}
-            } else if (en.attackEffect === "electric") {
+            } else if (en.attackEffect === "fire") {
               try {
-                if (shouldSpawnVfx("electric", __tempVecA)) {
-                  effects.spawnElectricBeamAuto(__tempVecA, __tempVecC, en.beamColor || 0x9fd8ff, 0.1);
+                if (shouldSpawnVfx("fire", __tempVecA)) {
+                  effects.spawnElectricBeamAuto(__tempVecA, __tempVecC, en.beamColor || 0xff6347, 0.1);
                 }
               } catch (_) {}
             } else {

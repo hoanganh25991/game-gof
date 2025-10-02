@@ -9,7 +9,7 @@ import { getSkillUpgradeManager } from "../../skill_upgrades.js";
  * - Native DOM overlay to select assignment key (Q/W/E/R) instead of prompt
  * - Shows option keys with current bindings for clarity
  * - After Hero Screen fades out, show countdown 2, 1 only (no extra overlay/backdrop)
- * - Then cast the selected key, show "⚡ Casted!" for 1.5s, and fade the Hero Screen back in
+ * - Then cast the selected key, show "🔥 Casted!" for 1.5s, and fade the Hero Screen back in
  *
  * Usage: call initHeroPreview(skills, { heroScreen }) after SkillsSystem is created.
  */
@@ -266,7 +266,7 @@ async function showCastingOverlayAndCast(skills, def, key) {
 
     // Show brief confirmation (keep small); mapping remains assigned and persisted
     number.style.fontSize = "42px";
-    await setNumber(number, "⚡ Casted!", 1500);
+    await setNumber(number, "🔥 Casted!", 1500);
   } finally {
     // Cleanup overlay
     try {

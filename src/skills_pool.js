@@ -368,3 +368,17 @@ export const SKILL_POOL = [
     "behavior": "On cast:\n- Instant AoE centered on caster with radius.\n- Deal dmg fire to all enemies in radius; apply slow (slowFactor, slowDuration).\n- Play effects.hand, effects.ring expanding, and effects.impact on enemies; strong camera shake effects.shake.\n- Ignores LoS."
   }
 ];
+
+/**
+ * Default starting loadout (4 skill IDs)
+ * - fire_bolt: Basic ranged attack
+ * - inferno_blast: AoE damage
+ * - flame_chain: Chain damage
+ * - flame_nova: Radial burst
+ */
+export const DEFAULT_LOADOUT = [
+  "fire_bolt",
+  "inferno_blast",
+  "flame_chain",
+  "flame_nova"
+];

@@ -13,7 +13,7 @@
  */
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { distance2D, dir2D, now } from "../utils.js";
+import { distance2D, dir2D, now } from "./utils.js";
 
 export function createInputService({
   renderer,

@@ -82,28 +82,28 @@ export function createGoTMesh() {
   root.add(leftHandAnchor);
 
   // Left hand fire orb + light (for FP two-hands effect)
-  const leftThunderOrb = new THREE.Mesh(
+  const leftFireOrb = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.2, 0),
     new THREE.MeshStandardMaterial({ color: COLOR.fire, emissive: 0xffa02d, emissiveIntensity: 2.0, roughness: 0.15, metalness: 0.1 })
   );
-  leftHandAnchor.add(leftThunderOrb);
+  leftHandAnchor.add(leftFireOrb);
   const leftHandLight = new THREE.PointLight(0xffb366, 1.0, 18, 2);
   leftHandAnchor.add(leftHandLight);
 
-  const thunderOrb = new THREE.Mesh(
+  const fireOrb = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.2, 0),
     new THREE.MeshStandardMaterial({ color: COLOR.fire, emissive: 0xffa02d, emissiveIntensity: 2.2, roughness: 0.15, metalness: 0.1 })
   );
-  handAnchor.add(thunderOrb);
+  handAnchor.add(fireOrb);
 
   const handLight = new THREE.PointLight(0xffb366, 1.3, 20, 2);
   handAnchor.add(handLight);
   // expose for idle pulse control
   root.userData.handLight = handLight;
-  root.userData.thunderOrb = thunderOrb;
+  root.userData.fireOrb = fireOrb;
   // expose left-hand VFX too
   root.userData.leftHandLight = leftHandLight;
-  root.userData.leftThunderOrb = leftThunderOrb;
+  root.userData.leftFireOrb = leftFireOrb;
 
   // Left arm (symmetric)
   const armL = new THREE.Mesh(
