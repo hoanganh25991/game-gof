@@ -273,4 +273,34 @@ The game is now fully themed as **God of Fire** with:
 - ✅ Fire-themed UI elements and feedback
 - ✅ Complete removal of thunder/lightning references
 
+---
+
+## 🧹 Final Cleanup (Phase 2)
+
+### Additional Files Updated
+11. ✅ `src/ui/hero/tabs/book.js` - Skill type descriptions
+    - "Instant zap" → "Instant fire blast"
+    - "lightning image that periodically zaps" → "fire image that periodically burns"
+
+12. ✅ `src/skills.js` - Code comments
+    - "Visual ring and zap" → "Visual ring and fire burst"
+    - "periodic zaps near player" → "periodic fire bursts near player"
+    - "schedule next zap" → "schedule next fire burst"
+
+13. ✅ `src/audio.js` - Documentation comments
+    - "zaps, booms, hits" → "fire bursts, booms, hits"
+
+14. ✅ `index.html` - Meta tags
+    - Title: "GoT RPG" → "God of Fire RPG"
+    - Description: "electric abilities" → "volcanic fire abilities"
+
+### Verification Results
+- ✅ **Zero** references to "thunder" in JavaScript files
+- ✅ **Zero** references to "lightning" in JavaScript files
+- ✅ **Zero** references to "electric" in JavaScript files
+- ✅ **Zero** references to "zeus" in JavaScript files
+- ✅ **Zero** references to "zap" in JavaScript files
+
+All thunder/lightning theme elements have been completely replaced with fire/volcanic theme!
+
 **The God of Fire rises! 🔥**

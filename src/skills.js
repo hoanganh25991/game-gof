@@ -79,11 +79,11 @@ export class SkillsSystem {
   _fx(def) {
     const e = (def && def.effects) || {};
     return {
-      beam: e.beamColor ?? e.beam ?? 0x8fd3ff,
-      impact: e.impactColor ?? e.impact ?? 0x9fd3ff,
-      ring: e.ringColor ?? e.ring ?? 0x9fd8ff,
-      arc: e.arcColor ?? e.arc ?? 0xbfe9ff,
-      hand: e.handColor ?? e.hand ?? 0x9fd8ff,
+      beam: e.beamColor ?? e.beam ?? COLOR.fire,      // Orange-red fire beam
+      impact: e.impactColor ?? e.impact ?? COLOR.midFire,  // Tomato red impact
+      ring: e.ringColor ?? e.ring ?? COLOR.ember,     // Ember orange ring
+      arc: e.arcColor ?? e.arc ?? 0xffa500,           // Bright orange arc
+      hand: e.handColor ?? e.hand ?? COLOR.ember,     // Ember orange hand
       shake: e.shake ?? 0
     };
   }
@@ -294,7 +294,7 @@ export class SkillsSystem {
         ? handWorldPos(this.player)
         : __vA.copy(attacker.pos()).add(__vB.set(0, 1.6, 0)).clone();
     const to = __vC.copy(target.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    this.effects.spawnElectricBeamAuto(from, to, COLOR.blue, 0.12);
+    this.effects.spawnElectricBeamAuto(from, to, COLOR.fire, 0.12);
     audio.sfx("basic");
     // FP hand VFX for basic attack
     try {

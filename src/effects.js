@@ -102,7 +102,7 @@ export class EffectsManager {
     this.queue.push({ obj: line, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: material });
   }
 
-  // Jagged fire beam with small fork
+  // Fire stream beam with flickering flames (replaces jagged electric look)
   spawnElectricBeam(from, to, color = COLOR.fire, life = 0.12, segments = 10, amplitude = 0.6) {
     // Use temporaries to compute dir/normal/up without allocations.
     const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
@@ -113,12 +113,14 @@ export class EffectsManager {
     const seg = Math.max(4, Math.round(segments * (this.quality === "low" ? 0.5 : (this.quality === "medium" ? 0.75 : 1))));
     for (let i = 0; i <= seg; i++) {
       const t = i / segments;
-      // build point into a temp vector to avoid intermediate clones of normal/up per op
+      // build point into a temp vector - smoother curve for fire stream
       const pTmp = this._tmpVecE.copy(from).lerp(this._tmpVecB.copy(to), t);
-      const amp = Math.sin(Math.PI * t) * amplitude;
-      // jitter components into temp vectors
-      const j1 = this._tmpVecA.copy(normal).multiplyScalar((Math.random() * 2 - 1) * amp);
-      const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.4);
+      // Wavy fire pattern instead of jagged lightning
+      const amp = Math.sin(Math.PI * t) * amplitude * 0.5; // Reduced amplitude for smoother fire
+      const waveOffset = Math.sin(t * Math.PI * 3 + Date.now() * 0.01) * amplitude * 0.3;
+      // jitter components into temp vectors - gentler for fire
+      const j1 = this._tmpVecA.copy(normal).multiplyScalar(waveOffset);
+      const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.6);
       pTmp.add(j1).add(j2);
       // push a cloned vector because pTmp is reused
       points.push(pTmp.clone());
@@ -131,13 +133,15 @@ export class EffectsManager {
     const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
     this.queue.push({ obj: line, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: material });
 
-    // occasional fork flicker
+    // Fire wisps instead of electric forks
     const length = dir.length() || 1;
     if (length > 6) {
-      const mid = from.clone().lerp(to, 0.6);
-      const forkEnd = mid.clone().add(normal.clone().multiplyScalar(1.2 + Math.random() * 1.2));
-      const g2 = new THREE.BufferGeometry().setFromPoints([mid, forkEnd]);
-      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.8 });
+      const mid = from.clone().lerp(to, 0.5 + Math.random() * 0.2);
+      // Upward wisp like rising flame
+      const wispEnd = mid.clone().add(up.clone().multiplyScalar(0.8 + Math.random() * 1.0));
+      wispEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 0.6));
+      const g2 = new THREE.BufferGeometry().setFromPoints([mid, wispEnd]);
+      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.6 });
       const l2 = new THREE.Line(g2, m2);
       this.transient.add(l2);
       const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
@@ -145,7 +149,7 @@ export class EffectsManager {
     }
   }
 
-  // Auto-scaling multi-pass beam for thickness by distance
+  // Auto-scaling multi-pass fire stream for thickness by distance
   spawnElectricBeamAuto(from, to, color = COLOR.fire, life = 0.12) {
     const dir = to.clone().sub(from);
     const length = dir.length() || 1;
@@ -154,7 +158,7 @@ export class EffectsManager {
 
     const segments = Math.max(8, Math.min(18, Math.round(8 + length * 0.5)));
     const seg = Math.max(6, Math.round(segments * (this.quality === "low" ? 0.5 : (this.quality === "medium" ? 0.75 : 1))));
-    const amplitude = Math.min(1.2, 0.35 + length * 0.03);
+    const amplitude = Math.min(1.0, 0.25 + length * 0.02); // Reduced for smoother fire
     const count = length < 12 ? 1 : (length < 28 ? 2 : 3);
 
     const countCap = this.quality === "low" ? 1 : (this.quality === "medium" ? 2 : 3);
@@ -165,9 +169,12 @@ export class EffectsManager {
       for (let i = 0; i <= seg; i++) {
         const t = i / segments;
         const pTmp = this._tmpVecE.copy(from).lerp(this._tmpVecB.copy(to), t);
-        const amp = Math.sin(Math.PI * t) * amplitude;
-        const j1 = this._tmpVecA.copy(normal).multiplyScalar((Math.random() * 2 - 1) * amp * (0.8 + n * 0.15));
-        const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.35);
+        // Smoother wavy pattern for fire stream
+        const amp = Math.sin(Math.PI * t) * amplitude * 0.6;
+        const wavePhase = t * Math.PI * 2 + n * 0.5 + Date.now() * 0.008;
+        const wave = Math.sin(wavePhase) * amplitude * 0.4;
+        const j1 = this._tmpVecA.copy(normal).multiplyScalar(wave * (0.9 + n * 0.1));
+        const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.5);
         pTmp.add(j1).add(j2);
         pts.push(pTmp.clone());
       }
@@ -180,11 +187,14 @@ export class EffectsManager {
       this.queue.push({ obj: l, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: m });
     }
 
+    // Fire wisps rising upward instead of sideways forks
     if (length > 6) {
-      const mid = from.clone().lerp(to, 0.6);
-      const forkEnd = mid.clone().add(normal.clone().multiplyScalar(1.2 + Math.random() * 1.2));
-      const g2 = new THREE.BufferGeometry().setFromPoints([mid, forkEnd]);
-      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.8 });
+      const mid = from.clone().lerp(to, 0.5 + Math.random() * 0.2);
+      // Upward wisp like rising flame
+      const wispEnd = mid.clone().add(up.clone().multiplyScalar(1.0 + Math.random() * 1.2));
+      wispEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 0.8));
+      const g2 = new THREE.BufferGeometry().setFromPoints([mid, wispEnd]);
+      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.6 });
       const l2 = new THREE.Line(g2, m2);
       this.transient.add(l2);
       const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
@@ -207,17 +217,17 @@ export class EffectsManager {
   }
 
   spawnStrike(point, radius = 2, color = COLOR.fire) {
-    // Vertical strike
-    const from = point.clone().add(new THREE.Vector3(0, 14, 0));
-    const to = point.clone().add(new THREE.Vector3(0, 0.2, 0));
-    this.spawnBeam(from, to, color, 0.12);
+    // Vertical fire pillar (from ground up instead of sky down for fire theme)
+    const from = point.clone().add(new THREE.Vector3(0, 0.1, 0));
+    const to = point.clone().add(new THREE.Vector3(0, 8, 0));
+    this.spawnBeam(from, to, color, 0.15);
 
-    // Radial sparks
+    // Radial fire bursts (outward and slightly upward like explosion)
     for (let i = 0; i < (this.quality === "low" ? 1 : (this.quality === "medium" ? 2 : 4)); i++) {
       const ang = Math.random() * Math.PI * 2;
       const r = Math.random() * radius;
-      const p2 = point.clone().add(new THREE.Vector3(Math.cos(ang) * r, 0.2 + Math.random() * 1.2, Math.sin(ang) * r));
-      this.spawnBeam(point.clone().add(new THREE.Vector3(0, 0.4, 0)), p2, color, 0.08);
+      const p2 = point.clone().add(new THREE.Vector3(Math.cos(ang) * r, 0.4 + Math.random() * 0.8, Math.sin(ang) * r));
+      this.spawnBeam(point.clone().add(new THREE.Vector3(0, 0.2, 0)), p2, color, 0.1);
     }
   }
   
