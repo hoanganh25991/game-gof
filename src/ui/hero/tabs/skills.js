@@ -1,4 +1,5 @@
 import { getSkillIcon } from "../../skillbar.js";
+import { getSkillUpgradeManager } from "../../../skill_upgrades.js";
 
 /**
  * Render the Skills tab (loadout slots + skill pool + assign bar).
@@ -52,6 +53,14 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
   }
   rightCol.appendChild(slotsWrap);
 
+  // Skill Points Display
+  const upgradeManager = getSkillUpgradeManager();
+  const skillPointsDisplay = document.createElement("div");
+  skillPointsDisplay.className = "skill-points-display";
+  skillPointsDisplay.style.cssText = "padding: 12px; background: rgba(255,140,0,0.15); border-radius: 8px; margin-bottom: 12px; text-align: center; font-size: 16px; font-weight: bold; color: #ffd700;";
+  skillPointsDisplay.innerHTML = `⭐ ${tt("hero.skillPoints") || "Skill Points"}: <span id="skillPointsCount">${upgradeManager.getSkillPoints()}</span>`;
+  rightCol.appendChild(skillPointsDisplay);
+
   // Skill Pool (items-style list)
   const poolPanel = document.createElement("div");
   poolPanel.className = "items-panel";
@@ -75,6 +84,16 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     row.className = "items-row";
     row.dataset.skillId = s.id;
 
+    // Check if skill is unlocked
+    const isUnlocked = upgradeManager.isSkillUnlocked(s.id);
+    const unlockLevel = upgradeManager.getSkillUnlockLevel(s.id);
+    const skillLevel = upgradeManager.getSkillLevel(s.id);
+    
+    if (!isUnlocked) {
+      row.style.opacity = "0.5";
+      row.style.filter = "grayscale(0.7)";
+    }
+
     const thumb = document.createElement("div");
     thumb.className = "items-thumb";
     const em = document.createElement("div");
@@ -85,6 +104,15 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
       em.style.lineHeight = "1";
     } catch (_) {}
     thumb.appendChild(em);
+    
+    // Add skill level badge
+    if (isUnlocked && skillLevel > 1) {
+      const levelBadge = document.createElement("div");
+      levelBadge.style.cssText = "position: absolute; top: 4px; right: 4px; background: #ff8c00; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;";
+      levelBadge.textContent = skillLevel;
+      thumb.style.position = "relative";
+      thumb.appendChild(levelBadge);
+    }
 
     const info = document.createElement("div");
     const title = document.createElement("div");
@@ -92,6 +120,11 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     const nameLocal = tt(`skills.names.${s.id}`) || s.name;
     const shortLocal = tt(`skills.shorts.${s.id}`) || s.short;
     title.textContent = `${nameLocal}${shortLocal ? " • " + shortLocal : ""}`;
+    
+    if (!isUnlocked) {
+      title.textContent += ` 🔒 (Lv ${unlockLevel})`;
+    }
+    
     const desc = document.createElement("div");
     desc.className = "items-desc";
     desc.textContent = s.type ? s.type : "";
@@ -100,6 +133,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     const parts = [];
     if (s.cd != null) parts.push(`CD ${s.cd}s`);
     if (s.mana != null) parts.push(`MP ${s.mana}`);
+    if (isUnlocked) parts.push(`Level ${skillLevel}/5`);
     if (parts.length) req.textContent = parts.join(" • ");
 
     info.appendChild(title);
@@ -108,13 +142,45 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
 
     const actions = document.createElement("div");
     actions.className = "items-actions";
+    actions.style.cssText = "display: flex; gap: 8px;";
+    
+    // Upgrade button
+    if (isUnlocked) {
+      const upgradeBtn = document.createElement("button");
+      upgradeBtn.className = "pill-btn pill-btn--yellow";
+      upgradeBtn.textContent = "⬆️";
+      upgradeBtn.title = tt("hero.upgrade") || "Upgrade Skill";
+      upgradeBtn.disabled = !upgradeManager.canUpgradeSkill(s.id);
+      if (upgradeBtn.disabled) {
+        upgradeBtn.style.opacity = "0.5";
+        upgradeBtn.style.cursor = "not-allowed";
+      }
+      upgradeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (upgradeManager.upgradeSkill(s.id)) {
+          // Update skill points display
+          const pointsEl = document.getElementById("skillPointsCount");
+          if (pointsEl) pointsEl.textContent = upgradeManager.getSkillPoints();
+          // Re-render to show new level
+          if (rerender) rerender();
+        }
+      });
+      actions.appendChild(upgradeBtn);
+    }
+    
+    // Assign button
     const btn = document.createElement("button");
     btn.className = "pill-btn pill-btn--yellow";
     btn.textContent = "➕";
     btn.title = tt("hero.assign");
+    btn.disabled = !isUnlocked;
+    if (!isUnlocked) {
+      btn.style.opacity = "0.5";
+      btn.style.cursor = "not-allowed";
+    }
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      showAssignBar(s.id);
+      if (isUnlocked) showAssignBar(s.id);
     });
     actions.appendChild(btn);
 
@@ -122,7 +188,9 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     row.appendChild(info);
     row.appendChild(actions);
 
-    row.addEventListener("click", () => showAssignBar(s.id));
+    if (isUnlocked) {
+      row.addEventListener("click", () => showAssignBar(s.id));
+    }
 
     list.appendChild(row);
   });

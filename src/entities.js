@@ -2,6 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { COLOR, WORLD, STATS_BASE, SCALING } from "./constants.js";
 import { createGoTMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
 import { distance2D, now } from "./utils.js";
+import { getSkillUpgradeManager } from "./skill_upgrades.js";
 
 export class Entity {
   constructor(mesh, radius = 1) {
@@ -88,12 +89,17 @@ export class Player extends Entity {
     this.defensePct = 0;
     this.defenseUntil = 0;
 
-    // Blue light glow on the character
-    const light = new THREE.PointLight(0x66b3ff, 1.2, 45, 2);
+    // Fire light glow on the character (updated for fire theme)
+    const light = new THREE.PointLight(0xffb366, 1.2, 45, 2);
     light.position.set(0, 3.5, 0);
     mesh.add(light);
     // Load persisted level (if any) and apply stats
     try { this.loadLevelFromStorage(); } catch (_) {}
+    // Initialize skill upgrade system
+    try {
+      const upgradeManager = getSkillUpgradeManager();
+      upgradeManager.initializeUnlockedSkills(this.level);
+    } catch (_) {}
   }
 
   // Persist just the level
@@ -171,6 +177,18 @@ export class Player extends Entity {
       // Increment permanent movement and attack speed multipliers
       this.speed *= SCALING.hero.moveSpeedGrowth;
       this.atkSpeedPerma *= SCALING.hero.atkSpeedGrowth;
+      
+      // Award skill points and check for skill unlocks
+      try {
+        const upgradeManager = getSkillUpgradeManager();
+        upgradeManager.awardSkillPoints(1);
+        const newlyUnlocked = upgradeManager.checkUnlocksForLevel(this.level);
+        if (newlyUnlocked.length > 0) {
+          console.log(`Unlocked new skills at level ${this.level}:`, newlyUnlocked);
+        }
+      } catch (e) {
+        console.warn("Skill upgrade system error:", e);
+      }
     }
 
     // Persist level if changed
