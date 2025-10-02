@@ -2213,7 +2213,7 @@ function updateIndicators(dt) {
       const slowed = en.slowUntil && t < en.slowUntil;
       if (slowed) {
         if (!en._slowRing) {
-          const r = createGroundRing(0.6, 0.9, 0x66aaff, 0.7);
+          const r = createGroundRing(0.6, 0.9, COLOR.ember, 0.7);
           effects.indicators.add(r);
           en._slowRing = r;
         }

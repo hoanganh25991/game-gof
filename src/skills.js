@@ -1106,18 +1106,18 @@ export class SkillsSystem {
         }
 
         try {
-          this.effects.spawnStrike(impact, 3, s.fx?.impact || 0xb5e2ff);
+          this.effects.spawnStrike(impact, 3, s.fx?.impact || COLOR.midFire);
           audio.sfx("strike");
         } catch (_) {}
 
         // Damage around impact
         const hitR = Math.max(0.5, s.strikeRadius || 2.5);
-        try { this.effects.spawnRingPulse(impact, Math.max(1.4, hitR), (s.fx?.ring || s.fx?.impact || 0xbfe2ff), 0.3, 0.6, 0.4); } catch (_) {}
+        try { this.effects.spawnRingPulse(impact, Math.max(1.4, hitR), (s.fx?.ring || s.fx?.impact || COLOR.ember), 0.3, 0.6, 0.4); } catch (_) {}
         this.enemies.forEach((en) => {
           if (!en.alive) return;
           if (distance2D(en.pos(), impact) <= hitR) {
             en.takeDamage(s.dmg || 0);
-            try { this.effects.spawnDamagePopup(en.pos(), s.dmg || 0, s.fx?.impact || 0xbfe2ff); } catch(e) {}
+            try { this.effects.spawnDamagePopup(en.pos(), s.dmg || 0, s.fx?.impact || COLOR.ember); } catch(e) {}
           }
         });
 
@@ -1154,10 +1154,10 @@ export class SkillsSystem {
           const from = c.pos.clone().add(off);
           const to = target.pos().clone().add(new THREE.Vector3(0, 1.2, 0));
           try {
-            this.effects.spawnElectricBeamAuto(from, to, 0x8fd3ff, 0.12);
-            this.effects.spawnArcNoisePath(from, to, 0xbfe9ff, 0.08);
+            this.effects.spawnElectricBeamAuto(from, to, COLOR.fire, 0.12);
+            this.effects.spawnArcNoisePath(from, to, COLOR.ember, 0.08);
             audio.sfx("chain_hit");
-            this.effects.spawnStrike(target.pos(), 0.9, 0x9fd3ff);
+            this.effects.spawnStrike(target.pos(), 0.9, COLOR.midFire);
           } catch (e) {}
           target.takeDamage(c.dmg);
           if (!c.shook) { this._requestShake(0.2); c.shook = true; }
@@ -1179,7 +1179,7 @@ export class SkillsSystem {
         const r = Math.random() * (tot.radius || 12);
         const pt = tot.pos.clone().add(new THREE.Vector3(Math.cos(ang) * r, 0, Math.sin(ang) * r));
         try {
-          const col = (tot.fx && (tot.fx.impact || tot.fx.ring)) || 0x9fd3ff;
+          const col = (tot.fx && (tot.fx.impact || tot.fx.ring)) || COLOR.midFire;
           this.effects.spawnStrike(pt, 2.4, col);
           this.effects.spawnRingPulse(pt, 1.8, col, 0.25, 0.45, 0.4);
         } catch (_) {}
@@ -1200,7 +1200,7 @@ export class SkillsSystem {
       const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.player.mesh.quaternion).normalize();
       const ahead = this.player.pos().clone().add(forward.multiplyScalar(10));
       const from = this.player.mesh.userData?.handAnchor ? handWorldPos(this.player) : this.player.pos().clone().add(new THREE.Vector3(0, 1.6, 0));
-      const mkRing = (center, r, col = 0x9fd8ff, a = 0.22) => {
+      const mkRing = (center, r, col = COLOR.ember, a = 0.22) => {
         try {
           const ring = createGroundRing(Math.max(0.1, r - 0.35), r + 0.35, col, a);
           ring.position.set(center.x, 0.02, center.z);
@@ -1254,7 +1254,7 @@ export class SkillsSystem {
         default: {
           // Generic preview: hand flash and a small strike in front
           this.effects.spawnHandFlash(this.player);
-          this.effects.spawnStrike(ahead, 2.5, 0x9fd8ff);
+          this.effects.spawnStrike(ahead, 2.5, COLOR.ember);
           break;
         }
       }
