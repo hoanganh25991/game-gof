@@ -161,6 +161,10 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
           // Update skill points display
           const pointsEl = document.getElementById("skillPointsCount");
           if (pointsEl) pointsEl.textContent = upgradeManager.getSkillPoints();
+          // Refresh the loadout to apply new upgrade bonuses to SKILLS
+          if (setLoadoutAndSave) {
+            setLoadoutAndSave(activeLoadout);
+          }
           // Re-render to show new level
           if (rerender) rerender();
         }

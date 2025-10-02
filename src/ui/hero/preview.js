@@ -2,6 +2,7 @@ import { SKILLS } from "../../constants.js";
 import { saveLoadout, loadOrDefault } from "../../loadout.js";
 import { SKILL_POOL, DEFAULT_LOADOUT } from "../../skills_pool.js";
 import { now } from "../../utils.js";
+import { getSkillUpgradeManager } from "../../skill_upgrades.js";
 
 /**
  * Enhanced Skillbook preview flow:
@@ -251,7 +252,11 @@ async function showCastingOverlayAndCast(skills, def, key) {
 
     // Persist assignment, then cast
     if (def) {
-      SKILLS[key] = Object.assign({}, def);
+      const upgradeManager = getSkillUpgradeManager();
+      const baseSkill = Object.assign({}, def);
+      // Apply upgrade bonuses based on skill level
+      const upgradedSkill = upgradeManager.applyUpgradeBonuses(def.id, baseSkill);
+      SKILLS[key] = upgradedSkill;
       // Persist selection to storage and refresh labels if available
       persistAssignment(key, def);
     }

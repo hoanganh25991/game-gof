@@ -32,6 +32,7 @@ import { updateSkillBarLabels } from "./ui/skillbar.js";
 import { promptBasicUpliftIfNeeded } from "./uplift.js";
 import { setupDesktopControls } from "./ui/deskop-controls.js"
 import * as payments from './payments.js';
+import { getSkillUpgradeManager } from "./skill_upgrades.js";
 
 
 // ------------------------------------------------------------
@@ -846,16 +847,22 @@ let currentLoadout = loadOrDefault(SKILL_POOL, DEFAULT_LOADOUT);
 
 /**
  * Apply an array of 4 skill ids to the SKILLS mapping (mutates exported SKILLS).
+ * Also applies skill upgrade bonuses from the upgrade system.
  */
 function applyLoadoutToSKILLS(loadoutIds) {
   const idMap = new Map(SKILL_POOL.map((s) => [s.id, s]));
   const keys = ["Q", "W", "E", "R"];
+  const upgradeManager = getSkillUpgradeManager();
+  
   for (let i = 0; i < 4; i++) {
     const id = loadoutIds[i];
     const def = idMap.get(id);
     if (def) {
       // shallow copy to avoid accidental shared references
-      SKILLS[keys[i]] = Object.assign({}, def);
+      const baseSkill = Object.assign({}, def);
+      // Apply upgrade bonuses based on skill level
+      const upgradedSkill = upgradeManager.applyUpgradeBonuses(id, baseSkill);
+      SKILLS[keys[i]] = upgradedSkill;
     }
   }
 }

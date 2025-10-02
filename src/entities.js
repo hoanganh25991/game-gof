@@ -182,9 +182,17 @@ export class Player extends Entity {
       try {
         const upgradeManager = getSkillUpgradeManager();
         upgradeManager.awardSkillPoints(1);
+        
+        // Show skill point notification
+        this._showNotification("⭐ +1 Skill Point", "#ffd700");
+        
         const newlyUnlocked = upgradeManager.checkUnlocksForLevel(this.level);
         if (newlyUnlocked.length > 0) {
           console.log(`Unlocked new skills at level ${this.level}:`, newlyUnlocked);
+          // Show unlock notification for each new skill
+          newlyUnlocked.forEach(skillId => {
+            this._showNotification(`🔓 New Skill Unlocked!`, "#ff8c00", 2500);
+          });
         }
       } catch (e) {
         console.warn("Skill upgrade system error:", e);
@@ -213,6 +221,40 @@ export class Player extends Entity {
   }
   spend(mana) {
     this.mp = Math.max(0, this.mp - mana);
+  }
+  
+  /**
+   * Show a floating notification message
+   */
+  _showNotification(message, color = "#ffd700", duration = 2000) {
+    try {
+      const notif = document.createElement("div");
+      notif.textContent = message;
+      notif.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.85);
+        color: ${color};
+        padding: 20px 40px;
+        border-radius: 12px;
+        font-size: 28px;
+        font-weight: bold;
+        z-index: 10000;
+        pointer-events: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        animation: notifFadeIn 0.3s ease-out;
+      `;
+      document.body.appendChild(notif);
+      
+      setTimeout(() => {
+        notif.style.animation = "notifFadeOut 0.3s ease-in";
+        setTimeout(() => notif.remove(), 300);
+      }, duration);
+    } catch (e) {
+      console.warn("Notification error:", e);
+    }
   }
 }
 
