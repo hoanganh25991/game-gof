@@ -22,9 +22,22 @@ export const COLOR = {
 export const WORLD = {
   groundSize: 500,     // local visual grid chunk size
   gridStep: 2,
-  // Increased enemy density for "hunter" playstyle:
-  enemyCount: 200,
+  // Dynamic enemy spawning around hero (not fixed on map)
+  enemyCount: 200,     // Legacy: used for initial spawn only
   enemySpawnRadius: 220,
+  enemySpawnMinRadius: 30,  // Minimum spawn distance from hero
+  // Dynamic spawning configuration
+  dynamicSpawn: {
+    enabled: true,
+    minEnemies: 40,           // Minimum enemies around hero at level 1
+    maxEnemies: 80,           // Maximum enemies around hero at high levels
+    enemiesPerLevel: 2,       // Additional enemies per player level
+    spawnInterval: 3,         // Seconds between continuous spawn checks
+    spawnBatchSize: 3,        // Enemies to spawn per interval
+    movementThreshold: 50,    // Distance hero must move to trigger burst spawn
+    burstSpawnSize: 8,        // Enemies to spawn when hero moves significantly
+    checkRadius: 250,         // Radius to count nearby enemies
+  },
   // Make the player slightly faster and more responsive
   playerSpeed: 16,
   playerTurnSpeed: 10,
@@ -83,6 +96,13 @@ export const SCALING = {
     // Per-hero-level growth factors for enemies
     hpGrowthPerLevel: 1.09,
     dmgGrowthPerLevel: 1.06,
+    // Tier probability scaling with player level
+    // Base probabilities: normal=78%, tough=18%, elite=3.5%, boss=0.5%
+    tierScaling: {
+      toughPerLevel: 0.005,   // +0.5% tough chance per level
+      elitePerLevel: 0.003,   // +0.3% elite chance per level
+      bossPerLevel: 0.001,    // +0.1% boss chance per level
+    },
   },
 };
 

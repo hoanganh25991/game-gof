@@ -261,11 +261,21 @@ export class Player extends Entity {
 export class Enemy extends Entity {
   constructor(position, level = 1) {
     // Determine tier for visual variety and scaling (normal, tough, elite, boss)
+    // Scale tier probabilities with player level for increasing difficulty
+    const lvl = Math.max(1, level || 1);
+    const tierScaling = SCALING.enemy.tierScaling || {};
+    
+    // Base: boss=0.5%, elite=3.5%, tough=18%, normal=78%
+    // Scale up with level (more dangerous enemies at higher levels)
+    const bossChance = Math.min(0.15, 0.005 + (lvl - 1) * (tierScaling.bossPerLevel || 0.001));
+    const eliteChance = Math.min(0.25, 0.04 + (lvl - 1) * (tierScaling.elitePerLevel || 0.003));
+    const toughChance = Math.min(0.50, 0.22 + (lvl - 1) * (tierScaling.toughPerLevel || 0.005));
+    
     const r = Math.random();
     let tier = "normal";
-    if (r < 0.005) tier = "boss";
-    else if (r < 0.04) tier = "elite";
-    else if (r < 0.22) tier = "tough";
+    if (r < bossChance) tier = "boss";
+    else if (r < eliteChance) tier = "elite";
+    else if (r < toughChance) tier = "tough";
 
     const TIER_COLOR = {
       normal: COLOR.enemyDark,

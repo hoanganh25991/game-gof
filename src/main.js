@@ -1033,49 +1033,142 @@ function applyMapModifiersToEnemy(en) {
     }
   } catch (_) {}
 }
-// Enemy count scaling with player level
-// Base: 50 enemies at level 1
-// Scaling: +2 enemies per level (50→52→54... up to 100 max)
-const MIN_ENEMY_COUNT = 50;
-const ENEMY_COUNT_PER_LEVEL = 2;
-const MAX_ENEMY_COUNT = 100;
+// Dynamic enemy spawning system - enemies surround the hero
+// Spawns scale with player level (more and stronger enemies)
+const dynamicSpawnConfig = WORLD.dynamicSpawn || {};
+
+// Track spawning state
+let lastSpawnCheckTime = 0;
+let lastPlayerPosition = new THREE.Vector3(0, 0, 0);
+let totalDistanceMoved = 0;
 
 /**
- * Calculate target enemy count based on player level, quality settings, and map modifiers.
- * Scales from 50 enemies at level 1 to 100 enemies at level 25+.
+ * Calculate target enemy count around hero based on level and settings.
+ * Scales from minEnemies at level 1 to maxEnemies at high levels.
  */
-function calculateEnemyCountForLevel(playerLevel) {
-  const levelBonus = Math.floor((playerLevel - 1) * ENEMY_COUNT_PER_LEVEL);
-  const baseCount = Math.min(MAX_ENEMY_COUNT, MIN_ENEMY_COUNT + levelBonus);
+function calculateDynamicEnemyCount(playerLevel) {
+  const cfg = dynamicSpawnConfig;
+  const minCount = cfg.minEnemies || 40;
+  const maxCount = cfg.maxEnemies || 80;
+  const perLevel = cfg.enemiesPerLevel || 2;
   
+  // Scale from min to max based on level
+  const levelBonus = Math.floor((playerLevel - 1) * perLevel);
+  const baseCount = Math.min(maxCount, minCount + levelBonus);
+  
+  // Apply quality multiplier
   const qualityMultiplier = {
     high: 1.0,
-    medium: 0.6,
-    low: 0.4,
+    medium: 0.7,
+    low: 0.5,
   };
   const mult = qualityMultiplier[renderQuality] || 1.0;
   const qualityAdjusted = Math.floor(baseCount * mult);
   
+  // Apply map modifiers
   const mods = mapManager.getModifiers?.() || {};
   const withMapMods = Math.floor(qualityAdjusted * (mods.enemyCountMul || 1));
   
-  // Always enforce minimum, but allow level scaling
-  return Math.max(MIN_ENEMY_COUNT, withMapMods);
+  // Apply performance scaling
+  const perfAdjusted = Math.floor(withMapMods * (__enemyPerfScale || 1));
+  
+  return Math.max(minCount, perfAdjusted);
 }
 
-// Initial enemy count based on player's starting level
-const enemyCountTarget = calculateEnemyCountForLevel(player.level);
+/**
+ * Count alive enemies within a radius of the hero.
+ */
+function countNearbyEnemies(radius) {
+  const heroPos = player.pos();
+  let count = 0;
+  for (const en of enemies) {
+    if (en.alive) {
+      const dist = distance2D(en.pos(), heroPos);
+      if (dist <= radius) count++;
+    }
+  }
+  return count;
+}
 
-console.info(`[Enemy Spawn] Level ${player.level}: ${enemyCountTarget} enemies (base: ${MIN_ENEMY_COUNT}, max: ${MAX_ENEMY_COUNT})`);
+/**
+ * Spawn a batch of enemies around the hero at current level.
+ */
+function spawnEnemyBatch(count, reason = "spawn") {
+  if (count <= 0) return 0;
+  
+  let spawned = 0;
+  for (let i = 0; i < count; i++) {
+    const pos = randomEnemySpawnPos();
+    const e = new Enemy(pos, player.level);
+    applyMapModifiersToEnemy(e);
+    e.mesh.userData.enemyRef = e;
+    scene.add(e.mesh);
+    enemies.push(e);
+    spawned++;
+  }
+  
+  if (spawned > 0) {
+    console.info(`[Dynamic Spawn] ${reason}: +${spawned} enemies (Level ${player.level}, Total: ${enemies.length})`);
+  }
+  
+  return spawned;
+}
+
+/**
+ * Dynamic spawning system - maintains enemy density around hero.
+ * Hybrid approach: continuous slow spawn + burst spawn on movement.
+ */
+function updateDynamicSpawning(dt) {
+  if (!dynamicSpawnConfig.enabled) return;
+  
+  const currentTime = now();
+  const heroPos = player.pos();
+  const cfg = dynamicSpawnConfig;
+  
+  // Track hero movement for burst spawning
+  const moveDist = distance2D(heroPos, lastPlayerPosition);
+  totalDistanceMoved += moveDist;
+  lastPlayerPosition.copy(heroPos);
+  
+  // Burst spawn when hero moves significantly
+  const moveThreshold = cfg.movementThreshold || 50;
+  if (totalDistanceMoved >= moveThreshold) {
+    totalDistanceMoved = 0;
+    const burstSize = cfg.burstSpawnSize || 8;
+    spawnEnemyBatch(burstSize, "movement burst");
+  }
+  
+  // Continuous spawn check (slower, maintains density)
+  const spawnInterval = cfg.spawnInterval || 3;
+  if (currentTime - lastSpawnCheckTime >= spawnInterval) {
+    lastSpawnCheckTime = currentTime;
+    
+    // Count nearby alive enemies
+    const checkRadius = cfg.checkRadius || 250;
+    const nearbyCount = countNearbyEnemies(checkRadius);
+    const targetCount = calculateDynamicEnemyCount(player.level);
+    
+    // Spawn if below target
+    if (nearbyCount < targetCount) {
+      const deficit = targetCount - nearbyCount;
+      const batchSize = Math.min(deficit, cfg.spawnBatchSize || 3);
+      spawnEnemyBatch(batchSize, "continuous");
+    }
+  }
+}
+
+// Legacy function for compatibility (now uses dynamic system)
+function calculateEnemyCountForLevel(playerLevel) {
+  return calculateDynamicEnemyCount(playerLevel);
+}
+
+// Initial enemy spawn around hero (dynamic system)
 const enemies = [];
-for (let i = 0; i < enemyCountTarget; i++) {
-  const angle = Math.random() * Math.PI * 2;
-  const r = WORLD.enemySpawnRadius * (0.4 + Math.random() * 0.8);
-  const pos = new THREE.Vector3(
-    VILLAGE_POS.x + Math.cos(angle) * r,
-    0,
-    VILLAGE_POS.z + Math.sin(angle) * r
-  );
+const initialEnemyCount = calculateDynamicEnemyCount(player.level);
+
+console.info(`[Dynamic Spawn] Initial spawn: ${initialEnemyCount} enemies around hero (Level ${player.level})`);
+for (let i = 0; i < initialEnemyCount; i++) {
+  const pos = randomEnemySpawnPos();
   const e = new Enemy(pos, player.level);
   applyMapModifiersToEnemy(e);
   e.mesh.userData.enemyRef = e;
@@ -1083,41 +1176,20 @@ for (let i = 0; i < enemyCountTarget; i++) {
   enemies.push(e);
 }
 
+// Initialize spawn tracking
+lastPlayerPosition.copy(player.pos());
+lastSpawnCheckTime = now();
+
 /**
- * Dynamically adjust enemy count based on player level, map modifiers, quality, and performance.
- * Scales enemy count as player levels up (50→100 enemies from level 1→25+).
- * New enemies spawn at current player level (stronger stats).
+ * Legacy function for map changes - now just triggers a spawn check.
+ * The dynamic spawning system handles continuous enemy management.
  */
 function adjustEnemyCountForCurrentMap() {
   try {
-    // Calculate desired count with level scaling
-    let desired = calculateEnemyCountForLevel(player.level);
-    
-    // Apply adaptive performance scaling (reduce if FPS is low)
-    desired = Math.floor(desired * (__enemyPerfScale || 1));
-    
-    // Enforce minimum
-    desired = Math.max(MIN_ENEMY_COUNT, desired);
-    
-    if (enemies.length < desired) {
-      const toAdd = desired - enemies.length;
-      console.info(`[Enemy Scaling] Adding ${toAdd} enemies (Level ${player.level}, Total: ${desired})`);
-      for (let i = 0; i < toAdd; i++) {
-        const pos = randomEnemySpawnPos();
-        const e = new Enemy(pos, player.level); // Spawn at current level (stronger)
-        applyMapModifiersToEnemy(e);
-        e.mesh.userData.enemyRef = e;
-        scene.add(e.mesh);
-        enemies.push(e);
-      }
-    } else if (enemies.length > desired) {
-      const toRemove = enemies.length - desired;
-      console.info(`[Enemy Scaling] Removing ${toRemove} enemies (Level ${player.level}, Total: ${desired})`);
-      for (let i = 0; i < toRemove; i++) {
-        const e = enemies.pop();
-        try { scene.remove(e.mesh); } catch (_) {}
-      }
-    }
+    // Force an immediate spawn check when map changes
+    lastSpawnCheckTime = 0;
+    totalDistanceMoved = 0;
+    console.info(`[Dynamic Spawn] Map changed - resetting spawn timers`);
   } catch (_) {}
 }
 try { window.adjustEnemyCountForMap = adjustEnemyCountForCurrentMap; } catch (_) {}
@@ -1609,6 +1681,10 @@ function animate() {
 
   updatePlayer(dt);
   updateEnemies(dt);
+  
+  // Dynamic enemy spawning system (hybrid: continuous + burst on movement)
+  try { updateDynamicSpawning(dt); } catch (e) { console.warn("Dynamic spawn error:", e); }
+  
   if (firstPerson && typeof player !== "undefined") {
     // Reuse temp vectors to avoid per-frame allocations in the FP hand code.
     // left/right are aliases into the shared pool (copied into mid when needed).
@@ -1831,13 +1907,13 @@ animate();
 // Helpers and per-system updates
 // ------------------------------------------------------------
 
-// Pick a random valid spawn position for enemies around the village ring.
+// Pick a random valid spawn position for enemies around the hero.
 // Ensures spawns are outside the village rest radius and within the world enemy spawn radius.
 function randomEnemySpawnPos() {
   // Dynamic enemy spawn around the hero for continuous gameplay.
   const angle = Math.random() * Math.PI * 2;
-  const minR = Math.max(30, WORLD.enemySpawnRadius * 0.5);
-  const maxR = Math.max(minR + 1, WORLD.enemySpawnRadius);
+  const minR = WORLD.enemySpawnMinRadius || 30;
+  const maxR = WORLD.enemySpawnRadius || 220;
   const r = minR + Math.random() * (maxR - minR);
 
   // Base candidate around player's current position
