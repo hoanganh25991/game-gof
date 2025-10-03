@@ -2,7 +2,7 @@
 // This refactor splits the original monolithic file into modules per system.
 // Behavior is preserved; tuning values unchanged.
 
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import * as THREE from "../vendor/three/build/three.module.js";
 import { DEBUG } from "./config.js";
 import { COLOR, WORLD, SKILLS, VILLAGE_POS, REST_RADIUS, SCALING } from "./constants.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "./world.js";
@@ -1041,6 +1041,8 @@ const dynamicSpawnConfig = WORLD.dynamicSpawn || {};
 let lastSpawnCheckTime = 0;
 let lastPlayerPosition = new THREE.Vector3(0, 0, 0);
 let totalDistanceMoved = 0;
+let __enemyPerfScale = 1.0; // Performance scaling for enemy count (adaptive)
+let __adaptNextT = 0; // Next time to check adaptive performance
 
 /**
  * Calculate target enemy count around hero based on level and settings.
@@ -1582,8 +1584,6 @@ if (isMobile) {
   __aiStride = Math.ceil(__aiStride * MOBILE_OPTIMIZATIONS.aiStrideMultiplier);
 }
 let __aiOffset = 0;
-let __enemyPerfScale = 1.0; // Performance scaling for enemy count (adaptive)
-let __adaptNextT = 0; // Next time to check adaptive performance
 const __MOVE_PING_INTERVAL = 0.3; // seconds between continuous move pings (joystick/arrow). Match right-click cadence.
 let __joyContPingT = 0;
 let __arrowContPingT = 0;

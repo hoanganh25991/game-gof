@@ -1,5 +1,5 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { GLTFLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+import * as THREE from "../vendor/three/build/three.module.js";
+import { GLTFLoader } from "../vendor/three/examples/jsm/loaders/GLTFLoader.js";
 import { COLOR } from "./constants.js";
 import { HERO_MODEL_URL } from "./config.js";
 

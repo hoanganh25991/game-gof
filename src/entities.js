@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import * as THREE from "../vendor/three/build/three.module.js";
 import { COLOR, WORLD, STATS_BASE, SCALING } from "./constants.js";
 import { createGoTMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
 import { distance2D, now } from "./utils.js";

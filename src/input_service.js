@@ -12,7 +12,7 @@
  * - Perfect separation yet — this is the first refactor step towards hexagonal input.
  */
 
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import * as THREE from "../vendor/three/build/three.module.js";
 import { distance2D, dir2D, now } from "./utils.js";
 
 export function createInputService({

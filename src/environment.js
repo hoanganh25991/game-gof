@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
 import { WORLD } from "./constants.js";
 import { createHouse, createGreekTemple, createVilla, createGreekColumn, createCypressTree, createOliveTree, createGreekStatue, createObelisk } from "./meshes.js";

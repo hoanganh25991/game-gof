@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import * as THREE from "../vendor/three/build/three.module.js";
 /**
  * placeStructures(params)
  * - Extracted placement logic for Greek-inspired structures and nature extras from src/environment.js

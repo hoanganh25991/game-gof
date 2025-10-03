@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import * as THREE from "../vendor/three/build/three.module.js";
 import { WORLD, SKILLS, COLOR, VILLAGE_POS, REST_RADIUS, SCALING, FX } from "./constants.js";
 import { distance2D, now } from "./utils.js";
 import { handWorldPos } from "./entities.js";

@@ -1,3 +1,4 @@
 .clinerules
 todo*.md
 scritps
+!memory_bank

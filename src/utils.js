@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import * as THREE from "../vendor/three/build/three.module.js";
 
 // Maps world XZ to minimap pixels centered on (centerX, centerZ)
 export function worldToMinimap(x, z, centerX, centerZ, scale = 0.8) {
