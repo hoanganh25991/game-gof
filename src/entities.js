@@ -104,7 +104,7 @@ export class Player extends Entity {
 
   // Persist just the level
   saveLevelToStorage() {
-    try { localStorage.setItem("playerLevel", String(this.level)); } catch (_) {}
+    try { localStorage.setItem("gof.playerLevel", String(this.level)); } catch (_) {}
   }
 
   // Reset stats back to STATS_BASE (level 1 baseline)
@@ -149,7 +149,7 @@ export class Player extends Entity {
   // Load persisted level (simple persistence)
   loadLevelFromStorage() {
     try {
-      const raw = localStorage.getItem("playerLevel");
+      const raw = localStorage.getItem("gof.playerLevel");
       if (!raw) return;
       const lvl = parseInt(raw, 10);
       if (Number.isFinite(lvl) && lvl > 1) {

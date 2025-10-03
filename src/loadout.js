@@ -12,7 +12,7 @@
  * so it can be used from anywhere (eg. src/main.js) by passing the skill pool array.
  */
 
-const STORAGE_KEY = "fire_loadout";
+const STORAGE_KEY = "gof.fire_loadout";
 
 /**
  * Save a loadout (array of skill id strings) to localStorage.

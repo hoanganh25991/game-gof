@@ -5,8 +5,8 @@
  * - Provides a simple API to integrate with UI and enemy spawning
  */
 export function createMapManager() {
-  const LS_CUR = "mapCurrentIndex";
-  const LS_MAX = "mapUnlockedMax";
+  const LS_CUR = "gof.mapCurrentIndex";
+  const LS_MAX = "gof.mapUnlockedMax";
 
   // Endless tuning beyond the defined Acts
   const ENDLESS = {

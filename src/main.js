@@ -105,7 +105,7 @@ if (isMobile) {
 }
 
 // Render quality preference (persisted). Default to "high" on desktop, "medium" on mobile.
-const _renderPrefs = JSON.parse(localStorage.getItem("renderPrefs") || "{}");
+const _renderPrefs = JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}");
 let renderQuality = (typeof _renderPrefs.quality === "string" && ["low", "medium", "high"].includes(_renderPrefs.quality))
   ? _renderPrefs.quality
   : (isMobile ? "medium" : "high");
@@ -115,7 +115,7 @@ if (isMobile && !_renderPrefs.quality) {
   renderQuality = "medium";
   try {
     const prefs = { ..._renderPrefs, quality: "medium" };
-    localStorage.setItem("renderPrefs", JSON.stringify(prefs));
+    localStorage.setItem("gof.renderPrefs", JSON.stringify(prefs));
     console.info("[Mobile] Auto-set quality to 'medium' for optimal performance");
   } catch (_) {}
 }
@@ -265,7 +265,7 @@ function getPerf() {
 }
 
 // Load environment preferences from localStorage (persist rain + density)
-const _envPrefs = JSON.parse(localStorage.getItem("envPrefs") || "{}");
+const _envPrefs = JSON.parse(localStorage.getItem("gof.envPrefs") || "{}");
 let envRainState = !!_envPrefs.rain;
 let envDensityIndex = Number.isFinite(parseInt(_envPrefs.density, 10)) ? parseInt(_envPrefs.density, 10) : 1;
 let envRainLevel = Number.isFinite(parseInt(_envPrefs.rainLevel, 10)) ? parseInt(_envPrefs.rainLevel, 10) : 1;
@@ -333,19 +333,19 @@ setupDesktopControls();
         // In-app SKU flow (unchanged)
         const purchases = await payments.checkOwned(PRODUCT_IDS);
         if (purchases && purchases.length > 0) {
-          try { localStorage.setItem('app.purchased', '1'); } catch (_) {}
+          try { localStorage.setItem('gof.app.purchased', '1'); } catch (_) {}
           window.__appPurchased = true;
           console.info('[payments] detected owned product(s):', purchases.map(p => p.itemId));
           // Optionally verify purchase tokens on server:
           // for (const p of purchases) await payments.verifyOnServer({ packageName: 'com.example.app', productId: p.itemId, purchaseToken: p.purchaseToken });
         } else {
           // fall back to previously-saved local state
-          window.__appPurchased = !!localStorage.getItem('app.purchased');
+          window.__appPurchased = !!localStorage.getItem('gof.app.purchased');
         }
       } else {
         // App-priced flow (no SKUs)
         // 1) Use any previously persisted local flag while we attempt to get a definitive license status.
-        window.__appPurchased = !!localStorage.getItem('app.purchased');
+        window.__appPurchased = !!localStorage.getItem('gof.app.purchased');
 
         // 2) Listen for license messages from the Android TWA wrapper.
         //    The wrapper should post a message to the page with:
@@ -357,7 +357,7 @@ setupDesktopControls();
             if (data.type === 'TWA_LICENSE_STATUS') {
               const entitled = !!data.entitled;
               window.__appPurchased = entitled;
-              try { localStorage.setItem('app.purchased', entitled ? '1' : '0'); } catch (_) {}
+              try { localStorage.setItem('gof.app.purchased', entitled ? '1' : '0'); } catch (_) {}
               console.info('[payments] received TWA_LICENSE_STATUS', { entitled });
 
               // If the wrapper provides a token suitable for server-side verification (Play Integrity or LVL),
@@ -367,7 +367,7 @@ setupDesktopControls();
                   const resp = await payments.verifyLicenseOnServer({ licenseData: data.licenseToken });
                   if (resp && resp.ok && resp.entitled) {
                     window.__appPurchased = true;
-                    try { localStorage.setItem('app.purchased', '1'); } catch (_) {}
+                    try { localStorage.setItem('gof.app.purchased', '1'); } catch (_) {}
                     console.info('[payments] server verified license token OK');
                   } else {
                     console.warn('[payments] server license verification returned not-entitled', resp);
@@ -400,7 +400,7 @@ setupDesktopControls();
       }
     } catch (e) {
       console.warn('[payments] initialization failed', e);
-      window.__appPurchased = !!localStorage.getItem('app.purchased');
+      window.__appPurchased = !!localStorage.getItem('gof.app.purchased');
     }
   })();
 
@@ -415,7 +415,7 @@ setupDesktopControls();
         if (all && all.length) {
           const found = (all || []).some(p => p && PRODUCT_IDS.includes(p.itemId));
           if (found) {
-            try { localStorage.setItem('app.purchased', '1'); } catch (_) {}
+            try { localStorage.setItem('gof.app.purchased', '1'); } catch (_) {}
             window.__appPurchased = true;
           }
         }
@@ -438,7 +438,7 @@ setupDesktopControls();
 })();
 
 /* Audio: preferences + initialize on first user gesture. Do not auto-start music if disabled. */
-const _audioPrefs = JSON.parse(localStorage.getItem("audioPrefs") || "{}");
+const _audioPrefs = JSON.parse(localStorage.getItem("gof.audioPrefs") || "{}");
 let musicEnabled = _audioPrefs.music !== false; // default true
 let sfxEnabled = _audioPrefs.sfx !== false;     // default true
 
@@ -528,9 +528,9 @@ function setFirstPerson(enabled) {
 const audioCtl = {
   audio,
   getMusicEnabled: () => musicEnabled,
-  setMusicEnabled: (v) => { musicEnabled = !!v; try { localStorage.setItem("audioPrefs", JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {} },
+  setMusicEnabled: (v) => { musicEnabled = !!v; try { localStorage.setItem("gof.audioPrefs", JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {} },
   getSfxEnabled: () => sfxEnabled,
-  setSfxEnabled: (v) => { sfxEnabled = !!v; try { localStorage.setItem("audioPrefs", JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {} },
+  setSfxEnabled: (v) => { sfxEnabled = !!v; try { localStorage.setItem("gof.audioPrefs", JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {} },
 };
 const environmentCtx = {
   scene,
@@ -709,7 +709,7 @@ if (envRainToggle) {
       try { env.setRainLevel(Math.min(Math.max(0, envRainLevel), 2)); } catch (_) {}
     }
     // persist
-    try { localStorage.setItem("envPrefs", JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
+    try { localStorage.setItem("gof.envPrefs", JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
   });
 }
 if (envDensity) {
@@ -734,7 +734,7 @@ if (envDensity) {
       updateEnvironmentFollow(env, player);
     } catch (e) {}
     // persist
-    try { localStorage.setItem("envPrefs", JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
+    try { localStorage.setItem("gof.envPrefs", JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
   };
   envDensity.addEventListener("change", onEnvDensityChange);
 }
@@ -753,7 +753,7 @@ if (rainDensity) {
     const lvl = Math.round(((ui - 1) / 9) * 2);
     envRainLevel = Math.min(Math.max(0, lvl), 2);
     try { env && typeof env.setRainLevel === "function" && env.setRainLevel(envRainLevel); } catch (_) {}
-    try { localStorage.setItem("envPrefs", JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
+    try { localStorage.setItem("gof.envPrefs", JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
   };
   rainDensity.addEventListener("change", onRainDensityChange);
 }
