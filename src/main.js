@@ -2144,10 +2144,17 @@ function updateEnemies(dt) {
                 }
               } catch (_) {}
             } else {
-              // default beam (archer/others)
+              // default ranged attack (archer/mage): spawn projectile
               try {
                 if (shouldSpawnVfx("largeBeam", __tempVecA)) {
-                  effects.spawnBeam(__tempVecA, __tempVecC, en.beamColor || 0xff8080, 0.09);
+                  effects.spawnFireball(__tempVecA.clone(), __tempVecC.clone(), {
+                    color: en.beamColor || 0xff8080,
+                    size: 0.25,
+                    speed: 22,
+                    onComplete: (hitPos) => {
+                      effects.spawnStrike(hitPos, 0.7, en.beamColor || 0xff8080);
+                    }
+                  });
                 }
               } catch (_) {}
             }
