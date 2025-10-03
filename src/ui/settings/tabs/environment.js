@@ -112,7 +112,7 @@ function initEnvironmentControls(environment) {
 
 function persistEnvPrefs(rain, densityIndex, rainLevel) {
   try {
-    localStorage.setItem("envPrefs", JSON.stringify({ rain: !!rain, density: densityIndex, rainLevel }));
+    localStorage.setItem("gof.envPrefs", JSON.stringify({ rain: !!rain, density: densityIndex, rainLevel }));
   } catch (_) {}
 }
 
