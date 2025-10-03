@@ -89,6 +89,57 @@ export class EffectsManager {
     this.spawnStrike(player.pos(), 1.2, 0xffa500);
   }
 
+  // ----- Projectile helpers -----
+  // Fireball projectile that travels from source to target with trail
+  spawnFireball(from, to, opts = {}) {
+    const color = opts.color || COLOR.fire;
+    const size = opts.size || 0.4;
+    const speed = opts.speed || 20;
+    const trail = opts.trail !== false;
+    
+    const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
+    const distance = dir.length();
+    const travelTime = distance / speed;
+    
+    // Create fireball sphere with glowing material
+    const fireballGeo = new THREE.SphereGeometry(size, 12, 12);
+    const fireballMat = new THREE.MeshBasicMaterial({ 
+      color: normalizeColor(color), 
+      transparent: true, 
+      opacity: 0.95 
+    });
+    const fireball = new THREE.Mesh(fireballGeo, fireballMat);
+    fireball.position.copy(from);
+    
+    // Add outer glow layer
+    const glowGeo = new THREE.SphereGeometry(size * 1.4, 12, 12);
+    const glowMat = new THREE.MeshBasicMaterial({ 
+      color: 0xffaa00, 
+      transparent: true, 
+      opacity: 0.4 
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    fireball.add(glow);
+    
+    this.transient.add(fireball);
+    
+    const startTime = now();
+    this.queue.push({
+      obj: fireball,
+      until: startTime + travelTime * FX.timeScale,
+      projectile: true,
+      from: from.clone(),
+      to: to.clone(),
+      startTime,
+      travelTime,
+      mat: fireballMat,
+      glowMat,
+      trail,
+      trailColor: color,
+      onComplete: opts.onComplete
+    });
+  }
+
   // ----- Beam helpers -----
   spawnBeam(from, to, color = COLOR.fire, life = 0.12) {
     // Avoid allocating temporary vectors for simple two-point lines by reusing instance temps.
@@ -102,8 +153,8 @@ export class EffectsManager {
     this.queue.push({ obj: line, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: material });
   }
 
-  // Fire stream beam with flickering flames (replaces jagged electric look)
-  spawnFireBeam(from, to, color = COLOR.fire, life = 0.12, segments = 10, amplitude = 0.6) {
+  // Fire stream/flamethrower beam with flickering flames (for continuous fire effects)
+  spawnFireStream(from, to, color = COLOR.fire, life = 0.12, segments = 10, amplitude = 0.6) {
     // Use temporaries to compute dir/normal/up without allocations.
     const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
     const normal = this._tmpVecC.set(-dir.z, 0, dir.x).normalize();
@@ -173,8 +224,8 @@ export class EffectsManager {
     }
   }
 
-  // Auto-scaling multi-pass fire stream for thickness by distance
-  spawnFireBeamAuto(from, to, color = COLOR.fire, life = 0.12) {
+  // Auto-scaling multi-pass fire stream for thickness by distance (flamethrower/continuous fire)
+  spawnFireStreamAuto(from, to, color = COLOR.fire, life = 0.12) {
     const dir = to.clone().sub(from);
     const length = dir.length() || 1;
     const normal = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
@@ -248,7 +299,7 @@ export class EffectsManager {
 
   spawnArcNoisePath(from, to, color = 0xff6347, life = 0.08, passes = 2) {
     for (let i = 0; i < passes; i++) {
-      this.spawnFireBeam(from, to, color, life, 6, 0.2);
+      this.spawnFireStream(from, to, color, life, 6, 0.2);
     }
   }
 
@@ -511,7 +562,7 @@ export class EffectsManager {
     });
   }
 
-  // Hand crackle sparks around hand anchor
+  // Hand crackle sparks around hand anchor (fire embers/sparks)
   spawnHandCrackle(player, left = false, strength = 1) {
     if (!player) return;
     const origin = left ? leftHandWorldPos(player) : handWorldPos(player);
@@ -521,16 +572,17 @@ export class EffectsManager {
       const dir = new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.2), (Math.random() - 0.5)).normalize();
       const len = 0.35 + Math.random() * 0.5 * strength;
       const to = origin.clone().add(dir.multiplyScalar(len));
-      this.spawnFireBeam(origin.clone(), to, 0xff6347, 0.06);
+      // Fire sparks/embers
+      this.spawnBeam(origin.clone(), to, 0xff6347, 0.06);
     }
   }
 
-  // Short arc connecting both hands
+  // Short arc connecting both hands (fire stream between hands)
   spawnHandLink(player, life = 0.08) {
     if (!player) return;
     const a = handWorldPos(player);
     const b = leftHandWorldPos(player);
-    this.spawnFireBeamAuto(a, b, 0xff6347, life);
+    this.spawnFireStreamAuto(a, b, 0xff6347, life);
   }
 
   // ----- Frame update -----
@@ -554,6 +606,36 @@ export class EffectsManager {
 
     for (let i = this.queue.length - 1; i >= 0; i--) {
       const e = this.queue[i];
+
+      // Projectile motion (fireballs, etc.)
+      if (e.projectile && e.obj && e.obj.position) {
+        const elapsed = t - e.startTime;
+        const progress = Math.min(1, elapsed / e.travelTime);
+        
+        // Lerp position from start to end
+        const newPos = this._tmpVecA.copy(e.from).lerp(this._tmpVecB.copy(e.to), progress);
+        e.obj.position.copy(newPos);
+        
+        // Add slight wobble for organic fire movement
+        const wobble = Math.sin(t * 15) * 0.1;
+        e.obj.position.y += wobble;
+        
+        // Spawn fire trail particles
+        if (e.trail && this.quality !== "low" && Math.random() > 0.6) {
+          const trailPos = e.obj.position.clone();
+          const trailEnd = trailPos.clone().add(new THREE.Vector3(
+            (Math.random() - 0.5) * 0.3,
+            -0.2 - Math.random() * 0.3,
+            (Math.random() - 0.5) * 0.3
+          ));
+          this.spawnBeam(trailPos, trailEnd, e.trailColor || COLOR.fire, 0.08);
+        }
+        
+        // Check if reached destination
+        if (progress >= 1 && e.onComplete) {
+          try { e.onComplete(e.to); } catch (_) {}
+        }
+      }
 
       // Vertical motion for popups
       if (e.velY && e.obj && e.obj.position) {

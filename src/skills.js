@@ -294,23 +294,35 @@ export class SkillsSystem {
         ? handWorldPos(this.player)
         : __vA.copy(attacker.pos()).add(__vB.set(0, 1.6, 0)).clone();
     const to = __vC.copy(target.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    this.effects.spawnFireBeamAuto(from, to, COLOR.fire, 0.12);
+    
+    // FIRE PROJECTILE: Spawn fireball that travels to target
+    const baseDmg = this.getBasicDamage(attacker);
+    const up = getBasicUplift ? getBasicUplift() : { aoeRadius: 0, chainJumps: 0, dmgMul: 1 };
+    const dmg = Math.max(1, Math.floor(baseDmg * (up.dmgMul || 1)));
+    
+    this.effects.spawnFireball(from, to, {
+      color: COLOR.fire,
+      size: 0.35,
+      speed: 25,
+      onComplete: (hitPos) => {
+        // Impact explosion at target
+        this.effects.spawnStrike(hitPos, 1.2, COLOR.fire);
+        this.effects.spawnHitDecal(target.pos(), COLOR.fire);
+      }
+    });
+    
     audio.sfx("basic");
-    // FP hand VFX for basic attack
+    // FP hand VFX for basic attack - fire casting effects
     try {
       this.effects.spawnHandFlash(this.player);
-      this.effects.spawnHandLink(this.player, 0.06);
       this.effects.spawnHandCrackle(this.player, false, 1.0);
       this.effects.spawnHandCrackle(this.player, true, 1.0);
       this.effects.spawnHandFlash(this.player, true);
-      this.effects.spawnHandLink(this.player, 0.08);
       this.effects.spawnHandCrackle(this.player, false, 1.2);
       this.effects.spawnHandCrackle(this.player, true, 1.2);
     } catch (e) {}
     if (attacker === this.player) this.player.braceUntil = now() + 0.18;
-    const baseDmg = this.getBasicDamage(attacker);
-    const up = getBasicUplift ? getBasicUplift() : { aoeRadius: 0, chainJumps: 0, dmgMul: 1 };
-    const dmg = Math.max(1, Math.floor(baseDmg * (up.dmgMul || 1)));
+    
     target.takeDamage(dmg);
     try { this.effects.spawnDamagePopup(target.pos(), dmg, 0xffe0e0); } catch (e) {}
 
@@ -340,7 +352,7 @@ export class SkillsSystem {
         hitSet.add(nxt);
         const from = __vA.copy(current.pos()).add(__vB.set(0,1.2,0)).clone();
         const to = __vC.copy(nxt.pos()).add(__vB.set(0,1.2,0)).clone();
-        try { this.effects.spawnFireBeamAuto(from, to, COLOR.ember, 0.08); } catch(_) {}
+        try { this.effects.spawnFireStreamAuto(from, to, COLOR.ember, 0.08); } catch(_) {}
         nxt.takeDamage(Math.max(1, Math.floor(dmg * 0.85)));
         current = nxt;
       }
@@ -433,7 +445,7 @@ export class SkillsSystem {
       const dir = __vB.set(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
       const to = __vC.copy(from).add(dir.multiplyScalar(effRange));
       try {
-        this.effects.spawnFireBeamAuto(from, to, fx.beam, 0.1);
+        this.effects.spawnFireStreamAuto(from, to, fx.beam, 0.1);
         this.effects.spawnStrike(__vA.copy(to).setY(0), 1.0, fx.impact);
         this._requestShake(fx.shake || 0);
         audio.sfx("beam");
@@ -633,7 +645,7 @@ export class SkillsSystem {
       const dir = __vB.set(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
       const to = from.clone().add(dir.multiplyScalar(effRange));
       try {
-        this.effects.spawnFireBeamAuto(from, to, fx.beam, 0.1);
+        this.effects.spawnFireStreamAuto(from, to, fx.beam, 0.1);
         this.effects.spawnStrike(to.clone().setY(0), 1.0, fx.impact);
         this._requestShake(fx.shake || 0);
         audio.sfx("beam");

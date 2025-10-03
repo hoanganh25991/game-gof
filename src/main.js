@@ -2132,7 +2132,15 @@ function updateEnemies(dt) {
             } else if (en.attackEffect === "fire") {
               try {
                 if (shouldSpawnVfx("fire", __tempVecA)) {
-                  effects.spawnFireBeamAuto(__tempVecA, __tempVecC, en.beamColor || 0xff6347, 0.1);
+                  // Enemy fire attack: spawn fireball projectile
+                  effects.spawnFireball(__tempVecA.clone(), __tempVecC.clone(), {
+                    color: en.beamColor || 0xff6347,
+                    size: 0.3,
+                    speed: 20,
+                    onComplete: (hitPos) => {
+                      effects.spawnStrike(hitPos, 0.8, en.beamColor || 0xff6347);
+                    }
+                  });
                 }
               } catch (_) {}
             } else {
