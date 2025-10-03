@@ -1582,6 +1582,8 @@ if (isMobile) {
   __aiStride = Math.ceil(__aiStride * MOBILE_OPTIMIZATIONS.aiStrideMultiplier);
 }
 let __aiOffset = 0;
+let __enemyPerfScale = 1.0; // Performance scaling for enemy count (adaptive)
+let __adaptNextT = 0; // Next time to check adaptive performance
 const __MOVE_PING_INTERVAL = 0.3; // seconds between continuous move pings (joystick/arrow). Match right-click cadence.
 let __joyContPingT = 0;
 let __arrowContPingT = 0;
