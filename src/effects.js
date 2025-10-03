@@ -108,44 +108,68 @@ export class EffectsManager {
     const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
     const normal = this._tmpVecC.set(-dir.z, 0, dir.x).normalize();
     const up = this._tmpVecD.set(0, 1, 0);
+    const length = dir.length() || 1;
 
-    const points = [];
-    const seg = Math.max(4, Math.round(segments * (this.quality === "low" ? 0.5 : (this.quality === "medium" ? 0.75 : 1))));
-    for (let i = 0; i <= seg; i++) {
-      const t = i / segments;
-      // build point into a temp vector - smoother curve for fire stream
-      const pTmp = this._tmpVecE.copy(from).lerp(this._tmpVecB.copy(to), t);
-      // Wavy fire pattern instead of jagged lightning
-      const amp = Math.sin(Math.PI * t) * amplitude * 0.5; // Reduced amplitude for smoother fire
-      const waveOffset = Math.sin(t * Math.PI * 3 + Date.now() * 0.01) * amplitude * 0.3;
-      // jitter components into temp vectors - gentler for fire
-      const j1 = this._tmpVecA.copy(normal).multiplyScalar(waveOffset);
-      const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.6);
-      pTmp.add(j1).add(j2);
-      // push a cloned vector because pTmp is reused
-      points.push(pTmp.clone());
+    // FIRE EFFECT: Multiple thick passes with gradient colors (yellow core, orange-red edges)
+    const fireColors = [
+      0xffff00,  // Bright yellow core
+      0xffa500,  // Orange middle
+      0xff4500,  // Orange-red outer
+    ];
+    
+    const passes = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
+    
+    for (let pass = 0; pass < passes; pass++) {
+      const points = [];
+      const seg = Math.max(4, Math.round(segments * (this.quality === "low" ? 0.5 : (this.quality === "medium" ? 0.75 : 1))));
+      const spreadMult = pass * 0.15; // Each pass spreads wider
+      
+      for (let i = 0; i <= seg; i++) {
+        const t = i / segments;
+        // build point into a temp vector - smoother curve for fire stream
+        const pTmp = this._tmpVecE.copy(from).lerp(this._tmpVecB.copy(to), t);
+        // Wavy fire pattern with turbulence
+        const amp = Math.sin(Math.PI * t) * amplitude * (0.3 + spreadMult);
+        const waveOffset = Math.sin(t * Math.PI * 3 + Date.now() * 0.01 + pass * 0.5) * amplitude * (0.2 + spreadMult);
+        // Add turbulence for organic fire look
+        const turbulence = (Math.random() - 0.5) * amplitude * (0.4 + spreadMult);
+        const j1 = this._tmpVecA.copy(normal).multiplyScalar(waveOffset + turbulence);
+        const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.6);
+        pTmp.add(j1).add(j2);
+        points.push(pTmp.clone());
+      }
+
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const colorIdx = Math.min(pass, fireColors.length - 1);
+      const fireColor = fireColors[colorIdx];
+      const opacity = pass === 0 ? 0.9 : (0.7 - pass * 0.15);
+      const material = new THREE.LineBasicMaterial({ 
+        color: normalizeColor(fireColor), 
+        transparent: true, 
+        opacity: opacity,
+        linewidth: 2 // Thicker lines for fire
+      });
+      const line = new THREE.Line(geometry, material);
+      this.transient.add(line);
+      const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
+      this.queue.push({ obj: line, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: material });
     }
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({ color: normalizeColor(color) });
-    const line = new THREE.Line(geometry, material);
-    this.transient.add(line);
-    const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
-    this.queue.push({ obj: line, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: material });
-
-    // Fire wisps instead of electric forks
-    const length = dir.length() || 1;
-    if (length > 6) {
-      const mid = from.clone().lerp(to, 0.5 + Math.random() * 0.2);
-      // Upward wisp like rising flame
-      const wispEnd = mid.clone().add(up.clone().multiplyScalar(0.8 + Math.random() * 1.0));
-      wispEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 0.6));
-      const g2 = new THREE.BufferGeometry().setFromPoints([mid, wispEnd]);
-      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.6 });
+    // Fire embers and sparks rising upward
+    const emberCount = this.quality === "low" ? 2 : (this.quality === "medium" ? 4 : 6);
+    for (let i = 0; i < emberCount; i++) {
+      const t = Math.random();
+      const emberPos = from.clone().lerp(to, t);
+      // Embers rise and drift
+      const emberEnd = emberPos.clone().add(up.clone().multiplyScalar(0.5 + Math.random() * 1.5));
+      emberEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 0.8));
+      const g2 = new THREE.BufferGeometry().setFromPoints([emberPos, emberEnd]);
+      const emberColor = Math.random() > 0.5 ? 0xffaa00 : 0xff6600;
+      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(emberColor), transparent: true, opacity: 0.7 });
       const l2 = new THREE.Line(g2, m2);
       this.transient.add(l2);
       const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
-      this.queue.push({ obj: l2, until: now() + life * lifeMul * 0.7 * FX.timeScale, fade: true, mat: m2 });
+      this.queue.push({ obj: l2, until: now() + life * lifeMul * (0.8 + Math.random() * 0.4) * FX.timeScale, fade: true, mat: m2 });
     }
   }
 
@@ -158,47 +182,67 @@ export class EffectsManager {
 
     const segments = Math.max(8, Math.min(18, Math.round(8 + length * 0.5)));
     const seg = Math.max(6, Math.round(segments * (this.quality === "low" ? 0.5 : (this.quality === "medium" ? 0.75 : 1))));
-    const amplitude = Math.min(1.0, 0.25 + length * 0.02); // Reduced for smoother fire
-    const count = length < 12 ? 1 : (length < 28 ? 2 : 3);
+    const amplitude = Math.min(1.0, 0.25 + length * 0.02);
 
-    const countCap = this.quality === "low" ? 1 : (this.quality === "medium" ? 2 : 3);
-    const passes = Math.min(count, countCap);
+    // FIRE EFFECT: Gradient from yellow core to orange-red edges
+    const fireColors = [
+      0xffff00,  // Bright yellow core
+      0xffaa00,  // Yellow-orange
+      0xff6600,  // Orange
+      0xff4500,  // Orange-red outer
+    ];
+
+    const countCap = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
+    const passes = Math.min(countCap, fireColors.length);
 
     for (let n = 0; n < passes; n++) {
       const pts = [];
+      const spreadMult = n * 0.2; // Each pass spreads wider for volumetric fire
+      
       for (let i = 0; i <= seg; i++) {
         const t = i / segments;
         const pTmp = this._tmpVecE.copy(from).lerp(this._tmpVecB.copy(to), t);
-        // Smoother wavy pattern for fire stream
-        const amp = Math.sin(Math.PI * t) * amplitude * 0.6;
+        // Organic wavy pattern with turbulence
+        const amp = Math.sin(Math.PI * t) * amplitude * (0.6 + spreadMult);
         const wavePhase = t * Math.PI * 2 + n * 0.5 + Date.now() * 0.008;
-        const wave = Math.sin(wavePhase) * amplitude * 0.4;
-        const j1 = this._tmpVecA.copy(normal).multiplyScalar(wave * (0.9 + n * 0.1));
+        const wave = Math.sin(wavePhase) * amplitude * (0.4 + spreadMult);
+        // Add random turbulence for fire chaos
+        const turbulence = (Math.random() - 0.5) * amplitude * (0.3 + spreadMult);
+        const j1 = this._tmpVecA.copy(normal).multiplyScalar(wave * (0.9 + n * 0.1) + turbulence);
         const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.5);
         pTmp.add(j1).add(j2);
         pts.push(pTmp.clone());
       }
       const g = new THREE.BufferGeometry().setFromPoints(pts);
-      const opacity = Math.max(0.35, (0.7 + Math.min(0.3, length * 0.01) - n * 0.15));
-      const m = new THREE.LineBasicMaterial({ color: normalizeColor(color), transparent: true, opacity });
+      const fireColor = fireColors[n];
+      const opacity = n === 0 ? 0.9 : Math.max(0.4, (0.75 - n * 0.15));
+      const m = new THREE.LineBasicMaterial({ 
+        color: normalizeColor(fireColor), 
+        transparent: true, 
+        opacity,
+        linewidth: 2
+      });
       const l = new THREE.Line(g, m);
       this.transient.add(l);
       const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
       this.queue.push({ obj: l, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: m });
     }
 
-    // Fire wisps rising upward instead of sideways forks
-    if (length > 6) {
-      const mid = from.clone().lerp(to, 0.5 + Math.random() * 0.2);
-      // Upward wisp like rising flame
-      const wispEnd = mid.clone().add(up.clone().multiplyScalar(1.0 + Math.random() * 1.2));
-      wispEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 0.8));
-      const g2 = new THREE.BufferGeometry().setFromPoints([mid, wispEnd]);
-      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.6 });
+    // Fire embers and sparks along the beam
+    const emberCount = this.quality === "low" ? 3 : (this.quality === "medium" ? 5 : 8);
+    for (let i = 0; i < emberCount; i++) {
+      const t = Math.random();
+      const emberPos = from.clone().lerp(to, t);
+      // Embers rise and drift randomly
+      const emberEnd = emberPos.clone().add(up.clone().multiplyScalar(0.6 + Math.random() * 1.8));
+      emberEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 1.2));
+      const g2 = new THREE.BufferGeometry().setFromPoints([emberPos, emberEnd]);
+      const emberColor = Math.random() > 0.6 ? 0xffaa00 : (Math.random() > 0.5 ? 0xff6600 : 0xff4500);
+      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(emberColor), transparent: true, opacity: 0.75 });
       const l2 = new THREE.Line(g2, m2);
       this.transient.add(l2);
       const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
-      this.queue.push({ obj: l2, until: now() + life * lifeMul * 0.7 * FX.timeScale, fade: true, mat: m2 });
+      this.queue.push({ obj: l2, until: now() + life * lifeMul * (0.7 + Math.random() * 0.5) * FX.timeScale, fade: true, mat: m2 });
     }
   }
 
@@ -217,17 +261,63 @@ export class EffectsManager {
   }
 
   spawnStrike(point, radius = 2, color = COLOR.fire) {
-    // Vertical fire pillar (from ground up instead of sky down for fire theme)
-    const from = point.clone().add(new THREE.Vector3(0, 0.1, 0));
-    const to = point.clone().add(new THREE.Vector3(0, 8, 0));
-    this.spawnBeam(from, to, color, 0.15);
+    // FIRE PILLAR: Multiple layered beams erupting from ground with gradient colors
+    const fireColors = [
+      0xffff00,  // Bright yellow core
+      0xffaa00,  // Yellow-orange
+      0xff6600,  // Orange
+      0xff4500,  // Orange-red outer
+    ];
+    
+    const pillarPasses = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
+    
+    // Main fire pillar with multiple passes for thickness
+    for (let i = 0; i < pillarPasses; i++) {
+      const from = point.clone().add(new THREE.Vector3(
+        (Math.random() - 0.5) * 0.3 * i, 
+        0.1, 
+        (Math.random() - 0.5) * 0.3 * i
+      ));
+      const to = point.clone().add(new THREE.Vector3(
+        (Math.random() - 0.5) * 0.5 * i, 
+        6 + Math.random() * 2, 
+        (Math.random() - 0.5) * 0.5 * i
+      ));
+      const pillarColor = fireColors[Math.min(i, fireColors.length - 1)];
+      this.spawnBeam(from, to, pillarColor, 0.15);
+    }
 
-    // Radial fire bursts (outward and slightly upward like explosion)
-    for (let i = 0; i < (this.quality === "low" ? 1 : (this.quality === "medium" ? 2 : 4)); i++) {
+    // Explosive radial fire bursts (outward and upward like volcanic eruption)
+    const burstCount = this.quality === "low" ? 3 : (this.quality === "medium" ? 6 : 8);
+    for (let i = 0; i < burstCount; i++) {
+      const ang = (i / burstCount) * Math.PI * 2 + Math.random() * 0.5;
+      const r = radius * (0.5 + Math.random() * 0.5);
+      const p2 = point.clone().add(new THREE.Vector3(
+        Math.cos(ang) * r, 
+        0.8 + Math.random() * 1.5, 
+        Math.sin(ang) * r
+      ));
+      const burstColor = Math.random() > 0.5 ? 0xffaa00 : 0xff6600;
+      this.spawnBeam(point.clone().add(new THREE.Vector3(0, 0.2, 0)), p2, burstColor, 0.12);
+    }
+    
+    // Fire embers shooting upward from impact point
+    const emberCount = this.quality === "low" ? 4 : (this.quality === "medium" ? 8 : 12);
+    for (let i = 0; i < emberCount; i++) {
       const ang = Math.random() * Math.PI * 2;
-      const r = Math.random() * radius;
-      const p2 = point.clone().add(new THREE.Vector3(Math.cos(ang) * r, 0.4 + Math.random() * 0.8, Math.sin(ang) * r));
-      this.spawnBeam(point.clone().add(new THREE.Vector3(0, 0.2, 0)), p2, color, 0.1);
+      const r = Math.random() * radius * 0.5;
+      const emberStart = point.clone().add(new THREE.Vector3(
+        Math.cos(ang) * r, 
+        0.1, 
+        Math.sin(ang) * r
+      ));
+      const emberEnd = emberStart.clone().add(new THREE.Vector3(
+        (Math.random() - 0.5) * 1.5,
+        2 + Math.random() * 3,
+        (Math.random() - 0.5) * 1.5
+      ));
+      const emberColor = Math.random() > 0.6 ? 0xffff00 : (Math.random() > 0.5 ? 0xffaa00 : 0xff6600);
+      this.spawnBeam(emberStart, emberEnd, emberColor, 0.1 + Math.random() * 0.1);
     }
   }
   
