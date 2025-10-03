@@ -10,6 +10,7 @@
   --theme-light-orange: #ff8c42; /* lighter orange */
   --theme-white: #ffffff;        /* clean white */
   --theme-accent: #ffa552;       /* bright orange accent */
+  --theme-yellow: #ffd94a;       /* primary button yellow/gold */
 
   /* Backwards-compatible aliases */
   --white: #ffe6d9;
@@ -33,6 +34,30 @@
   --system-border: rgba(255,107,53,0.3);
   --system-text: #ffe6d9;
   --system-accent: var(--theme-accent);
+
+  /* Common color values - for consistency */
+  --border-orange: rgba(255, 140, 66, 0.35);
+  --border-orange-light: rgba(255, 140, 66, 0.3);
+  --border-orange-subtle: rgba(255, 140, 66, 0.15);
+  --border-white-subtle: rgba(255, 255, 255, 0.12);
+  --border-white-faint: rgba(255, 255, 255, 0.06);
+  
+  /* Background gradients */
+  --bg-radial-fire: radial-gradient(1200px 1200px at 70% 30%, #2a1510 0%, #1a0f0a 50%, #0a0503 100%);
+  --bg-dark-fire: rgba(40, 20, 10, 0.6);
+  --bg-darker-fire: rgba(26, 13, 8, 0.8);
+  
+  /* Text colors */
+  --text-warm: #ffe6d9;
+  --text-warm-light: #ffd4b3;
+  
+  /* Shadow values */
+  --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-strong: 0 8px 30px rgba(0, 0, 0, 0.45);
+  
+  /* Glow effects */
+  --glow-orange: rgba(255, 140, 66, 0.6);
+  --glow-orange-strong: rgba(255, 140, 66, 0.8);
 }
 
 *{ box-sizing: border-box; }
@@ -44,7 +69,7 @@ html, body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background: radial-gradient(1200px 1200px at 70% 30%, #2a1510 0%, #1a0f0a 50%, #0a0503 100%);
+  background: var(--bg-radial-fire);
   color: var(--white);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
 }
@@ -83,7 +108,7 @@ button:focus-visible{
 
 /* Utility: glow text */
 .glow{
-  text-shadow: 0 0 6px rgba(255,140,66,0.6), 0 2px 10px rgba(0,0,0,0.6);
+  text-shadow: 0 0 6px var(--glow-orange), 0 2px 10px rgba(0,0,0,0.6);
 }
 
 /* Small helper: centered overlay messages (used across screens) */
@@ -94,13 +119,13 @@ button:focus-visible{
   transform: translateX(-50%);
   padding: 10px 16px;
   background: var(--glass-strong);
-  border: 1px solid rgba(124,196,255,0.35);
+  border: 1px solid var(--border-orange);
   border-radius: 10px;
-  color: #e6f4ff;
+  color: var(--text-warm);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.3px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+  box-shadow: var(--shadow-strong);
   z-index: 1000;
   pointer-events: none;
 }
@@ -111,7 +136,7 @@ button:focus-visible{
   width: 16px; height: 16px;
   border-radius: 50%;
   border: 2px solid var(--accent);
-  box-shadow: 0 0 12px rgba(124,196,255,0.7), inset 0 0 6px rgba(124,196,255,0.7);
+  box-shadow: 0 0 12px var(--glow-orange-strong), inset 0 0 6px var(--glow-orange);
 }
 
 /* Small utility to visually hide everything except flash overlay (splash flow).

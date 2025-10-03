@@ -4,7 +4,7 @@
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: linear-gradient(135deg, #0a0e1a 0%, #1a2332 100%);
+  background: var(--bg-radial-fire);
   display: none;
   align-items: center;
   justify-content: center;
@@ -20,7 +20,7 @@
 .rotate-overlay h2 {
   font-size: 28px;
   margin: 16px 0;
-  color: #ff8c42;
+  color: var(--theme-light-orange);
   font-weight: bold;
 }
 

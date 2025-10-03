@@ -159,7 +159,4 @@
   font-size: 42px;
 }
 
-/* Utility hidden helper */
-.hidden {
-  display: none !important;
-}
+/* Utility hidden helper (defined in base.css) */

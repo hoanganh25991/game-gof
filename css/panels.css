@@ -238,21 +238,21 @@
   margin: 6px 0;
 }
 
-/* Buttons / flags in system screens: use game dark theme glass with thunder accent */
+/* Buttons / flags in system screens: use game dark theme glass with fire accent */
 .system-screen .primary,
 .system-screen .secondary,
 .system-screen .flag {
-  border-color: rgba(255, 140, 66, 0.35);
-  background: linear-gradient(180deg, rgba(22, 44, 78, 0.9), rgba(10, 25, 48, 0.85));
-  color: #ffe6d9;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 140, 66, 0.15);
+  border-color: var(--border-orange);
+  background: linear-gradient(180deg, rgba(40, 20, 10, 0.9), rgba(30, 15, 8, 0.85));
+  color: var(--text-warm);
+  box-shadow: var(--shadow-medium), inset 0 0 0 1px var(--border-orange-subtle);
 }
 
-/* Accent highlights for interactive elements (use thunder yellow) */
+/* Accent highlights for interactive elements (use yellow for primary) */
 .system-screen .primary,
 .system-screen .flag {
   outline-color: var(--theme-yellow);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 217, 74, 0.2);
+  box-shadow: var(--shadow-medium), 0 0 12px rgba(255, 217, 74, 0.2);
 }
 
 /* Unified hover/active states */

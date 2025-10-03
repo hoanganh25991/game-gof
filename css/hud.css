@@ -10,10 +10,10 @@
   width: min(20rem, 45vw);
   padding: 10px 12px;
   background: var(--glass);
-  border: 1px solid rgba(255,140,66,0.3);
+  border: 1px solid var(--border-orange-light);
   border-radius: 10px;
   backdrop-filter: blur(6px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  box-shadow: var(--shadow-medium);
   pointer-events: auto;
   z-index: 20;
 }
@@ -30,8 +30,8 @@
 .bar{
   position: relative;
   height: 18px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--border-white-faint);
+  border: 1px solid var(--border-white-subtle);
   border-radius: 6px;
   overflow: hidden;
   grid-column: 1 / 2;
@@ -73,7 +73,7 @@
   justify-content: space-between;
   padding: 0 8px;
   font-size: 12px;
-  color: #ffe6d9;
+  color: var(--text-warm);
   text-shadow: 0 1px 0 rgba(0,0,0,0.4);
   mix-blend-mode: screen;
   pointer-events: none;
@@ -89,9 +89,9 @@
   padding: 4px 8px;
   border-radius: 8px;
   background: linear-gradient(180deg, rgba(255,140,66,0.2), rgba(255,107,53,0.1));
-  border: 1px solid rgba(255,140,66,0.35);
+  border: 1px solid var(--border-orange);
   font-weight: 700;
-  color: #ffd4b3;
+  color: var(--text-warm-light);
   text-shadow: 0 1px 0 rgba(0,0,0,0.4);
 }
 
@@ -102,10 +102,10 @@
   top: 12px;
   width: 208px;
   height: 208px;
-  background: radial-gradient(220px 220px at 50% 50%, rgba(40,20,10,0.6) 0%, rgba(26,13,8,0.65) 60%, rgba(15,8,4,0.7) 100%);
-  border: 1px solid rgba(255,140,66,0.35);
+  background: radial-gradient(220px 220px at 50% 50%, var(--bg-dark-fire) 0%, rgba(26,13,8,0.65) 60%, rgba(15,8,4,0.7) 100%);
+  border: 1px solid var(--border-orange);
   border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  box-shadow: var(--shadow-medium);
   image-rendering: pixelated;
   pointer-events: auto;
   z-index: 30;
