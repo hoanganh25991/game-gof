@@ -10,7 +10,7 @@ Successfully updated all CSS files in the `/css` directory to match the referenc
 ### 1. **base.css** ✅
 **Changes:**
 - Added CSS custom properties (variables) for theming
-- Introduced `--theme-dark-blue`, `--theme-blue`, `--theme-yellow` color palette
+- Introduced `--theme-orange`, `--theme-blue`, `--theme-yellow` color palette
 - Added `--glass` and `--glass-strong` for backdrop effects
 - Added `--system-bg`, `--system-border`, `--system-text` for settings/hero screens
 - Updated body background to radial gradient (blue tones)
@@ -18,7 +18,7 @@ Successfully updated all CSS files in the `/css` directory to match the referenc
 
 **Key Variables:**
 ```css
---theme-dark-blue: #0b1a2b;
+--theme-orange: #0b1a2b;
 --theme-blue: #1e90ff;
 --theme-yellow: #ffde59;  /* Thunder yellow accent */
 --glass: rgba(14, 28, 52, 0.6);

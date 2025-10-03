@@ -57,7 +57,7 @@
   margin: 0 0 8px 0;
   font-size: 28px;
   font-weight: 800;
-  color: var(--theme-dark-blue);
+  color: var(--theme-orange);
   letter-spacing: 0.6px;
 }
 .flash .flash-desc{
@@ -100,7 +100,7 @@
   margin: 0 0 8px 0;
   font-size: clamp(20px, 5.5vw, 28px);
   font-weight: 800;
-  color: var(--theme-dark-blue);
+  color: var(--theme-orange);
   letter-spacing: 0.6px;
 }
 .start-screen p{

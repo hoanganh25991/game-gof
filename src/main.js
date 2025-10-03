@@ -676,7 +676,7 @@ function updateFlagActive() {
       // Inline highlight to match checkbox (fire orange) so it's always visible
       if (isActive) {
         el.style.background = "linear-gradient(180deg, #ffb366, #ff8c42)";
-        el.style.color = "var(--theme-dark-blue)";
+        el.style.color = "var(--theme-orange)";
         el.style.borderColor = "rgba(255,140,66,0.6)";
         el.style.boxShadow = "0 6px 18px rgba(0,0,0,0.35), 0 0 10px rgba(255,140,66,0.28)";
       } else {

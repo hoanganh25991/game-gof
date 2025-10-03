@@ -5,7 +5,7 @@
 
 :root{
   /* Primary theme palette (dark blue / blue / white / yellow) */
-  --theme-dark-blue: #0b1a2b;    /* battlefield deep blue */
+  --theme-orange: #0b1a2b;    /* battlefield deep blue */
   --theme-blue: #1e90ff;         /* primary blue accent */
   --theme-mid-blue: #123a6b;     /* mid tone */
   --theme-white: #ffffff;        /* clean system white */
@@ -14,7 +14,7 @@
   /* Backwards-compatible aliases */
   --white: #e6f4ff;
   --blue: var(--theme-blue);
-  --dark-blue: var(--theme-dark-blue);
+  --dark-blue: var(--theme-orange);
   --mid-blue: var(--theme-mid-blue);
 
   /* Gameplay / UI tokens */
@@ -31,7 +31,7 @@
   /* System (settings / hero / flash) theme tokens */
   --system-bg: linear-gradient(180deg, rgba(255,250,230,0.99), rgba(255,245,200,0.98));
   --system-border: rgba(60,50,30,0.12);
-  --system-text: var(--theme-dark-blue);
+  --system-text: var(--theme-orange);
   --system-accent: var(--theme-yellow);
 }
 
