@@ -2132,7 +2132,7 @@ function updateEnemies(dt) {
             } else if (en.attackEffect === "fire") {
               try {
                 if (shouldSpawnVfx("fire", __tempVecA)) {
-                  effects.spawnElectricBeamAuto(__tempVecA, __tempVecC, en.beamColor || 0xff6347, 0.1);
+                  effects.spawnFireBeamAuto(__tempVecA, __tempVecC, en.beamColor || 0xff6347, 0.1);
                 }
               } catch (_) {}
             } else {
@@ -2237,7 +2237,7 @@ function updateIndicators(dt) {
     __tempVecA.copy(from);
     __tempVecB.set((Math.random() - 0.5) * 0.6, 0.2 + Math.random() * 0.3, (Math.random() - 0.5) * 0.6);
     __tempVecC.copy(from).add(__tempVecB);
-    effects.spawnElectricBeam(__tempVecA, __tempVecC, COLOR.ember, 0.06, 5, 0.2);
+    effects.spawnFireBeam(__tempVecA, __tempVecC, COLOR.ember, 0.06, 5, 0.2);
     window.__nextHandSparkT = t + 0.5 + Math.random() * 0.5;
   }
 }

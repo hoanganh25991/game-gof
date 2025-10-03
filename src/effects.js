@@ -103,7 +103,7 @@ export class EffectsManager {
   }
 
   // Fire stream beam with flickering flames (replaces jagged electric look)
-  spawnElectricBeam(from, to, color = COLOR.fire, life = 0.12, segments = 10, amplitude = 0.6) {
+  spawnFireBeam(from, to, color = COLOR.fire, life = 0.12, segments = 10, amplitude = 0.6) {
     // Use temporaries to compute dir/normal/up without allocations.
     const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
     const normal = this._tmpVecC.set(-dir.z, 0, dir.x).normalize();
@@ -174,7 +174,7 @@ export class EffectsManager {
   }
 
   // Auto-scaling multi-pass fire stream for thickness by distance
-  spawnElectricBeamAuto(from, to, color = COLOR.fire, life = 0.12) {
+  spawnFireBeamAuto(from, to, color = COLOR.fire, life = 0.12) {
     const dir = to.clone().sub(from);
     const length = dir.length() || 1;
     const normal = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
@@ -248,7 +248,7 @@ export class EffectsManager {
 
   spawnArcNoisePath(from, to, color = 0xff6347, life = 0.08, passes = 2) {
     for (let i = 0; i < passes; i++) {
-      this.spawnElectricBeam(from, to, color, life, 6, 0.2);
+      this.spawnFireBeam(from, to, color, life, 6, 0.2);
     }
   }
 
@@ -521,7 +521,7 @@ export class EffectsManager {
       const dir = new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.2), (Math.random() - 0.5)).normalize();
       const len = 0.35 + Math.random() * 0.5 * strength;
       const to = origin.clone().add(dir.multiplyScalar(len));
-      this.spawnElectricBeam(origin.clone(), to, 0xff6347, 0.06);
+      this.spawnFireBeam(origin.clone(), to, 0xff6347, 0.06);
     }
   }
 
@@ -530,7 +530,7 @@ export class EffectsManager {
     if (!player) return;
     const a = handWorldPos(player);
     const b = leftHandWorldPos(player);
-    this.spawnElectricBeamAuto(a, b, 0xff6347, life);
+    this.spawnFireBeamAuto(a, b, 0xff6347, life);
   }
 
   // ----- Frame update -----

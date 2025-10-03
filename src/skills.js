@@ -294,7 +294,7 @@ export class SkillsSystem {
         ? handWorldPos(this.player)
         : __vA.copy(attacker.pos()).add(__vB.set(0, 1.6, 0)).clone();
     const to = __vC.copy(target.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    this.effects.spawnElectricBeamAuto(from, to, COLOR.fire, 0.12);
+    this.effects.spawnFireBeamAuto(from, to, COLOR.fire, 0.12);
     audio.sfx("basic");
     // FP hand VFX for basic attack
     try {
@@ -340,7 +340,7 @@ export class SkillsSystem {
         hitSet.add(nxt);
         const from = __vA.copy(current.pos()).add(__vB.set(0,1.2,0)).clone();
         const to = __vC.copy(nxt.pos()).add(__vB.set(0,1.2,0)).clone();
-        try { this.effects.spawnElectricBeamAuto(from, to, COLOR.ember, 0.08); } catch(_) {}
+        try { this.effects.spawnFireBeamAuto(from, to, COLOR.ember, 0.08); } catch(_) {}
         nxt.takeDamage(Math.max(1, Math.floor(dmg * 0.85)));
         current = nxt;
       }
@@ -433,7 +433,7 @@ export class SkillsSystem {
       const dir = __vB.set(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
       const to = __vC.copy(from).add(dir.multiplyScalar(effRange));
       try {
-        this.effects.spawnElectricBeamAuto(from, to, fx.beam, 0.1);
+        this.effects.spawnFireBeamAuto(from, to, fx.beam, 0.1);
         this.effects.spawnStrike(__vA.copy(to).setY(0), 1.0, fx.impact);
         this._requestShake(fx.shake || 0);
         audio.sfx("beam");
@@ -456,7 +456,7 @@ export class SkillsSystem {
     let first = true;
     while (current && jumps-- > 0) {
       const hitPoint = __vA.copy(current.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    this.effects.spawnElectricBeamAuto(lastPoint, hitPoint, this._fx(SK).beam, 0.12);
+    this.effects.spawnFireBeamAuto(lastPoint, hitPoint, this._fx(SK).beam, 0.12);
     this.effects.spawnArcNoisePath(lastPoint, hitPoint, this._fx(SK).arc, 0.08);
     if (first) { this._requestShake(this._fx(SK).shake || 0); first = false; }
     const dmgHit = this.scaleSkillDamage(SK.dmg || 0);
@@ -633,7 +633,7 @@ export class SkillsSystem {
       const dir = __vB.set(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
       const to = from.clone().add(dir.multiplyScalar(effRange));
       try {
-        this.effects.spawnElectricBeamAuto(from, to, fx.beam, 0.1);
+        this.effects.spawnFireBeamAuto(from, to, fx.beam, 0.1);
         this.effects.spawnStrike(to.clone().setY(0), 1.0, fx.impact);
         this._requestShake(fx.shake || 0);
         audio.sfx("beam");
@@ -656,7 +656,7 @@ export class SkillsSystem {
           ? handWorldPos(this.player)
           : __vA.copy(this.player.pos()).add(__vB.set(0, 1.6, 0)).clone();
     const to = __vC.copy(target.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    this.effects.spawnElectricBeamAuto(from, to, this._fx(SK).beam, 0.12); this._requestShake(this._fx(SK).shake);
+    this.effects.spawnFireBeamAuto(from, to, this._fx(SK).beam, 0.12); this._requestShake(this._fx(SK).shake);
     this.effects.spawnArcNoisePath(from, to, this._fx(SK).arc, 0.08, 2);
     audio.sfx("beam");
     const dmg = this.scaleSkillDamage(SK.dmg || 0);
@@ -886,7 +886,7 @@ export class SkillsSystem {
     try {
       const to = target.pos().clone().add(new THREE.Vector3(0,1.2,0));
       const from = this.player.pos().clone().add(new THREE.Vector3(0,1.6,0));
-      this.effects.spawnElectricBeamAuto(from, to, this._fx(SK).beam, 0.12);
+      this.effects.spawnFireBeamAuto(from, to, this._fx(SK).beam, 0.12);
       this.effects.spawnStrike(target.pos(), 1.2, this._fx(SK).impact);
       try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).impact); } catch (_) {}
       audio.sfx("cast_beam");
@@ -1154,7 +1154,7 @@ export class SkillsSystem {
           const from = c.pos.clone().add(off);
           const to = target.pos().clone().add(new THREE.Vector3(0, 1.2, 0));
           try {
-            this.effects.spawnElectricBeamAuto(from, to, COLOR.fire, 0.12);
+            this.effects.spawnFireBeamAuto(from, to, COLOR.fire, 0.12);
             this.effects.spawnArcNoisePath(from, to, COLOR.ember, 0.08);
             audio.sfx("chain_hit");
             this.effects.spawnStrike(target.pos(), 0.9, COLOR.midFire);
@@ -1247,7 +1247,7 @@ export class SkillsSystem {
         case "beam": {
           const fx = this._fx(def);
           const to = ahead.clone().add(new THREE.Vector3(0, 1.2, 0));
-          this.effects.spawnElectricBeamAuto(from, to, fx.beam, 0.12);
+          this.effects.spawnFireBeamAuto(from, to, fx.beam, 0.12);
           this.effects.spawnStrike(ahead, 1.0, fx.impact);
           break;
         }
