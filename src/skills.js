@@ -468,7 +468,7 @@ export class SkillsSystem {
     let first = true;
     while (current && jumps-- > 0) {
       const hitPoint = __vA.copy(current.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    this.effects.spawnFireBeamAuto(lastPoint, hitPoint, this._fx(SK).beam, 0.12);
+    this.effects.spawnFireStreamAuto(lastPoint, hitPoint, this._fx(SK).beam, 0.12);
     this.effects.spawnArcNoisePath(lastPoint, hitPoint, this._fx(SK).arc, 0.08);
     if (first) { this._requestShake(this._fx(SK).shake || 0); first = false; }
     const dmgHit = this.scaleSkillDamage(SK.dmg || 0);
@@ -668,8 +668,18 @@ export class SkillsSystem {
           ? handWorldPos(this.player)
           : __vA.copy(this.player.pos()).add(__vB.set(0, 1.6, 0)).clone();
     const to = __vC.copy(target.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    this.effects.spawnFireBeamAuto(from, to, this._fx(SK).beam, 0.12); this._requestShake(this._fx(SK).shake);
-    this.effects.spawnArcNoisePath(from, to, this._fx(SK).arc, 0.08, 2);
+    
+    // Spawn fireball projectile for beam skill
+    this.effects.spawnFireball(from, to, {
+      color: this._fx(SK).beam,
+      size: 0.4,
+      speed: 30,
+      onComplete: () => {
+        this.effects.spawnStrike(target.pos(), 1.2, this._fx(SK).impact);
+        this.effects.spawnArcNoisePath(from, to, this._fx(SK).arc, 0.08, 2);
+      }
+    });
+    this._requestShake(this._fx(SK).shake);
     audio.sfx("beam");
     const dmg = this.scaleSkillDamage(SK.dmg || 0);
     target.takeDamage(dmg);
@@ -898,9 +908,17 @@ export class SkillsSystem {
     try {
       const to = target.pos().clone().add(new THREE.Vector3(0,1.2,0));
       const from = this.player.pos().clone().add(new THREE.Vector3(0,1.6,0));
-      this.effects.spawnFireBeamAuto(from, to, this._fx(SK).beam, 0.12);
-      this.effects.spawnStrike(target.pos(), 1.2, this._fx(SK).impact);
-      try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).impact); } catch (_) {}
+      
+      // Spawn fireball projectile for mark skill
+      this.effects.spawnFireball(from, to, {
+        color: this._fx(SK).beam,
+        size: 0.35,
+        speed: 35,
+        onComplete: () => {
+          this.effects.spawnStrike(target.pos(), 1.2, this._fx(SK).impact);
+          try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).impact); } catch (_) {}
+        }
+      });
       audio.sfx("cast_beam");
     } catch (_) {}
   }
@@ -1166,10 +1184,17 @@ export class SkillsSystem {
           const from = c.pos.clone().add(off);
           const to = target.pos().clone().add(new THREE.Vector3(0, 1.2, 0));
           try {
-            this.effects.spawnFireBeamAuto(from, to, COLOR.fire, 0.12);
-            this.effects.spawnArcNoisePath(from, to, COLOR.ember, 0.08);
+            // Clone fires fireball projectiles at enemies
+            this.effects.spawnFireball(from, to, {
+              color: COLOR.fire,
+              size: 0.3,
+              speed: 25,
+              onComplete: () => {
+                this.effects.spawnStrike(target.pos(), 0.9, COLOR.midFire);
+                this.effects.spawnArcNoisePath(from, to, COLOR.ember, 0.08);
+              }
+            });
             audio.sfx("chain_hit");
-            this.effects.spawnStrike(target.pos(), 0.9, COLOR.midFire);
           } catch (e) {}
           target.takeDamage(c.dmg);
           if (!c.shook) { this._requestShake(0.2); c.shook = true; }
@@ -1259,8 +1284,15 @@ export class SkillsSystem {
         case "beam": {
           const fx = this._fx(def);
           const to = ahead.clone().add(new THREE.Vector3(0, 1.2, 0));
-          this.effects.spawnFireBeamAuto(from, to, fx.beam, 0.12);
-          this.effects.spawnStrike(ahead, 1.0, fx.impact);
+          // Preview: spawn fireball projectile
+          this.effects.spawnFireball(from, to, {
+            color: fx.beam,
+            size: 0.35,
+            speed: 30,
+            onComplete: () => {
+              this.effects.spawnStrike(ahead, 1.0, fx.impact);
+            }
+          });
           break;
         }
         default: {
