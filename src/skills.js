@@ -249,36 +249,40 @@ export class SkillsSystem {
   tryBasicAttack(attacker, target) {
     const time = now();
     if (time < (attacker.nextBasicReady || 0)) return false;
-    if (!target || !target.alive) return false;
+    
+    // Allow casting without a target
+    const hasValidTarget = target && target.alive;
 
     // Prevent player from attacking targets outside while inside any village (origin or dynamic).
     // Falls back to origin-only rule if villages API is not provided.
-    try {
-      if (attacker === this.player) {
-        // More permissive safe-zone rule:
-        // - Allow attacking inside same village
-        // - Allow attacking just outside boundary (small tolerance)
-        // - Prevent cross-village aggression only when both are inside different villages
-        if (this.villages && typeof this.villages.isInsideAnyVillage === "function") {
-          const pin = this.villages.isInsideAnyVillage(attacker.pos());
-          const tin = this.villages.isInsideAnyVillage(target.pos());
-          if (pin && pin.inside && tin && tin.inside && pin.key !== tin.key) {
-            return false; // inside different villages
+    if (hasValidTarget) {
+      try {
+        if (attacker === this.player) {
+          // More permissive safe-zone rule:
+          // - Allow attacking inside same village
+          // - Allow attacking just outside boundary (small tolerance)
+          // - Prevent cross-village aggression only when both are inside different villages
+          if (this.villages && typeof this.villages.isInsideAnyVillage === "function") {
+            const pin = this.villages.isInsideAnyVillage(attacker.pos());
+            const tin = this.villages.isInsideAnyVillage(target.pos());
+            if (pin && pin.inside && tin && tin.inside && pin.key !== tin.key) {
+              return false; // inside different villages
+            }
+          } else {
+            // Fallback: origin-only safe ring with tolerance to avoid misses near boundary
+            const pd = distance2D(attacker.pos(), VILLAGE_POS);
+            const td = distance2D(target.pos(), VILLAGE_POS);
+            const tol = 1.5;
+            if ((pd <= (REST_RADIUS - tol)) && (td > (REST_RADIUS + tol))) return false;
           }
-        } else {
-          // Fallback: origin-only safe ring with tolerance to avoid misses near boundary
-          const pd = distance2D(attacker.pos(), VILLAGE_POS);
-          const td = distance2D(target.pos(), VILLAGE_POS);
-          const tol = 1.5;
-          if ((pd <= (REST_RADIUS - tol)) && (td > (REST_RADIUS + tol))) return false;
         }
+      } catch (e) {
+        // ignore errors in defensive check
       }
-    } catch (e) {
-      // ignore errors in defensive check
-    }
 
-    const dist = distance2D(attacker.pos(), target.pos());
-    if (dist > WORLD.attackRange * (WORLD.attackRangeMult || 1)) return false;
+      const dist = distance2D(attacker.pos(), target.pos());
+      if (dist > WORLD.attackRange * (WORLD.attackRangeMult || 1)) return false;
+    }
 
     const buffMul = (attacker.atkSpeedUntil && now() < attacker.atkSpeedUntil) ? (attacker.atkSpeedMul || 1) : 1;
     const permaMul = attacker.atkSpeedPerma || 1;
@@ -293,7 +297,19 @@ export class SkillsSystem {
       attacker === this.player && this.player.mesh.userData.handAnchor
         ? handWorldPos(this.player)
         : __vA.copy(attacker.pos()).add(__vB.set(0, 1.6, 0)).clone();
-    const to = __vC.copy(target.pos()).add(__vB.set(0, 1.2, 0)).clone();
+    
+    // Calculate target position: use actual target if available, otherwise fire in facing direction
+    let to;
+    if (hasValidTarget) {
+      to = __vC.copy(target.pos()).add(__vB.set(0, 1.2, 0)).clone();
+    } else {
+      // Fire in the direction the player is facing
+      const range = WORLD.attackRange * (WORLD.attackRangeMult || 1);
+      const yaw = attacker.lastFacingYaw || attacker.mesh.rotation.y || 0;
+      to = __vC.copy(attacker.pos())
+        .add(__vB.set(Math.sin(yaw) * range, 1.2, Math.cos(yaw) * range))
+        .clone();
+    }
     
     // FIRE PROJECTILE: Spawn fireball that travels to target
     const baseDmg = this.getBasicDamage(attacker);
@@ -307,7 +323,9 @@ export class SkillsSystem {
       onComplete: (hitPos) => {
         // Impact explosion at target
         this.effects.spawnStrike(hitPos, 1.2, COLOR.fire);
-        this.effects.spawnHitDecal(target.pos(), COLOR.fire);
+        if (hasValidTarget) {
+          this.effects.spawnHitDecal(target.pos(), COLOR.fire);
+        }
       }
     });
     
@@ -323,40 +341,44 @@ export class SkillsSystem {
     } catch (e) {}
     if (attacker === this.player) this.player.braceUntil = now() + 0.18;
     
-    target.takeDamage(dmg);
-    try { this.effects.spawnDamagePopup(target.pos(), dmg, 0xffe0e0); } catch (e) {}
+    // Only deal damage if there's a valid target
+    if (hasValidTarget) {
+      target.takeDamage(dmg);
+      try { this.effects.spawnDamagePopup(target.pos(), dmg, 0xffe0e0); } catch (e) {}
 
-    // Uplift: AOE explosion around the hit target
-    try {
-      if (up.aoeRadius && up.aoeRadius > 0) {
-        this.effects.spawnStrike(target.pos(), up.aoeRadius, COLOR.ember);
-        const r = up.aoeRadius + 2.5;
-        this.enemies.forEach((en) => {
-          if (!en.alive || en === target) return;
-          if (distance2D(en.pos(), target.pos()) <= r) en.takeDamage(Math.max(1, Math.floor(dmg * 0.8)));
-        });
-      }
-    } catch (_) {}
+      // Uplift: AOE explosion around the hit target
+      try {
+        if (up.aoeRadius && up.aoeRadius > 0) {
+          this.effects.spawnStrike(target.pos(), up.aoeRadius, COLOR.ember);
+          const r = up.aoeRadius + 2.5;
+          this.enemies.forEach((en) => {
+            if (!en.alive || en === target) return;
+            if (distance2D(en.pos(), target.pos()) <= r) en.takeDamage(Math.max(1, Math.floor(dmg * 0.8)));
+          });
+        }
+      } catch (_) {}
 
-    // Uplift: Chain to nearby enemies
-    try {
-      let jumps = Math.max(0, up.chainJumps || 0);
-      let current = target;
-      const hitSet = new Set([current]);
-      while (jumps-- > 0) {
-        const candidates = this.enemies
-          .filter(e => e.alive && !hitSet.has(e) && distance2D(current.pos(), e.pos()) <= 22)
-          .sort((a,b) => distance2D(current.pos(), a.pos()) - distance2D(current.pos(), b.pos()));
-        const nxt = candidates[0];
-        if (!nxt) break;
-        hitSet.add(nxt);
-        const from = __vA.copy(current.pos()).add(__vB.set(0,1.2,0)).clone();
-        const to = __vC.copy(nxt.pos()).add(__vB.set(0,1.2,0)).clone();
-        try { this.effects.spawnFireStreamAuto(from, to, COLOR.ember, 0.08); } catch(_) {}
-        nxt.takeDamage(Math.max(1, Math.floor(dmg * 0.85)));
-        current = nxt;
-      }
-    } catch (_) {}
+      // Uplift: Chain to nearby enemies
+      try {
+        let jumps = Math.max(0, up.chainJumps || 0);
+        let current = target;
+        const hitSet = new Set([current]);
+        while (jumps-- > 0) {
+          const candidates = this.enemies
+            .filter(e => e.alive && !hitSet.has(e) && distance2D(current.pos(), e.pos()) <= 22)
+            .sort((a,b) => distance2D(current.pos(), a.pos()) - distance2D(current.pos(), b.pos()));
+          const nxt = candidates[0];
+          if (!nxt) break;
+          hitSet.add(nxt);
+          const from = __vA.copy(current.pos()).add(__vB.set(0,1.2,0)).clone();
+          const to = __vC.copy(nxt.pos()).add(__vB.set(0,1.2,0)).clone();
+          try { this.effects.spawnFireStreamAuto(from, to, COLOR.ember, 0.08); } catch(_) {}
+          nxt.takeDamage(Math.max(1, Math.floor(dmg * 0.85)));
+          current = nxt;
+        }
+      } catch (_) {}
+    }
+    
     return true;
   }
 

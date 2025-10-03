@@ -276,7 +276,7 @@ export function initTouchControls({ player, skills, effects, aimPreview, attackP
   // Skill wheel actions (generic)
   if (els.btnBasic) {
     els.btnBasic.addEventListener("click", () => {
-      // Mobile "A" / Basic button: attempt immediate basic attack on nearest enemy.
+      // Mobile "A" / Basic button: attempt immediate basic attack on nearest enemy or in facing direction.
       if (player.frozen) return;
       try {
         const nearest = (typeof getNearestEnemy === "function")
@@ -293,10 +293,9 @@ export function initTouchControls({ player, skills, effects, aimPreview, attackP
             player.attackMove = false;
           }
           effects?.spawnTargetPing?.(nearest);
-          try { skills.tryBasicAttack(player, nearest); } catch (err) { /* ignore */ }
-        } else {
-          // No nearby enemy: do nothing
         }
+        // Always try basic attack (will fire in facing direction if no target)
+        try { skills.tryBasicAttack(player, nearest); } catch (err) { /* ignore */ }
       } catch (e) {
         // fail silently
       }

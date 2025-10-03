@@ -61,16 +61,18 @@ export function createInputService({
     try {
       const effRange = effectiveRange();
       const nearest = getNearestEnemy(player.pos(), effRange, enemies);
-      if (!nearest) return;
-      player.target = nearest;
-      player.moveTarget = null;
-      try {
-        const d = distance2D(player.pos(), nearest.pos());
-        player.attackMove = d > effRange * 0.95;
-      } catch (err) {
-        player.attackMove = false;
+      if (nearest) {
+        player.target = nearest;
+        player.moveTarget = null;
+        try {
+          const d = distance2D(player.pos(), nearest.pos());
+          player.attackMove = d > effRange * 0.95;
+        } catch (err) {
+          player.attackMove = false;
+        }
+        effects.spawnTargetPing(nearest);
       }
-      effects.spawnTargetPing(nearest);
+      // Always try basic attack (will fire in facing direction if no target)
       skills.tryBasicAttack(player, nearest);
     } catch (e) {}
   }
