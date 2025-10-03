@@ -117,9 +117,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     const info = document.createElement("div");
     const title = document.createElement("div");
     title.className = "items-title";
-    const nameLocal = tt(`skills.names.${s.id}`) || s.name;
-    const shortLocal = tt(`skills.shorts.${s.id}`) || s.short;
-    title.textContent = `${nameLocal}${shortLocal ? " • " + shortLocal : ""}`;
+    title.textContent = tt(`skills.names.${s.id}`) || s.name;
     
     if (!isUnlocked) {
       title.textContent += ` 🔒 (Lv ${unlockLevel})`;
