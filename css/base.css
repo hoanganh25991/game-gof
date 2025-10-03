@@ -4,35 +4,35 @@
 */
 
 :root{
-  /* Primary theme palette (dark blue / blue / white / yellow) */
-  --theme-dark-blue: #0b1a2b;    /* battlefield deep blue */
-  --theme-blue: #1e90ff;         /* primary blue accent */
-  --theme-mid-blue: #123a6b;     /* mid tone */
-  --theme-white: #ffffff;        /* clean system white */
-  --theme-yellow: #ffde59;       /* thunder / light yellow */
+  /* Primary theme palette (FIRE THEME - orange/red) */
+  --theme-dark: #1a0a05;         /* deep dark red-brown */
+  --theme-orange: #ff6b35;       /* primary fire orange */
+  --theme-light-orange: #ff8c42; /* lighter orange */
+  --theme-white: #ffffff;        /* clean white */
+  --theme-accent: #ffa552;       /* bright orange accent */
 
   /* Backwards-compatible aliases */
-  --white: #e6f4ff;
-  --blue: var(--theme-blue);
-  --dark-blue: var(--theme-dark-blue);
-  --mid-blue: var(--theme-mid-blue);
+  --white: #ffe6d9;
+  --orange: var(--theme-orange);
+  --dark-orange: #cc5529;
+  --light-orange: var(--theme-light-orange);
 
   /* Gameplay / UI tokens */
-  --hp: #4ec3ff;   /* themed blue for HP */
-  --mp: #1a73e8;   /* deeper blue for mana */
-  --xp: #9ad1ff;   /* light blue for XP */
-  --bg: #050a12;
+  --hp: #ff4444;   /* red for HP */
+  --mp: #4488ff;   /* blue for mana */
+  --xp: #ffaa44;   /* orange for XP */
+  --bg: #0a0503;
 
   /* Glass / overlay tokens */
-  --glass: rgba(14, 28, 52, 0.6);
-  --glass-strong: rgba(14, 28, 52, 0.8);
-  --accent: #7cc4ff;
+  --glass: rgba(26, 10, 5, 0.7);
+  --glass-strong: rgba(26, 10, 5, 0.85);
+  --accent: var(--theme-accent);
 
   /* System (settings / hero / flash) theme tokens */
-  --system-bg: linear-gradient(180deg, rgba(255,250,230,0.99), rgba(255,245,200,0.98));
-  --system-border: rgba(60,50,30,0.12);
-  --system-text: var(--theme-dark-blue);
-  --system-accent: var(--theme-yellow);
+  --system-bg: linear-gradient(180deg, rgba(40,20,10,0.95), rgba(30,15,8,0.95));
+  --system-border: rgba(255,107,53,0.3);
+  --system-text: #ffe6d9;
+  --system-accent: var(--theme-accent);
 }
 
 *{ box-sizing: border-box; }
@@ -44,7 +44,7 @@ html, body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background: radial-gradient(1200px 1200px at 70% 30%, #0d2140 0%, #091528 50%, #050a12 100%);
+  background: radial-gradient(1200px 1200px at 70% 30%, #2a1510 0%, #1a0f0a 50%, #0a0503 100%);
   color: var(--white);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
 }
@@ -67,7 +67,7 @@ button{
   touch-action: manipulation;
 }
 button:focus-visible{
-  outline: 2px solid rgba(255,217,74,0.8); /* thunder yellow */
+  outline: 2px solid rgba(255,165,82,0.8); /* fire orange */
   outline-offset: 2px;
 }
 
@@ -83,7 +83,7 @@ button:focus-visible{
 
 /* Utility: glow text */
 .glow{
-  text-shadow: 0 0 6px rgba(124,196,255,0.5), 0 2px 10px rgba(0,0,0,0.6);
+  text-shadow: 0 0 6px rgba(255,140,66,0.6), 0 2px 10px rgba(0,0,0,0.6);
 }
 
 /* Small helper: centered overlay messages (used across screens) */
@@ -94,9 +94,9 @@ button:focus-visible{
   transform: translateX(-50%);
   padding: 10px 16px;
   background: var(--glass-strong);
-  border: 1px solid rgba(124,196,255,0.35);
+  border: 1px solid rgba(255,140,66,0.4);
   border-radius: 10px;
-  color: #e6f4ff;
+  color: #ffe6d9;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -111,7 +111,7 @@ button:focus-visible{
   width: 16px; height: 16px;
   border-radius: 50%;
   border: 2px solid var(--accent);
-  box-shadow: 0 0 12px rgba(124,196,255,0.7), inset 0 0 6px rgba(124,196,255,0.7);
+  box-shadow: 0 0 12px rgba(255,165,82,0.7), inset 0 0 6px rgba(255,165,82,0.7);
 }
 
 /* Small utility to visually hide everything except flash overlay (splash flow).
