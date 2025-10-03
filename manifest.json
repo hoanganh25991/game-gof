@@ -5,8 +5,8 @@
   "short_name": "GoF",
   "display": "fullscreen",
   "orientation": "landscape",
-  "background_color": "#0b1a2b",
-  "theme_color": "#0b1a2b",
+  "background_color": "#ff6b35",
+  "theme_color": "#ff6b35",
   "description": "GoF RPG — top-down action with storms, skills, and endless maps.",
   "icons": [
     {

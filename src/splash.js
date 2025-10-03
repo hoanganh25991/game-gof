@@ -72,8 +72,8 @@ export function initSplash() {
           if (startScreen) {
             // Inject start screen content dynamically to avoid affecting LCP
             startScreen.innerHTML = `
-              <h2 id="startTitle" data-i18n="start.title">Hành trình của Thần Sấm</h2>
-              <p id="startStory" data-i18n="start.story">Thế giới chìm trong u ám. Những bóng đêm tỉnh dậy, và chỉ một vị thần có thể gọi sấm sét trở lại. Hãy dẫn GoF — vị thần sấm — qua rừng hoang, làng mạc đổ nát và chiến trường, tiêu diệt lũ quái và khôi phục trật tự.</p>
+              <h2 id="startTitle" data-i18n="start.title">Hành trình của Hoả Thần</h2>
+              <p id="startStory" data-i18n="start.story">Thế giới chìm trong u ám. Những bóng đêm tỉnh dậy, và chỉ một vị thần có thể gọi sấm sét trở lại. Hãy dẫn GoF — vị hoả thần — qua rừng hoang, làng mạc đổ nát và chiến trường, tiêu diệt lũ quái và khôi phục trật tự.</p>
               <button id="btnStartGame" class="primary" data-i18n="btn.start">Bắt đầu</button>
             `;
             
