@@ -944,7 +944,7 @@ const aimPreview = null;
 
 const attackPreview = null;
 
-const selectionRing = createGroundRing(0.9, 1.05, 0x7cc4ff, 0.55);
+const selectionRing = createGroundRing(0.9, 1.05, COLOR.fire, 0.55);
 selectionRing.visible = true;
 effects.indicators.add(selectionRing);
 
@@ -2212,7 +2212,7 @@ function updateIndicators(dt) {
     selectionRing.visible = true;
     const p = selectedUnit.pos();
     selectionRing.position.set(p.x, 0.02, p.z);
-    const col = selectedUnit.team === "enemy" ? 0xff6060 : 0x7cc4ff;
+    const col = selectedUnit.team === "enemy" ? 0xff6060 : COLOR.fire;
     selectionRing.material.color.setHex(col);
   } else {
     selectionRing.visible = false;
