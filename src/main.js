@@ -766,7 +766,7 @@ function initQualitySelect() {
   // Initialize from persisted prefs or current variable
   let q = renderQuality;
   try {
-    const prefs = JSON.parse(localStorage.getItem("renderPrefs") || "{}");
+    const prefs = JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}");
     if (prefs && typeof prefs.quality === "string") q = prefs.quality;
   } catch (_) {}
 
@@ -782,11 +782,11 @@ function initQualitySelect() {
       const nextQ = valid ? v : "high";
       // Persist preference before full reload
       try {
-        const prev = JSON.parse(localStorage.getItem("renderPrefs") || "{}");
+        const prev = JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}");
         prev.quality = nextQ;
-        localStorage.setItem("renderPrefs", JSON.stringify(prev));
+        localStorage.setItem("gof.renderPrefs", JSON.stringify(prev));
       } catch (_) {}
-      try { localStorage.setItem("pendingReloadReason", "quality-change"); } catch (_) {}
+      try { localStorage.setItem("gof.pendingReloadReason", "quality-change"); } catch (_) {}
       // Reload to apply enemy density and fully reinitialize subsystems for the new quality
       window.location.reload();
     });
@@ -804,7 +804,7 @@ function initZoomControl() {
   // Initialize from persisted prefs or UI default 2 (≈0.711)
   let z = 0.6 + (1 / 9) * 1.0;
   try {
-    const prefs = JSON.parse(localStorage.getItem("renderPrefs") || "{}");
+    const prefs = JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}");
     if (typeof prefs.zoom === "number") z = prefs.zoom;
   } catch (_) {}
 
@@ -830,9 +830,9 @@ function initZoomControl() {
         cameraOffset.copy(_baseCameraOffset.clone().multiplyScalar(zoom));
       } catch (_) {}
       try {
-        const prev = JSON.parse(localStorage.getItem("renderPrefs") || "{}");
+        const prev = JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}");
         prev.zoom = zoom;
-        localStorage.setItem("renderPrefs", JSON.stringify(prev));
+        localStorage.setItem("gof.renderPrefs", JSON.stringify(prev));
       } catch (_) {}
     };
     sel.addEventListener("change", onChange);
@@ -847,7 +847,7 @@ if (musicToggle) {
   musicToggle.checked = !!musicEnabled;
   musicToggle.addEventListener("change", () => {
     musicEnabled = !!musicToggle.checked;
-    try { localStorage.setItem("audioPrefs", JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {}
+    try { localStorage.setItem("gof.audioPrefs", JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {}
     if (musicEnabled) {
       // Start background music immediately
       try {
@@ -868,7 +868,7 @@ if (sfxToggle) {
   sfxToggle.addEventListener("change", () => {
     sfxEnabled = !!sfxToggle.checked;
     try { audio.setSfxVolume(sfxEnabled ? 0.5 : 0.0); } catch (_) {}
-    try { localStorage.setItem("audioPrefs", JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {}
+    try { localStorage.setItem("gof.audioPrefs", JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {}
   });
 }
 
