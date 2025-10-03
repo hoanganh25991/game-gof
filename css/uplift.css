@@ -1,252 +1,101 @@
-/* Uplift popup and skill upgrade UI */
+/* css/uplift.css
+   Styles for the Uplift popup and toast
+*/
 
 #upliftPopup {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
   display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.3s ease;
 }
 
 #upliftPopup[aria-hidden="false"] {
   display: flex;
 }
 
-.uplift-card {
-  background: linear-gradient(135deg, #1a2332 0%, #0a0e1a 100%);
-  border: 3px solid rgba(255, 170, 0, 0.5);
-  border-radius: 20px;
-  padding: 32px;
-  max-width: 600px;
-  width: 90%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 170, 0, 0.3);
-  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.uplift-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: #ffcc44;
+#upliftPopup .uplift-card {
+  min-width: 280px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  background: rgba(12,28,52,0.95);
+  border: 1px solid rgba(124,196,255,0.35);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+  border-radius: 10px;
+  padding: 16px;
+  color: #fff;
   text-align: center;
-  margin-bottom: 16px;
-  text-shadow: 0 2px 8px rgba(255, 170, 0, 0.5);
 }
 
-.uplift-desc {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.8);
-  text-align: center;
-  margin-bottom: 24px;
-  line-height: 1.6;
+#upliftPopup .uplift-title {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #ffd86a;
 }
 
-.uplift-btn-row {
+#upliftPopup .uplift-desc {
+  opacity: 0.9;
+  margin-bottom: 12px;
+}
+
+#upliftPopup .uplift-btn-row {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.uplift-btn {
-  flex: 1;
-  min-width: 150px;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 3px solid rgba(255, 170, 0, 0.4);
-  border-radius: 16px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.uplift-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 170, 0, 0.1) 0%, rgba(255, 140, 66, 0.1) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.uplift-btn:hover {
-  border-color: rgba(255, 170, 0, 0.8);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(255, 170, 0, 0.4);
-}
-
-.uplift-btn:hover::before {
-  opacity: 1;
-}
-
-.uplift-btn:active {
-  transform: translateY(-2px) scale(0.98);
-}
-
-.uplift-btn-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.uplift-btn-name {
-  font-size: 16px;
-  font-weight: bold;
-  color: #ffcc44;
-  margin-bottom: 4px;
-}
-
-.uplift-btn-desc {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
-  text-align: center;
-  line-height: 1.4;
-}
-
-.uplift-footer {
-  display: flex;
-  justify-content: center;
-  padding-top: 16px;
-  border-top: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.uplift-skip {
-  padding: 10px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+#upliftPopup .uplift-btn {
+  padding: 10px 12px;
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 13px;
-  font-weight: 600;
+  border: 1px solid rgba(124,196,255,0.35);
+  background: linear-gradient(180deg, #1b3c6b, #0f294a);
+  color: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
+  min-width: 110px;
+  text-align: center;
+  user-select: none;
 }
 
-.uplift-skip:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
-  border-color: rgba(255, 255, 255, 0.2);
+#upliftPopup .uplift-btn:focus {
+  outline: 2px solid rgba(124,196,255,0.6);
+  outline-offset: 2px;
 }
 
-/* Uplift toast notification */
+#upliftPopup .uplift-footer {
+  margin-top: 10px;
+}
+
+#upliftPopup .uplift-skip {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(124,196,255,0.25);
+  background: rgba(12,28,52,0.85);
+  color: #ddd;
+  cursor: pointer;
+}
+
 #upliftToast {
   position: fixed;
-  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.95);
-  border: 3px solid rgba(255, 170, 0, 0.5);
-  border-radius: 16px;
-  padding: 20px 32px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #ffcc44;
-  z-index: 10001;
-  opacity: 0;
+  top: 12%;
+  transform: translateX(-50%);
+  background: rgba(20,40,70,0.95);
+  border: 1px solid rgba(124,196,255,0.35);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  z-index: 9999;
+  display: none;
   pointer-events: none;
-  transition: opacity 0.3s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 170, 0, 0.3);
-  text-align: center;
 }
 
 #upliftToast.show {
-  opacity: 1;
-  animation: toastPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes toastPop {
-  0% {
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.1);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-/* Level up notification */
-.level-up-notif {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.95);
-  border: 3px solid rgba(255, 170, 0, 0.6);
-  border-radius: 20px;
-  padding: 32px 48px;
-  font-size: 32px;
-  font-weight: bold;
-  color: #ffcc44;
-  z-index: 10001;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 60px rgba(255, 170, 0, 0.5);
-  animation: levelUpAnim 2s ease-out forwards;
-}
-
-@keyframes levelUpAnim {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.2);
-  }
-  80% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-}
-
-/* Skill points indicator */
-.skill-points-indicator {
-  position: fixed;
-  top: 80px;
-  left: 20px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 2px solid rgba(255, 170, 0, 0.5);
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #ffcc44;
-  z-index: 101;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-}
-
-.skill-points-indicator::before {
-  content: '⭐';
-  font-size: 18px;
+  display: block;
 }

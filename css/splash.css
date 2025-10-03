@@ -1,132 +1,125 @@
-/* Splash screen and loading styles */
+/* css/splash.css
+   Flash / Splash overlay styles (full-screen beautiful splash and progress)
+   Imported by css/style.css
+*/
 
-.flash {
+.flash{
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, #0a0e1a 0%, #1a2332 100%);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(800px 400px at 30% 30%,
+    rgba(255,250,230,0.95) 0%,
+    rgba(255,245,200,0.9) 40%,
+    rgba(250,240,200,0.88) 60%,
+    rgba(20,24,30,0.02) 100%);
   z-index: 9999;
-  animation: fadeIn 0.5s ease;
+  pointer-events: auto; /* intercept clicks while splash visible */
 }
 
-.flash-card {
+/* Hidden helper */
+.flash.hidden{ display:none; pointer-events: none; opacity: 0; transition: none; }
+
+/* Ensure screens/UI are hidden while splash active */
+.splash-active .screen,
+.splash-active .screen .screen-content,
+.splash-active #ui-root,
+.splash-active #bottomLeftGroup {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Card inside the splash for content */
+.flash .flash-card{
+  width: min(720px, 92vw);
+  max-width: 760px;
+  padding: 28px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,250,0.98), rgba(255,250,220,0.98));
+  border: 1px solid var(--system-border);
+  box-shadow: 0 24px 80px rgba(10,12,16,0.12);
   text-align: center;
-  color: #fff;
-  padding: 2rem;
-  max-width: 500px;
-  animation: slideUp 0.6s ease;
+  color: var(--system-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-height: min(90vh, 90dvh);
+  overflow: auto;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Title / description */
+.flash .flash-title{
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--theme-dark-blue);
+  letter-spacing: 0.6px;
+}
+.flash .flash-desc{
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: rgba(10,10,20,0.85);
 }
 
-.flash-title {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: glow 2s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 10px rgba(255, 107, 53, 0.5));
-  }
-  50% {
-    filter: drop-shadow(0 0 20px rgba(255, 140, 66, 0.8));
-  }
-}
-
-.flash-desc {
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-  opacity: 0.9;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.progress {
+/* Progress bar */
+.flash .progress{
   width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  height: 12px;
+  background: linear-gradient(180deg, rgba(10,10,10,0.04), rgba(10,10,10,0.02));
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0,0,0,0.04);
 }
-
-.progress .bar {
+.flash .progress .bar{
   height: 100%;
-  background: linear-gradient(90deg, #ff6b35, #ff8c42, #ffa552);
-  background-size: 200% 100%;
-  transition: width 0.3s ease;
-  animation: shimmer 2s linear infinite;
-  box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+  width: 0%;
+  background: linear-gradient(90deg, var(--theme-yellow), #ffd14d);
+  box-shadow: 0 6px 18px rgba(255,220,70,0.12), inset 0 -4px 12px rgba(255,255,255,0.12);
+  transition: width 120ms linear;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.flash-note {
-  margin-top: 10px;
+/* Small note under progress */
+.flash .flash-note{
+  color: rgba(10,10,20,0.6);
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  animation: pulse 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 0.8;
-  }
+/* Safe-area padding for notches (overrides default padding) */
+.flash{
+  padding: 24px;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 
-/* Splash fade out */
-.splash-active .flash {
-  animation: fadeOut 0.5s ease forwards;
+/* Start screen typography scales responsively (prevents oversized text on small screens) */
+.start-screen h2{
+  margin: 0 0 8px 0;
+  font-size: clamp(20px, 5.5vw, 28px);
+  font-weight: 800;
+  color: var(--theme-dark-blue);
+  letter-spacing: 0.6px;
+}
+.start-screen p{
+  margin: 0 0 12px 0;
+  font-size: clamp(13px, 3.8vw, 16px);
+  line-height: 1.4;
+  color: rgba(10,10,20,0.85);
+}
+.start-screen .primary{
+  font-size: clamp(14px, 4.2vw, 16px);
+  padding: 10px 16px;
+  min-width: 120px;
 }
 
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    pointer-events: none;
-  }
-}
-
-/* Loading spinner (optional) */
-.spinner {
-  width: 40px;
-  height: 40px;
-  margin: 20px auto;
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top-color: #ff8c42;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+/* Tighten the card on narrow screens */
+@media (max-width: 600px){
+  .flash .flash-card{
+    width: min(640px, 94vw);
+    padding: 20px;
+    gap: 10px;
   }
 }

@@ -1,201 +1,165 @@
-/* Preview overlays for skill selection and casting */
+/* css/preview.css
+   Styles for Hero preview overlays: key select and casting confirmation.
+*/
 
 #__previewKeySelect {
   position: fixed;
   inset: 0;
-  z-index: 10000;
   display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.3s ease;
+  background: rgba(0,0,0,0.35);
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+  pointer-events: auto;
 }
 
 #__previewKeySelect[aria-hidden="false"] {
   display: flex;
 }
 
-.preview-box {
-  background: linear-gradient(135deg, #1a2332 0%, #0a0e1a 100%);
-  border: 3px solid rgba(255, 107, 53, 0.5);
-  border-radius: 20px;
-  padding: 32px;
-  max-width: 600px;
-  width: 90%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
-  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+#__previewKeySelect .preview-box {
+  min-width: 300px;
+  max-width: 90vw;
+  background: rgba(10,20,30,0.9);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 14px;
+  color: #dfefff;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  text-align: center;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
 }
 
 .__preview-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #ff8c42;
-  text-align: center;
-  margin-bottom: 24px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 16px;
 }
 
 .__preview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+  align-items: start;
+}
+
+.__preview-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
 }
 
 .preview-key-btn {
-  aspect-ratio: 1;
-  background: rgba(0, 0, 0, 0.6);
-  border: 3px solid rgba(255, 107, 53, 0.4);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.preview-key-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 140, 66, 0.1) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.preview-key-btn:hover {
-  border-color: rgba(255, 107, 53, 0.8);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(255, 107, 53, 0.4);
-}
-
-.preview-key-btn:hover::before {
-  opacity: 1;
-}
-
-.preview-key-btn:active {
-  transform: translateY(-2px) scale(0.98);
-}
-
-.preview-key-btn.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  filter: grayscale(0.8);
-}
-
-.preview-key-btn.disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.preview-key-label {
-  font-size: 20px;
-  font-weight: bold;
-  color: #ff8c42;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 6px 12px;
+  padding: 12px 6px;
   border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(40,60,90,0.85);
+  color: #eaf6ff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background 140ms ease;
 }
 
-.preview-key-skill {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+.preview-key-btn:hover,
+.preview-key-btn:focus {
+  background: rgba(60,90,140,0.9);
+  outline: none;
+}
+
+.preview-key-info {
+  font-size: 11px;
+  opacity: 0.8;
   text-align: center;
-  padding: 0 8px;
 }
 
 .__preview-tip {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  margin-bottom: 20px;
-  line-height: 1.5;
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 6px;
 }
 
 .__preview-actions {
+  margin-top: 10px;
   display: flex;
+  gap: 8px;
   justify-content: center;
-  gap: 12px;
 }
 
 .preview-cancel {
-  padding: 10px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(120,40,40,0.85);
+  color: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-weight: 600;
 }
 
-.preview-cancel:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+.preview-cancel:hover,
+.preview-cancel:focus {
+  background: rgba(160,60,60,0.9);
+  outline: none;
 }
 
-/* Casting preview */
+/* Casting overlay */
 #__previewCasting {
   position: fixed;
-  top: 50%;
   left: 50%;
+  top: 18%;
   transform: translate(-50%, -50%);
-  z-index: 10001;
   display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
   pointer-events: none;
 }
 
 #__previewCasting[aria-hidden="false"] {
-  display: block;
+  display: flex;
 }
 
 .__preview-card {
-  background: rgba(0, 0, 0, 0.95);
-  border: 3px solid rgba(255, 107, 53, 0.6);
-  border-radius: 50%;
-  width: 120px;
-  height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 60px rgba(255, 107, 53, 0.5);
-  animation: castingPulse 1s ease-in-out infinite;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  color: #e8f6ff;
+  text-align: center;
+  box-shadow: none;
 }
 
-@keyframes castingPulse {
-  0%, 100% {
-    transform: scale(1);
-    border-color: rgba(255, 107, 53, 0.6);
-  }
-  50% {
-    transform: scale(1.1);
-    border-color: rgba(255, 140, 66, 0.8);
-  }
-}
-
+/* Number element used for countdown and cast confirmation */
 .__preview-number {
-  font-size: 48px;
-  font-weight: bold;
-  color: #ff8c42;
-  text-shadow: 0 0 20px rgba(255, 107, 53, 0.8);
-  animation: countdownScale 1s ease-out;
+  font-size: 42px;
+  font-weight: 800;
+  color: #bfe9ff;
+  text-shadow: 0 0 12px rgba(100,180,255,0.6);
+  min-height: 1.2em;
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 140ms ease, transform 140ms ease;
+  display: inline-block;
 }
 
-@keyframes countdownScale {
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+/* Large style used temporarily by JS */
+.__preview-number--large {
+  font-size: 126px;
+}
+
+/* small confirmation */
+.__preview-number--small {
+  font-size: 42px;
+}
+
+/* Utility hidden helper */
+.hidden {
+  display: none !important;
 }
