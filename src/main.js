@@ -1,4 +1,4 @@
-// GoT RPG — Modular Orchestrator
+// GoF RPG — Modular Orchestrator
 // This refactor splits the original monolithic file into modules per system.
 // Behavior is preserved; tuning values unchanged.
 
@@ -2252,7 +2252,7 @@ function updateIndicators(dt) {
     __tempVecA.copy(from);
     __tempVecB.set((Math.random() - 0.5) * 0.6, 0.2 + Math.random() * 0.3, (Math.random() - 0.5) * 0.6);
     __tempVecC.copy(from).add(__tempVecB);
-    effects.spawnFireBeam(__tempVecA, __tempVecC, COLOR.ember, 0.06, 5, 0.2);
+    effects.spawnFireStream(__tempVecA, __tempVecC, COLOR.ember, 0.06, 5, 0.2);
     window.__nextHandSparkT = t + 0.5 + Math.random() * 0.5;
   }
 }

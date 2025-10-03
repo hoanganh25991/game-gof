@@ -451,7 +451,7 @@ export function handWorldPos(player) {
 }
 
 /**
- * World position of GoT's left hand.
+ * World position of GoF's left hand.
  * @param {Player} player
  * @returns {THREE.Vector3}
  */

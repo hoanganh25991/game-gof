@@ -3,7 +3,7 @@ import { GLTFLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders
 import { COLOR } from "./constants.js";
 import { HERO_MODEL_URL } from "./config.js";
 
-// Creates the GoT character mesh (placeholder geometry with optional GLTF replacement if ?model=URL).
+// Creates the GoF character mesh (placeholder geometry with optional GLTF replacement if ?model=URL).
 // Note: This function does NOT add the mesh to the scene; caller should add it.
 export function createGoTMesh() {
   const root = new THREE.Group();
@@ -184,7 +184,7 @@ export function createGoTMesh() {
   // Assemble placeholder into root
   root.add(body);
 
-  // Optional: load external GoT GLTF model (pass ?model=URL)
+  // Optional: load external GoF GLTF model (pass ?model=URL)
   if (HERO_MODEL_URL) {
     const loader = new GLTFLoader();
     loader.load(

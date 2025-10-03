@@ -1,26 +1,26 @@
-# GoT RPG (Three.js Top‑Down Action/RTS‑like Prototype)
+# GoF RPG (Three.js Top‑Down Action/RTS‑like Prototype)
 
 A lightweight prototype featuring DOTA‑style controls, electric abilities, simple AI, HUD/minimap, portals/recall, and a village regen zone — implemented as modular ES modules with Three.js.
 
 ## Overview
 
 **Game Play**
-![guide](./images/got-guide.jpeg)
+![guide](./images/gof-guide.jpeg)
 
 **First Person**
-![guide](./images/got-first-person.jpeg)
+![guide](./images/gof-first-person.jpeg)
 
 **Skills**
-![guide](./images/got-skills.jpeg)
+![guide](./images/gof-skills.jpeg)
 
 **Guide**
-![guide](./images/got-guide.jpeg)
+![guide](./images/gof-guide.jpeg)
 
 **Settings**
-![guide](./images/got-settings.jpeg)
+![guide](./images/gof-settings.jpeg)
 
 **Maps**
-![guide](./images/got-maps.jpeg)
+![guide](./images/gof-maps.jpeg)
 
 ### Demo
 
@@ -28,7 +28,7 @@ A lightweight prototype featuring DOTA‑style controls, electric abilities, sim
 
 ## Google Play
 
-https://play.google.com/store/apps/details?id=io.github.hoanganh25991.got
+https://play.google.com/store/apps/details?id=io.github.hoanganh25991.gof
 
 ## Quick Start
 
@@ -43,7 +43,7 @@ Then open:
 
 ## Gameplay Overview
 
-- Player (GoT) moves with RTS‑style orders and auto‑attacks when in range.
+- Player (GoF) moves with RTS‑style orders and auto‑attacks when in range.
 - Enemies aggro, chase, attack, or wander when idle.
 - Four skills with cooldowns and mana:
   - Q Chain Lightning (chains targets in range)

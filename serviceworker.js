@@ -1,11 +1,11 @@
-// Simple PWA Service Worker for GoT RPG
+// Simple PWA Service Worker for GoF RPG
 // - Versioned cache name for rollout/cleanup
 // - Precache core shell files (kept intentionally small)
 // - Runtime cache: cache-first for same-origin GET, network-first for navigations
 // - Cleans up old versions on activate
 
 const VERSION = "v1.0.1-20251001";
-const CACHE_NAME = `got-rpg-${VERSION}`;
+const CACHE_NAME = `gof-rpg-${VERSION}`;
 
 // Keep this list small to avoid heavy installs. Runtime caching will cover the rest.
 /** Subpath-safe asset list: resolve relative to SW scope during install */
@@ -56,7 +56,7 @@ self.addEventListener("activate", (event) => {
       const keys = await caches.keys();
       await Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME && key.startsWith("got-rpg-")) {
+          if (key !== CACHE_NAME && key.startsWith("gof-rpg-")) {
             return caches.delete(key);
           }
         })

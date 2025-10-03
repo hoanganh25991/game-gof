@@ -101,7 +101,7 @@
   },
   "start": {
     "title": "Hành trình của Thần Sấm",
-    "story": "Thế giới chìm trong u ám. Những bóng đêm thức tỉnh; chỉ một vị thần có thể gọi bão. Hãy dẫn GoT — vị thần sấm — qua rừng hoang, làng mạc đổ nát và chiến trường, tiêu diệt lũ quái và khôi phục trật tự."
+    "story": "Thế giới chìm trong u ám. Những bóng đêm thức tỉnh; chỉ một vị thần có thể gọi bão. Hãy dẫn GoF — vị thần sấm — qua rừng hoang, làng mạc đổ nát và chiến trường, tiêu diệt lũ quái và khôi phục trật tự."
   },
   "guide": {
     "button": "👋 Hướng dẫn",
@@ -174,7 +174,7 @@
       "lightning_bolt": "Tia Sét",
       "static_field": "Trường Tĩnh Điện",
       "thunderstorm": "Bão Sét",
-      "got_bolt": "Tia GoT",
+      "got_bolt": "Tia GoF",
       "ion_nova": "Nova Ion",
       "overcharge_aura": "Hào Quang Quá Tải",
       "crackling_field": "Trường Nổ Lách Tách",
@@ -203,7 +203,7 @@
       "lightning_dash": "Lướt Sét",
       "blink_strike": "Đòn Đánh Tức Thời",
       "thunder_image": "Ảnh Sấm Sét",
-      "got_judgement": "Phán Quyết GoT",
+      "got_judgement": "Phán Quyết GoF",
       "maelstrom": "Cột Bão"
     },
     "shorts": {

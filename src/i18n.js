@@ -1,5 +1,5 @@
 /**
- * i18n utility (logic only) for GoT RPG.
+ * i18n utility (logic only) for GoF RPG.
  *
  * Behavior:
  * - Loads locale JSON files dynamically from ./locales/{lang}.json (relative to this module).

@@ -101,7 +101,7 @@
   },
   "start": {
     "title": "Journey of the Thunder God",
-    "story": "The world has slipped into shadow. Waking phantoms roam the land; only one god can summon the storm again. Lead GoT — the thunder god — through wild forests, ruined villages and battlefields, slaying hordes of creatures and restoring order."
+    "story": "The world has slipped into shadow. Waking phantoms roam the land; only one god can summon the storm again. Lead GoF — the thunder god — through wild forests, ruined villages and battlefields, slaying hordes of creatures and restoring order."
   },
   "guide": {
     "button": "👋 Guide",
@@ -174,7 +174,7 @@
       "lightning_bolt": "Lightning Bolt",
       "static_field": "Static Field",
       "thunderstorm": "Thunderstorm",
-      "got_bolt": "GoT Bolt",
+      "got_bolt": "GoF Bolt",
       "ion_nova": "Ion Nova",
       "overcharge_aura": "Overcharge Aura",
       "crackling_field": "Crackling Field",
@@ -203,7 +203,7 @@
       "lightning_dash": "Lightning Dash",
       "blink_strike": "Blink Strike",
       "thunder_image": "Thunder Image",
-      "got_judgement": "GoT' Judgement",
+      "got_judgement": "GoF' Judgement",
       "maelstrom": "Maelstrom"
     },
     "shorts": {
