@@ -39,20 +39,9 @@ export function renderBookTab(panelEl, ctx = {}) {
   detail.appendChild(stats);
   detail.appendChild(imgBox);
 
-  const typeExplain = {
-    chain: "Chains between nearby enemies, hitting multiple targets.",
-    aoe: "Ground-targeted area. Damages enemies within its radius.",
-    aura: "Toggle aura around hero. Ticks damage periodically while draining mana.",
-    storm: "Multiple random strikes in a radius over time.",
-    beam: "Instant fire blast to nearest enemy in range.",
-    nova: "Radial burst around hero.",
-    heal: "Restores hero HP instantly.",
-    mana: "Restores hero MP instantly.",
-    buff: "Temporarily increases damage and speed.",
-    dash: "Quickly dash forward.",
-    blink: "Teleport toward direction/point.",
-    clone: "Summons a fire image that periodically burns nearby foes.",
-    shield: "Reduces incoming damage for a short time; may grant brief invulnerability on cast.",
+  // Use localized type descriptions
+  const getTypeExplain = (type) => {
+    return tt(`skills.types.${type}`) || type;
   };
 
   function computeDamage(s) {
@@ -67,25 +56,25 @@ export function renderBookTab(panelEl, ctx = {}) {
       const nameLocal = tt(`skills.names.${s.id}`) || s.name;
       const shortLocal = tt(`skills.shorts.${s.id}`) || s.short || "";
       title.textContent = `${nameLocal}${shortLocal ? " (" + shortLocal + ")" : ""}`;
-      const dmgLine = typeof s.dmg === "number" ? `Damage: ${computeDamage(s)} (base ${s.dmg})` : "";
+      const dmgLine = typeof s.dmg === "number" ? `${tt('skills.stats.damage')}: ${computeDamage(s)} (${tt('skills.stats.base')} ${s.dmg})` : "";
       const lines = [
         "---",
-        `Type: ${s.type}`,
-        s.cd != null ? `Cooldown: ${s.cd}s` : "",
-        s.mana != null ? `Mana: ${s.mana}` : "",
+        `${tt('skills.stats.type')}: ${s.type}`,
+        s.cd != null ? `${tt('skills.stats.cooldown')}: ${s.cd}s` : "",
+        s.mana != null ? `${tt('skills.stats.mana')}: ${s.mana}` : "",
         "---",
-        s.radius != null ? `Radius: ${s.radius}` : "",
-        s.range != null ? `Range: ${s.range}` : "",
-        s.jumps != null ? `Jumps: ${s.jumps}` : "",
-        s.jumpRange != null ? `Jump Range: ${s.jumpRange}` : "",
-        s.tick != null ? `Tick: ${s.tick}s` : "",
-        s.duration != null ? `Duration: ${s.duration}s` : "",
-        s.slowFactor != null ? `Slow: ${Math.round(s.slowFactor * 100)}%` : "",
-        s.slowDuration != null ? `Slow Duration: ${s.slowDuration}s` : "",
+        s.radius != null ? `${tt('skills.stats.radius')}: ${s.radius}` : "",
+        s.range != null ? `${tt('skills.stats.range')}: ${s.range}` : "",
+        s.jumps != null ? `${tt('skills.stats.jumps')}: ${s.jumps}` : "",
+        s.jumpRange != null ? `${tt('skills.stats.jumpRange')}: ${s.jumpRange}` : "",
+        s.tick != null ? `${tt('skills.stats.tick')}: ${s.tick}s` : "",
+        s.duration != null ? `${tt('skills.stats.duration')}: ${s.duration}s` : "",
+        s.slowFactor != null ? `${tt('skills.stats.slow')}: ${Math.round(s.slowFactor * 100)}%` : "",
+        s.slowDuration != null ? `${tt('skills.stats.slowDuration')}: ${s.slowDuration}s` : "",
         dmgLine,
       ].filter(Boolean);
       stats.innerHTML = lines.map((x) => `<div>${x}</div>`).join("");
-      expl.textContent = typeExplain[s.type] || "No description.";
+      expl.textContent = getTypeExplain(s.type) || "No description.";
     } catch (_) {}
   }
 
