@@ -142,7 +142,7 @@ game-gof/
 │   └── bottom-middle.css   # Bottom-center UI styles
 │
 ├── audio/                  # Audio assets
-│   └── Ice and Snow.mp3    # Background music
+│   └── ice-and-snow.mp3    # Background music
 │
 ├── vendor/                 # Third-party dependencies
 │   └── three/              # Three.js (bundled locally)

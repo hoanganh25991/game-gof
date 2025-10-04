@@ -42,7 +42,7 @@ export function setupSettingsScreen({
       if (audioCtl?.getMusicEnabled?.()) {
         audioCtl.audio?.resumeFromForeground?.();
         // Safe to call; will (re)start stream or resume element on user gesture
-        audioCtl.audio?.startStreamMusic?.("audio/Ice and Snow.mp3", { volume: 0.35, loop: true });
+        audioCtl.audio?.startStreamMusic?.("audio/ice-and-snow.mp3", { volume: 0.35, loop: true });
       }
     } catch (_) {}
   });
@@ -148,7 +148,7 @@ function initAudioControls(audioCtl) {
       // Start/stop music immediately
       if (next) {
         try {
-          audioCtl.audio?.startStreamMusic?.("audio/Ice and Snow.mp3", { volume: 0.35, loop: true });
+          audioCtl.audio?.startStreamMusic?.("audio/ice-and-snow.mp3", { volume: 0.35, loop: true });
         } catch (e) {
           try {
             audioCtl.audio?.setMusicVolume?.(0.35);

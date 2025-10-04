@@ -4,7 +4,7 @@ Status: Implemented
 Scope: SFX for combat and skills + lightweight ambient music
 
 Overview
-- Primarily procedural via WebAudio for a zero-dependency, free baseline. Optional streaming track ("audio/Ice and Snow.mp3") can be used as background music.
+- Primarily procedural via WebAudio for a zero-dependency, free baseline. Optional streaming track ("audio/ice-and-snow.mp3") can be used as background music.
 - Autoplay-safe. AudioContext is created/resumed only after the first user interaction.
 - Background music is a gentle generative loop designed for focus/relaxation.
 - SFX cover core gameplay beats without changing any game logic.
@@ -28,7 +28,7 @@ Integration Points
 - src/main.js
   - Initializes audio via audio.startOnFirstUserGesture(document) (attaches visibility/focus handlers)
   - Starts background music on first user gesture if enabled by Settings:
-    - Prefers streaming track "audio/Ice and Snow.mp3" via audio.startStreamMusic("audio/Ice and Snow.mp3", { volume: 0.35, loop: true })
+    - Prefers streaming track "audio/ice-and-snow.mp3" via audio.startStreamMusic("audio/ice-and-snow.mp3", { volume: 0.35, loop: true })
     - Falls back to generative audio.startMusic() if streaming fails (e.g., CORS)
   - Settings panel toggles:
     - Music toggle starts/stops stream/generative and persists preference
@@ -91,7 +91,7 @@ Usage and Controls
 - Initialization (autoplay safe):
   - audio.startOnFirstUserGesture(document)
   - Start background music after the first user gesture:
-    - audio.startStreamMusic("audio/Ice and Snow.mp3", { volume: 0.35, loop: true }) or
+    - audio.startStreamMusic("audio/ice-and-snow.mp3", { volume: 0.35, loop: true }) or
     - audio.startMusic() as a fallback when streaming is unavailable
 - Volume control (e.g., via DevTools console):
   - audio.setSfxVolume(0.0 .. 1.0)
