@@ -31,6 +31,13 @@ export function renderInfoTab(panelEl, ctx = {}) {
   const $vendor = el("#glVendor");
   const $renderer = el("#glRenderer");
 
+  // Memory UI elements (optional; only set if present)
+  const $memUsed = el("#memUsed");
+  const $memTotal = el("#memTotal");
+  const $memPct = el("#memPct");
+  const $memLimit = el("#memLimit");
+  const $deviceMemory = el("#deviceMemory");
+
   // Static WebGL capability info
   try {
     if (renderer) {
@@ -58,6 +65,14 @@ export function renderInfoTab(panelEl, ctx = {}) {
     const m = Math.pow(10, d);
     return Math.round((Number.isFinite(n) ? n : 0) * m) / m;
   }
+  function bytesToHuman(bytes) {
+    const b = Number(bytes) || 0;
+    const KB = 1024, MB = KB * 1024, GB = MB * 1024;
+    if (b >= GB) return `${round(b / GB, 2)} GB`;
+    if (b >= MB) return `${round(b / MB, 1)} MB`;
+    if (b >= KB) return `${round(b / KB, 0)} KB`;
+    return `${b} B`;
+  }
   function update() {
     try {
       const perf = typeof getPerf === "function" ? getPerf() : (window.__perfMetrics || null);
@@ -75,6 +90,31 @@ export function renderInfoTab(panelEl, ctx = {}) {
         if ($geoms) $geoms.textContent = String(ri.geometries || (renderer?.info?.memory?.geometries || 0));
         if ($tex) $tex.textContent = String(ri.textures || (renderer?.info?.memory?.textures || 0));
       }
+
+      // Memory usage (JS heap) and device memory (if supported)
+      try {
+        const mem = (typeof performance !== "undefined" && performance && performance.memory) ? performance.memory : null;
+        if (mem) {
+          const used = mem.usedJSHeapSize || 0;
+          const total = mem.totalJSHeapSize || 0;
+          const limit = mem.jsHeapSizeLimit || 0;
+          const pct = limit ? (used / limit) * 100 : (total ? (used / total) * 100 : 0);
+          if ($memUsed) $memUsed.textContent = bytesToHuman(used);
+          if ($memTotal) $memTotal.textContent = total ? bytesToHuman(total) : "—";
+          if ($memLimit) $memLimit.textContent = limit ? bytesToHuman(limit) : "—";
+          if ($memPct) $memPct.textContent = `${round(pct, 1)}%`;
+        } else {
+          if ($memUsed) $memUsed.textContent = "—";
+          if ($memTotal) $memTotal.textContent = "—";
+          if ($memLimit) $memLimit.textContent = "—";
+          if ($memPct) $memPct.textContent = "—";
+        }
+      } catch (_) {}
+
+      try {
+        const devMem = (typeof navigator !== "undefined" && navigator && typeof navigator.deviceMemory === "number") ? navigator.deviceMemory : null;
+        if ($deviceMemory) $deviceMemory.textContent = devMem ? `${devMem} GB` : "—";
+      } catch (_) {}
     } catch (_) {}
   }
 
