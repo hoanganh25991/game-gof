@@ -4,7 +4,7 @@
  * Skill upgrade system for God of Fire
  * 
  * Features:
- * - Each skill can be upgraded up to level 5
+ * - Skills can be upgraded infinitely (no cap)
  * - Upgrades improve damage, reduce cooldown, increase range/radius, etc.
  * - Skills unlock at specific player levels
  * - Players earn skill points on level-up to spend on upgrades
@@ -87,7 +87,7 @@ export const SKILL_UPGRADE_BONUSES = {
 /**
  * Maximum skill level
  */
-export const MAX_SKILL_LEVEL = 5;
+export const MAX_SKILL_LEVEL = Number.POSITIVE_INFINITY;
 
 /**
  * Skill points earned per player level
@@ -95,11 +95,34 @@ export const MAX_SKILL_LEVEL = 5;
 export const SKILL_POINTS_PER_LEVEL = 1;
 
 /**
+ * Compute a cumulative bonus for any level index using the defined arrays.
+ * For levels beyond the last defined entry, continue progression using the
+ * last step with diminishing returns (geometric series with decay).
+ */
+const BONUS_DECAY = 0.5; // 0.5 = strong diminishing returns, adjust to tune
+function getScaledBonus(levelIndex, bonusArray) {
+  if (!Array.isArray(bonusArray)) return null;
+  const lastIndex = bonusArray.length - 1;
+  if (lastIndex < 0) return null;
+  if (levelIndex <= lastIndex) return bonusArray[levelIndex];
+  if (lastIndex === 0) return bonusArray[0];
+
+  const last = bonusArray[lastIndex];
+  const prev = bonusArray[lastIndex - 1];
+  const step0 = last - prev; // can be negative (e.g., mana cost reduction)
+  const extra = levelIndex - lastIndex;
+
+  const decay = BONUS_DECAY;
+  const factor = decay === 1 ? extra : (1 - Math.pow(decay, extra)) / (1 - decay);
+  return last + step0 * factor;
+}
+
+/**
  * Skill upgrade manager class
  */
 export class SkillUpgradeManager {
   constructor() {
-    this.skillLevels = new Map(); // skill_id -> level (1-5)
+    this.skillLevels = new Map(); // skill_id -> level (1+)
     this.skillPoints = 0;
     this.unlockedSkills = new Set();
     this.loadFromStorage();
@@ -149,7 +172,7 @@ export class SkillUpgradeManager {
   }
 
   /**
-   * Get current level of a skill (1-5)
+   * Get current level of a skill (1+)
    */
   getSkillLevel(skillId) {
     return this.skillLevels.get(skillId) || 1;
@@ -203,33 +226,39 @@ export class SkillUpgradeManager {
     const levelIndex = level - 1;
 
     // Apply damage bonus
-    if (upgraded.dmg && SKILL_UPGRADE_BONUSES.damage[levelIndex]) {
-      upgraded.dmg = Math.floor(upgraded.dmg * (1 + SKILL_UPGRADE_BONUSES.damage[levelIndex]));
+    const dmgBonus = getScaledBonus(levelIndex, SKILL_UPGRADE_BONUSES.damage);
+    if (upgraded.dmg && typeof dmgBonus === "number") {
+      upgraded.dmg = Math.floor(upgraded.dmg * (1 + dmgBonus));
     }
 
     // Apply cooldown reduction
-    if (upgraded.cd && SKILL_UPGRADE_BONUSES.cooldown[levelIndex]) {
-      upgraded.cd = Math.max(0.5, upgraded.cd * (1 - SKILL_UPGRADE_BONUSES.cooldown[levelIndex]));
+    const cdBonus = getScaledBonus(levelIndex, SKILL_UPGRADE_BONUSES.cooldown);
+    if (upgraded.cd && typeof cdBonus === "number") {
+      upgraded.cd = Math.max(0.5, upgraded.cd * (1 - cdBonus));
     }
 
     // Apply range bonus
-    if (upgraded.range && SKILL_UPGRADE_BONUSES.range[levelIndex]) {
-      upgraded.range = Math.floor(upgraded.range * (1 + SKILL_UPGRADE_BONUSES.range[levelIndex]));
+    const rangeBonus = getScaledBonus(levelIndex, SKILL_UPGRADE_BONUSES.range);
+    if (upgraded.range && typeof rangeBonus === "number") {
+      upgraded.range = Math.floor(upgraded.range * (1 + rangeBonus));
     }
 
     // Apply radius bonus
-    if (upgraded.radius && SKILL_UPGRADE_BONUSES.radius[levelIndex]) {
-      upgraded.radius = upgraded.radius * (1 + SKILL_UPGRADE_BONUSES.radius[levelIndex]);
+    const radiusBonus = getScaledBonus(levelIndex, SKILL_UPGRADE_BONUSES.radius);
+    if (upgraded.radius && typeof radiusBonus === "number") {
+      upgraded.radius = upgraded.radius * (1 + radiusBonus);
     }
 
     // Apply duration bonus
-    if (upgraded.duration && SKILL_UPGRADE_BONUSES.duration[levelIndex]) {
-      upgraded.duration = upgraded.duration * (1 + SKILL_UPGRADE_BONUSES.duration[levelIndex]);
+    const durationBonus = getScaledBonus(levelIndex, SKILL_UPGRADE_BONUSES.duration);
+    if (upgraded.duration && typeof durationBonus === "number") {
+      upgraded.duration = upgraded.duration * (1 + durationBonus);
     }
 
     // Apply mana cost reduction
-    if (upgraded.mana && SKILL_UPGRADE_BONUSES.mana[levelIndex]) {
-      upgraded.mana = Math.max(1, Math.floor(upgraded.mana * (1 + SKILL_UPGRADE_BONUSES.mana[levelIndex])));
+    const manaBonus = getScaledBonus(levelIndex, SKILL_UPGRADE_BONUSES.mana);
+    if (upgraded.mana && typeof manaBonus === "number") {
+      upgraded.mana = Math.max(1, Math.floor(upgraded.mana * (1 + manaBonus)));
     }
 
     return upgraded;

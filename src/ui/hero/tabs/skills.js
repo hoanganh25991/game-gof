@@ -131,7 +131,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     const parts = [];
     if (s.cd != null) parts.push(`CD ${s.cd}s`);
     if (s.mana != null) parts.push(`MP ${s.mana}`);
-    if (isUnlocked) parts.push(`Level ${skillLevel}/5`);
+    if (isUnlocked) parts.push(`Level ${skillLevel}`);
     if (parts.length) req.textContent = parts.join(" • ");
 
     info.appendChild(title);
