@@ -1,13 +1,13 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture } from "./utils.js";
-import { WORLD } from "./constants.js";
+import { WORLD, storageKey } from "./constants.js";
 
 export function getTargetPixelRatio() {
   // Read render quality preference (persisted). Default to "high".
   // Values: "low" | "medium" | "high" | (fallback: dynamic)
   let quality = "high";
   try {
-    const prefs = JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}");
+    const prefs = JSON.parse(localStorage.getItem(storageKey("renderPrefs")) || "{}");
     if (prefs && typeof prefs.quality === "string") quality = prefs.quality;
   } catch (_) {}
 
@@ -32,7 +32,7 @@ export function getTargetPixelRatio() {
  * Appends renderer canvas to document.body.
  */
 export function initWorld() {
-  const prefs = (() => { try { return JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}"); } catch (_) { return {}; } })();
+  const prefs = (() => { try { return JSON.parse(localStorage.getItem(storageKey("renderPrefs")) || "{}"); } catch (_) { return {}; } })();
   const q = typeof prefs.quality === "string" ? prefs.quality : "high";
   const renderer = new THREE.WebGLRenderer({ antialias: q === "high", alpha: true, powerPreference: "high-performance" });
   renderer.setSize(window.innerWidth, window.innerHeight);

@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
-import { WORLD } from "./constants.js";
+import { WORLD, storageKey } from "./constants.js";
 import { createHouse, createGreekTemple, createVilla, createGreekColumn, createCypressTree, createOliveTree, createGreekStatue, createObelisk } from "./meshes.js";
 import { placeStructures } from "./structures.js";
 
@@ -36,7 +36,7 @@ export function initEnvironment(scene, options = {}) {
   );
 
   // Quality preset scaling for environment complexity
-  try { cfg.quality = cfg.quality || (JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}").quality || "high"); } catch (_) { cfg.quality = cfg.quality || "high"; }
+  try { cfg.quality = cfg.quality || (JSON.parse(localStorage.getItem(storageKey("renderPrefs")) || "{}").quality || "high"); } catch (_) { cfg.quality = cfg.quality || "high"; }
   const __q = cfg.quality;
   // Scale prop counts based on quality unless explicitly overridden by options
   if (__q === "medium") {

@@ -1,5 +1,34 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 
+export const LOCAL_STORAGE_PREFIX = "gof";
+
+export const storageKey = (suffix, separator = ".") => {
+  const sep = typeof separator === "string" ? separator : ".";
+  return `${LOCAL_STORAGE_PREFIX}${sep || ""}${suffix}`;
+};
+
+export const STORAGE_KEYS = {
+  renderPrefs: storageKey("renderPrefs"),
+  envPrefs: storageKey("envPrefs"),
+  audioPrefs: storageKey("audioPrefs"),
+  uiPrefs: storageKey("uiPrefs"),
+  pendingReloadReason: storageKey("pendingReloadReason"),
+  appPurchased: storageKey("app.purchased"),
+  playerLevel: storageKey("playerLevel"),
+  mapCurrentIndex: storageKey("mapCurrentIndex"),
+  mapUnlockedMax: storageKey("mapUnlockedMax"),
+  upliftChoices: storageKey("upliftChoices_v1"),
+  persistentMarks: storageKey("persistentMarks"),
+  markNextReadyAt: storageKey("markNextReadyAt"),
+  villages: storageKey("dynamic.villages.v1"),
+  roads: storageKey("dynamic.roads.v1"),
+  roadsGeom: storageKey("dynamic.roads_geom.v1"),
+  worldSeed: storageKey("worldSeed"),
+  chunkPrefix: storageKey("chunk"),
+  lang: storageKey("lang"),
+  fireLoadout: storageKey("fire_loadout"),
+};
+
 export const COLOR = {
   // Fire theme colors
   fire: 0xff4500,        // Orange-red fire
@@ -60,7 +89,7 @@ export const WORLD = {
     enabled: true,      // enable streaming chunks for environment/structures
     size: 150,          // chunk size in world units
     radius: 3,          // load radius in chunks (box radius)
-    storagePrefix: "gof.chunk"
+    storagePrefix: storageKey("chunk")
   },
 };
 
