@@ -1,5 +1,6 @@
+!memory_bank
 .clinerules
 todo*.md
-scritps
-!memory_bank
-scritps
+scripts
+android-build
+aab-output
