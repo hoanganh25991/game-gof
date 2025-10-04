@@ -2174,14 +2174,13 @@ function updateEnemies(dt) {
     }
     const toPlayer = player.alive ? distance2D(en.pos(), player.pos()) : Infinity;
 
-    // Stream/recycle enemies that are far away to maintain density around the hero
-    const STREAM_DESPAWN_DIST = (WORLD.enemySpawnRadius || 220) * 1.6;
-    if (toPlayer > STREAM_DESPAWN_DIST) {
-      const pos = randomEnemySpawnPos();
-      en.mesh.position.copy(pos);
-      en.moveTarget = null;
-      en.nextAttackReady = now() + 0.8;
-      // skip AI this frame after relocation
+    // Despawn enemies far from the hero to save memory and rely on dynamic spawner to refill density
+    const DESPAWN_DIST =
+      (WORLD?.dynamicSpawn?.despawnRadius) ||
+      ((WORLD.enemySpawnRadius || 220) * 1.6);
+    if (toPlayer > DESPAWN_DIST) {
+      try { scene.remove(en.mesh); } catch (_) {}
+      en._despawned = true;
       return;
     }
 
@@ -2315,6 +2314,21 @@ function updateEnemies(dt) {
       en.respawn(pos, player.level);
     }
   });
+
+  // Cleanup: remove despawned enemies from the array and refresh cached meshes
+  try {
+    let removed = 0;
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      const e = enemies[i];
+      if (e && e._despawned) {
+        enemies.splice(i, 1);
+        removed++;
+      }
+    }
+    if (removed > 0) {
+      try { __refreshEnemyMeshes && __refreshEnemyMeshes(); } catch (_) {}
+    }
+  } catch (_) {}
 }
 
 function updateIndicators(dt) {
