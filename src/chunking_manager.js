@@ -248,53 +248,61 @@ export class ChunkingManager {
       group.add(g);
     }
 
-    // Rare structure placement (low frequency)
-    // ~10% chance to place one small structure in this chunk
-    if (rng() < 0.1) {
-      const p = randInChunk();
-      const r = seededRange(rng, 0, Math.PI * 2);
+    // Structures: increase frequency for better visibility under chunking
+    // Place 1-2 structures per chunk on average (60% chance for one, 25% chance for a second)
+    {
+      // Guarantee at least one structure per chunk for better visibility.
+      // Add a couple of probabilistic extras to avoid overcrowding.
+      let count = 1;
+      if (rng() < 0.35) count += 1;
+      if (rng() < 0.15) count += 1;
 
-      const which = rng();
-      if (which < 0.2) {
-        const t = createGreekTemple({
-          cols: Math.max(5, Math.floor(seededRange(rng, 6, 9))),
-          rows: Math.max(7, Math.floor(seededRange(rng, 9, 12))),
-          columnHeight: seededRange(rng, 5.2, 6.2),
-          colSpacingX: seededRange(rng, 2.2, 2.8),
-          colSpacingZ: seededRange(rng, 2.3, 3.0),
-        });
-        t.position.set(p.x, 0, p.z);
-        t.rotation.y = r;
-        group.add(t);
-      } else if (which < 0.45) {
-        const v = createVilla({
-          width: seededRange(rng, 10, 16),
-          depth: seededRange(rng, 8, 12),
-          height: seededRange(rng, 3.5, 5.2),
-        });
-        v.position.set(p.x, 0, p.z);
-        v.rotation.y = r;
-        v.scale.setScalar(seededRange(rng, 0.9, 1.2));
-        group.add(v);
-      } else if (which < 0.7) {
-        const c = createGreekColumn({
-          height: seededRange(rng, 4.2, 6.2),
-          radius: seededRange(rng, 0.24, 0.34),
-          order: ["doric", "ionic", "corinthian"][Math.floor(seededRange(rng, 0, 3)) | 0],
-        });
-        c.position.set(p.x, 0, p.z);
-        c.rotation.y = r;
-        group.add(c);
-      } else if (which < 0.85) {
-        const s = createGreekStatue();
-        s.position.set(p.x, 0, p.z);
-        s.rotation.y = r;
-        group.add(s);
-      } else {
-        const o = createObelisk({ height: seededRange(rng, 5.5, 7.5) });
-        o.position.set(p.x, 0, p.z);
-        o.rotation.y = r;
-        group.add(o);
+      for (let i = 0; i < count; i++) {
+        const p = randInChunk();
+        const r = seededRange(rng, 0, Math.PI * 2);
+
+        const which = rng();
+        if (which < 0.2) {
+          const t = createGreekTemple({
+            cols: Math.max(5, Math.floor(seededRange(rng, 6, 9))),
+            rows: Math.max(7, Math.floor(seededRange(rng, 9, 12))),
+            columnHeight: seededRange(rng, 5.2, 6.2),
+            colSpacingX: seededRange(rng, 2.2, 2.8),
+            colSpacingZ: seededRange(rng, 2.3, 3.0),
+          });
+          t.position.set(p.x, 0, p.z);
+          t.rotation.y = r;
+          group.add(t);
+        } else if (which < 0.45) {
+          const v = createVilla({
+            width: seededRange(rng, 10, 16),
+            depth: seededRange(rng, 8, 12),
+            height: seededRange(rng, 3.5, 5.2),
+          });
+          v.position.set(p.x, 0, p.z);
+          v.rotation.y = r;
+          v.scale.setScalar(seededRange(rng, 0.9, 1.2));
+          group.add(v);
+        } else if (which < 0.7) {
+          const c = createGreekColumn({
+            height: seededRange(rng, 4.2, 6.2),
+            radius: seededRange(rng, 0.24, 0.34),
+            order: ["doric", "ionic", "corinthian"][Math.floor(seededRange(rng, 0, 3)) | 0],
+          });
+          c.position.set(p.x, 0, p.z);
+          c.rotation.y = r;
+          group.add(c);
+        } else if (which < 0.85) {
+          const s = createGreekStatue();
+          s.position.set(p.x, 0, p.z);
+          s.rotation.y = r;
+          group.add(s);
+        } else {
+          const o = createObelisk({ height: seededRange(rng, 5.5, 7.5) });
+          o.position.set(p.x, 0, p.z);
+          o.rotation.y = r;
+          group.add(o);
+        }
       }
     }
   }
