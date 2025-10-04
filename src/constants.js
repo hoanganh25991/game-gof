@@ -58,8 +58,8 @@ export const WORLD = {
   // Chunked world streaming
   chunking: {
     enabled: true,      // enable streaming chunks for environment/structures
-    size: 200,          // chunk size in world units
-    radius: 2,          // load radius in chunks (box radius)
+    size: 150,          // chunk size in world units
+    radius: 3,          // load radius in chunks (box radius)
     storagePrefix: "gof.chunk"
   },
 };
