@@ -376,9 +376,6 @@ export const SKILL_POOL = [
  * - flame_chain: Chain damage
  * - flame_nova: Radial burst
  */
-export const DEFAULT_LOADOUT = [
-  "fire_bolt",
-  "inferno_blast",
-  "flame_chain",
-  "flame_nova"
-];
+export const DEFAULT_LOADOUT = Object.freeze(
+  SKILL_POOL.slice(0, 4).map((skill) => skill.id)
+);
