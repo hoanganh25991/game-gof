@@ -11,10 +11,11 @@
  */
 
 import { SKILL_POOL } from "./skills_pool.js";
+import { STORAGE_KEYS } from "./constants.js";
 
-const STORAGE_KEY = "gof_skill_levels";
-const STORAGE_KEY_POINTS = "gof_skill_points";
-const STORAGE_KEY_UNLOCKED = "gof_unlocked_skills";
+const STORAGE_KEY = STORAGE_KEYS.skillLevels;
+const STORAGE_KEY_POINTS = STORAGE_KEYS.skillPoints;
+const STORAGE_KEY_UNLOCKED = STORAGE_KEYS.unlockedSkills;
 
 /**
  * Max player level required to guarantee every skill is unlocked.

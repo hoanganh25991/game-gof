@@ -7,8 +7,9 @@
  */
 
 import { t } from "./i18n.js";
+import { STORAGE_KEYS } from "./constants.js";
 
-const LS_KEY = "gof.upliftChoices_v1";
+const LS_KEY = STORAGE_KEYS.upliftChoices;
 
 // Milestones: every N levels starting at 'start'
 const MILESTONE = { start: 5, step: 5 };

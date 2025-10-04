@@ -3,8 +3,9 @@ import * as THREE from "../vendor/three/build/three.module.js";
 export const LOCAL_STORAGE_PREFIX = "gof";
 
 export const storageKey = (suffix, separator = ".") => {
+  const suffixStr = String(suffix ?? "");
   const sep = typeof separator === "string" ? separator : ".";
-  return `${LOCAL_STORAGE_PREFIX}${sep || ""}${suffix}`;
+  return `${LOCAL_STORAGE_PREFIX}${sep || ""}${suffixStr}`;
 };
 
 export const STORAGE_KEYS = {
@@ -27,6 +28,9 @@ export const STORAGE_KEYS = {
   chunkPrefix: storageKey("chunk"),
   lang: storageKey("lang"),
   fireLoadout: storageKey("fire_loadout"),
+  skillLevels: storageKey("skill_levels"),
+  skillPoints: storageKey("skill_points"),
+  unlockedSkills: storageKey("unlocked_skills"),
 };
 
 export const COLOR = {

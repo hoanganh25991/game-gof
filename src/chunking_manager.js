@@ -1,5 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { hashStringToInt, createSeededRNG, seededRange } from "./utils.js";
+import { STORAGE_KEYS } from "./constants.js";
 import {
   createCypressTree,
   createOliveTree,
@@ -13,7 +14,7 @@ import {
 /**
  * Persist or retrieve a stable world seed so generation is consistent across sessions.
  */
-export function getOrInitWorldSeed(key = "gof.worldSeed") {
+export function getOrInitWorldSeed(key = STORAGE_KEYS.worldSeed) {
   try {
     const existing = localStorage.getItem(key);
     if (existing) return parseInt(existing, 10);
@@ -41,7 +42,7 @@ export class ChunkingManager {
     this.size = Math.max(50, Math.floor(opts.chunkSize || 200));
     this.radius = Math.max(1, Math.floor(opts.radius || 2)); // radius in chunks (Manhattan/box)
     this.seed = Number.isFinite(opts.seed) ? (opts.seed >>> 0) : 0;
-    this.storagePrefix = String(opts.storagePrefix || "gof.chunk");
+    this.storagePrefix = String(opts.storagePrefix || STORAGE_KEYS.chunkPrefix);
     this.active = new Map(); // key -> { group, ix, iz }
     this.generators = []; // list of (ctx) => void
     this.densities = Object.assign({ trees: 40, rocks: 16, flowers: 60 }, opts.densities || {});

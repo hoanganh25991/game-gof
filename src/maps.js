@@ -4,9 +4,11 @@
  * - Persists current map index and unlocked max to localStorage
  * - Provides a simple API to integrate with UI and enemy spawning
  */
+import { STORAGE_KEYS } from "./constants.js";
+
 export function createMapManager() {
-  const LS_CUR = "gof.mapCurrentIndex";
-  const LS_MAX = "gof.mapUnlockedMax";
+  const LS_CUR = STORAGE_KEYS.mapCurrentIndex;
+  const LS_MAX = STORAGE_KEYS.mapUnlockedMax;
 
   // Endless tuning beyond the defined Acts
   const ENDLESS = {

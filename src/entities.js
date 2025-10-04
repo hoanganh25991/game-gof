@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, WORLD, STATS_BASE, SCALING } from "./constants.js";
+import { COLOR, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "./constants.js";
 import { createGoTMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
 import { distance2D, now } from "./utils.js";
 import { getSkillUpgradeManager } from "./skill_upgrades.js";
@@ -104,7 +104,7 @@ export class Player extends Entity {
 
   // Persist just the level
   saveLevelToStorage() {
-    try { localStorage.setItem("gof.playerLevel", String(this.level)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.playerLevel, String(this.level)); } catch (_) {}
   }
 
   // Reset stats back to STATS_BASE (level 1 baseline)
@@ -149,7 +149,7 @@ export class Player extends Entity {
   // Load persisted level (simple persistence)
   loadLevelFromStorage() {
     try {
-      const raw = localStorage.getItem("gof.playerLevel");
+      const raw = localStorage.getItem(STORAGE_KEYS.playerLevel);
       if (!raw) return;
       const lvl = parseInt(raw, 10);
       if (Number.isFinite(lvl) && lvl > 1) {
