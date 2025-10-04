@@ -1,5 +1,5 @@
-import { PlayerBarsUI } from "./hudparts/player_bars.js";
-import { MinimapUI } from "./hudparts/minimap.js";
+import { PlayerBarsUI } from "./player_bars.js";
+import { MinimapUI } from "./minimap.js";
 
 /**
  * UIManager (orchestrator)
