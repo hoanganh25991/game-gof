@@ -371,10 +371,6 @@ export const SKILL_POOL = [
 
 /**
  * Default starting loadout (4 skill IDs)
- * - fire_bolt: Basic ranged attack
- * - inferno_blast: AoE damage
- * - flame_chain: Chain damage
- * - flame_nova: Radial burst
  */
 export const DEFAULT_LOADOUT = Object.freeze(
   SKILL_POOL.slice(0, 4).map((skill) => skill.id)
