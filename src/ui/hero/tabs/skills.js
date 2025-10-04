@@ -58,7 +58,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
   const skillPointsDisplay = document.createElement("div");
   skillPointsDisplay.className = "skill-points-display";
   skillPointsDisplay.style.cssText = "padding: 12px; background: rgba(255,140,0,0.15); border-radius: 8px; margin-bottom: 12px; text-align: center; font-size: 16px; font-weight: bold; color: #ffd700;";
-  skillPointsDisplay.innerHTML = `⭐ ${tt("hero.skillPoints") || "Skill Points"}: <span id="skillPointsCount">${upgradeManager.getSkillPoints()}</span>`;
+  skillPointsDisplay.innerHTML = `⭐ ${tt("hero.info.skillPoints") || "Skill Points"}: <span id="skillPointsCount">${upgradeManager.getSkillPoints()}</span>`;
   rightCol.appendChild(skillPointsDisplay);
 
   // Skill Pool (items-style list)

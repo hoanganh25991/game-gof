@@ -53,6 +53,15 @@ export function initEnvironment(scene, options = {}) {
     cfg.enableWater = false;
     cfg.rainCount = Math.floor(cfg.rainCount * 0.33);
   }
+  // If chunking is enabled, delegate world props/structures to chunk manager
+  try {
+    if (WORLD?.chunking?.enabled) {
+      cfg.treeCount = 0;
+      cfg.rockCount = 0;
+      cfg.flowerCount = 0;
+      cfg.villageCount = 0;
+    }
+  } catch (_) {}
   // Road segments based on quality
   const __roadSegs = __q === "low" ? 36 : (__q === "medium" ? 80 : 140);
   // Whether to add light sources on houses (skip on low, dim on medium)
@@ -375,34 +384,36 @@ export function initEnvironment(scene, options = {}) {
     villageCenters.push(c);
   }
 
-  try {
-    placeStructures({
-      rng,
-      seededRange,
-      root,
-      villageCenters,
-      water,
-      cfg,
-      __q,
-      acquireLight,
-      createGreekTemple,
-      createVilla,
-      createGreekColumn,
-      createCypressTree,
-      createOliveTree,
-      createGreekStatue,
-      createObelisk,
-      pickPos: (minVillage = 12, minWater = 10, minBetween = 10, maxTries = 60) => {
-        let tries = maxTries;
-        while (tries-- > 0) {
-          const p = seededRandomPosInBounds();
-          if (p) return p;
+  if (!WORLD?.chunking?.enabled) {
+    try {
+      placeStructures({
+        rng,
+        seededRange,
+        root,
+        villageCenters,
+        water,
+        cfg,
+        __q,
+        acquireLight,
+        createGreekTemple,
+        createVilla,
+        createGreekColumn,
+        createCypressTree,
+        createOliveTree,
+        createGreekStatue,
+        createObelisk,
+        pickPos: (minVillage = 12, minWater = 10, minBetween = 10, maxTries = 60) => {
+          let tries = maxTries;
+          while (tries-- > 0) {
+            const p = seededRandomPosInBounds();
+            if (p) return p;
+          }
+          return seededRandomPosInBounds();
         }
-        return seededRandomPosInBounds();
-      }
-    });
-  } catch (e) {
-    console.warn("Extra structures generation failed", e);
+      });
+    } catch (e) {
+      console.warn("Extra structures generation failed", e);
+    }
   }
 
   // (structures were moved to src/environment/structures.js - handled above)

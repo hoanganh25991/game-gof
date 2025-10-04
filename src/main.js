@@ -33,6 +33,7 @@ import { promptBasicUpliftIfNeeded } from "./uplift.js";
 import { setupDesktopControls } from "./ui/deskop-controls.js"
 import * as payments from './payments.js';
 import { getSkillUpgradeManager } from "./skill_upgrades.js";
+import { ChunkingManager, getOrInitWorldSeed } from "./chunking_manager.js";
 
 
 // ------------------------------------------------------------
@@ -122,6 +123,8 @@ if (isMobile && !_renderPrefs.quality) {
 
 const effects = new EffectsManager(scene, { quality: renderQuality });
 const mapManager = createMapManager();
+let chunkMgr = null;
+const WORLD_SEED = getOrInitWorldSeed();
 
 
 // Perf collector: smoothed FPS, 1% low, frame ms, and renderer.info snapshot
@@ -297,7 +300,36 @@ if (isMobile) {
   }
 }
 
-let env = initEnvironment(scene, Object.assign({}, envPreset, { enableRain: envRainState, quality: renderQuality }));
+let env = null;
+// Initialize chunking-based environment streaming (if enabled), and reduce static scatter to zero
+if (WORLD && WORLD.chunking && WORLD.chunking.enabled) {
+  const chunkCfg = WORLD.chunking || {};
+  const size = Math.max(50, chunkCfg.size || 200);
+  const ground = (WORLD.groundSize || 500);
+  const groundArea = ground * ground;
+  const chunkArea = size * size;
+  const densityScale = Math.max(0.01, Math.min(1, chunkArea / groundArea));
+  const dens = {
+    trees: Math.max(0, Math.floor((envPreset.treeCount || 0) * densityScale)),
+    rocks: Math.max(0, Math.floor((envPreset.rockCount || 0) * densityScale)),
+    flowers: Math.max(0, Math.floor((envPreset.flowerCount || 0) * densityScale)),
+  };
+  try {
+    chunkMgr = new ChunkingManager(scene, {
+      chunkSize: size,
+      radius: Math.max(1, chunkCfg.radius || 2),
+      seed: WORLD_SEED,
+      storagePrefix: chunkCfg.storagePrefix || "gof.chunk",
+      densities: dens,
+    });
+    // Prevent static environment from duplicating streamed props
+    envPreset = Object.assign({}, envPreset, { treeCount: 0, rockCount: 0, flowerCount: 0 });
+  } catch (e) {
+    console.warn("[Chunking] init failed, falling back to static env:", e);
+    chunkMgr = null;
+  }
+}
+env = initEnvironment(scene, Object.assign({}, envPreset, { enableRain: envRainState, quality: renderQuality, seed: WORLD_SEED }));
 try {
   if (envRainState && env && typeof env.setRainLevel === "function") {
     env.setRainLevel(Math.min(Math.max(0, envRainLevel), 2));
@@ -1784,6 +1816,7 @@ function animate() {
   }
   updateGridFollow(ground, player);
   if (env) updateEnvironmentFollow(env, player);
+  if (chunkMgr) { try { chunkMgr.update(player.pos()); } catch (_) {} }
 
   // Throttle HUD and minimap updates to reduce main-thread DOM work on low-end devices.
   // HUD_UPDATE_MS / MINIMAP_UPDATE_MS are configured near the top of this file and exposed for tuning.

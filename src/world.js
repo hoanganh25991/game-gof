@@ -141,6 +141,7 @@ export function updateGridFollow(ground, player) {
  */
 export function updateEnvironmentFollow(env, player) {
   if (!env || !env.root || !player || !player.pos) return;
+  try { if (WORLD?.chunking?.enabled) return; } catch (_) {}
   const p = player.pos();
   const half = (WORLD.groundSize * 0.5 - 6) || 244;
   const margin = Math.min(half * 0.25, 80); // recenter when nearing edge, keep a safety margin

@@ -55,6 +55,13 @@ export const WORLD = {
   aiAttackCooldown: 1.2,
   aiAttackDamage: 14,
   enemyRespawnDelay: 8,
+  // Chunked world streaming
+  chunking: {
+    enabled: true,      // enable streaming chunks for environment/structures
+    size: 200,          // chunk size in world units
+    radius: 2,          // load radius in chunks (box radius)
+    storagePrefix: "gof.chunk"
+  },
 };
 
 export const STATS_BASE = {
