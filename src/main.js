@@ -28,7 +28,7 @@ import { initHeroPreview } from "./ui/hero/preview.js";
 import { startInstructionGuide as startInstructionGuideOverlay } from "./ui/guide.js";
 import { setupSettingsScreen } from "./ui/settings/index.js";
 import { renderHeroScreen as renderHeroScreenUI } from "./ui/hero/index.js";
-import { updateSkillBarLabels } from "./ui/skillbar.js";
+import { updateSkillBarLabels } from "./ui/icons.js";
 import { promptBasicUpliftIfNeeded } from "./uplift.js";
 import { setupDesktopControls } from "./ui/deskop-controls.js"
 import * as payments from './payments.js';

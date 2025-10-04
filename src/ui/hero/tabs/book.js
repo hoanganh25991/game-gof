@@ -1,5 +1,4 @@
 import { SCALING } from "../../../constants.js";
-import { getSkillIcon } from "../../skillbar.js";
 
 /**
  * Render the Skillbook tab: list of skills with detail panel and preview button.
@@ -88,7 +87,7 @@ export function renderBookTab(panelEl, ctx = {}) {
     thumb.className = "items-thumb";
     const em = document.createElement("div");
     em.className = "items-thumb-ph";
-    em.textContent = getSkillIcon(s.short || s.name);
+    em.textContent = (s.icon || "—");
     try {
       em.style.fontSize = "42px";
       em.style.lineHeight = "1";

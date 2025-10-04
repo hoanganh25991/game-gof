@@ -1,4 +1,3 @@
-import { getSkillIcon } from "../../skillbar.js";
 import { getSkillUpgradeManager } from "../../../skill_upgrades.js";
 
 /**
@@ -45,7 +44,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     const skillDef = SKILL_POOL.find((s) => s.id === skillId);
     slot.innerHTML = `
       <div class="slot-key">${keys[i]}</div>
-      <div class="skill-icon">${getSkillIcon(skillDef ? skillDef.short : null)}</div>
+      <div class="skill-icon">${skillDef ? (skillDef.icon || "—") : "—"}</div>
       <div class="slot-short">${skillDef ? (tt(`skills.shorts.${skillDef.id}`) || skillDef.short || "—") : "—"}</div>
       <div class="slot-name">${skillDef ? (tt(`skills.names.${skillDef.id}`) || skillDef.name || "—") : (t ? (t("hero.slot.empty") || "Empty") : "Empty")}</div>
     `;
@@ -98,7 +97,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     thumb.className = "items-thumb";
     const em = document.createElement("div");
     em.className = "items-thumb-ph";
-    em.textContent = getSkillIcon(s.short);
+    em.textContent = (s.icon || "—");
     try {
       em.style.fontSize = "42px";
       em.style.lineHeight = "1";
@@ -231,7 +230,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
         const skillDef = SKILL_POOL.find((s) => s.id === skillId);
         slotEl.innerHTML = `
       <div class="slot-key">${keys[i]}</div>
-      <div class="skill-icon">${getSkillIcon(skillDef ? skillDef.short : null)}</div>
+      <div class="skill-icon">${skillDef ? (skillDef.icon || "—") : "—"}</div>
       <div class="slot-short">${skillDef ? (tt(`skills.shorts.${skillDef.id}`) || skillDef.short || "—") : "—"}</div>
       <div class="slot-name">${skillDef ? (tt(`skills.names.${skillDef.id}`) || skillDef.name || "—") : (t ? (t("hero.slot.empty") || "Empty") : "Empty")}</div>
     `;
@@ -311,7 +310,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
       });
     } catch (_) {}
     const sd = SKILL_POOL.find((s) => s.id === skillId);
-    const icon = getSkillIcon(sd ? sd.short : null);
+    const icon = sd ? (sd.icon || "") : "";
     const nameLocal2 = sd ? (tt(`skills.names.${sd.id}`) || sd.name || "") : "";
     const shortLocal2 = sd ? (tt(`skills.shorts.${sd.id}`) || sd.short || "") : "";
     assignLabel.textContent = `${tt("assign.assign")} ${nameLocal2} (${shortLocal2}) ${icon} ${tt("assign.toSlot")}`;
