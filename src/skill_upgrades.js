@@ -10,48 +10,66 @@
  * - Players earn skill points on level-up to spend on upgrades
  */
 
+import { SKILL_POOL } from "./skills_pool.js";
+
 const STORAGE_KEY = "gof_skill_levels";
 const STORAGE_KEY_POINTS = "gof_skill_points";
 const STORAGE_KEY_UNLOCKED = "gof_unlocked_skills";
 
 /**
- * Skill unlock requirements (player level needed to unlock each skill)
+ * Max player level required to guarantee every skill is unlocked.
+ * Adjust this to rebalance the pacing of skill unlocks.
  */
-export const SKILL_UNLOCK_LEVELS = {
-  // Starting skills (unlocked at level 1)
-  "flame_chain": 1,
-  "inferno_blast": 1,
-  "burning_aura": 1,
-  "meteor_storm": 1,
-  
-  // Unlocked at level 3
-  "fire_dash": 3,
-  "flame_shield": 3,
-  
-  // Unlocked at level 5
-  "phoenix_strike": 5,
-  "lava_pool": 5,
-  
-  // Unlocked at level 7
-  "fire_tornado": 7,
-  "combustion": 7,
-  
-  // Unlocked at level 10
-  "solar_flare": 10,
-  "magma_eruption": 10,
-  
-  // Unlocked at level 12
-  "flame_wall": 12,
-  "heat_wave": 12,
-  
-  // Unlocked at level 15
-  "pyroclasm": 15,
-  "infernal_rage": 15,
-  
-  // Unlocked at level 18
-  "supernova": 18,
-  "eternal_flame": 18,
-};
+export const MAX_SKILL_UNLOCK_LEVEL = 25;
+
+const STARTING_LEVEL = 1;
+const STARTING_SKILL_COUNT = 4; // Keep a few early skills available from level 1
+const UNLOCK_CURVE_EXPONENT = 1.2; // >1 pushes later skills toward higher levels
+
+const clamp01 = (value) => Math.min(1, Math.max(0, value));
+
+/**
+ * Determine unlock levels dynamically based on the ordered skill pool.
+ */
+function computeSkillUnlockLevels(skillPool, maxLevel) {
+  if (!Array.isArray(skillPool) || skillPool.length === 0) {
+    return {};
+  }
+
+  const unlockLevels = {};
+  const totalSkills = skillPool.length;
+  const starters = Math.min(STARTING_SKILL_COUNT, totalSkills);
+  const remaining = Math.max(0, totalSkills - starters);
+  const denominator = Math.max(1, remaining - 1);
+
+  for (let index = 0; index < totalSkills; index++) {
+    const skillDef = skillPool[index];
+    if (!skillDef || !skillDef.id) continue;
+
+    let level = STARTING_LEVEL;
+    if (index >= starters && remaining > 0) {
+      const offset = index - starters;
+      const normalized = clamp01(offset / denominator);
+      const curved = Math.pow(normalized, UNLOCK_CURVE_EXPONENT);
+      level = Math.max(
+        STARTING_LEVEL + 1,
+        Math.round(STARTING_LEVEL + curved * (maxLevel - STARTING_LEVEL))
+      );
+    }
+
+    unlockLevels[skillDef.id] = Math.min(maxLevel, level);
+  }
+
+  return unlockLevels;
+}
+
+/**
+ * Skill unlock requirements (player level needed to unlock each skill).
+ */
+export const SKILL_UNLOCK_LEVELS = computeSkillUnlockLevels(
+  SKILL_POOL,
+  MAX_SKILL_UNLOCK_LEVEL
+);
 
 /**
  * Skill upgrade bonuses per level
