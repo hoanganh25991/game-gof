@@ -33,40 +33,13 @@ import { setupDesktopControls } from "./ui/deskop-controls.js"
 import * as payments from './payments.js';
 import { getSkillUpgradeManager } from "./skill_upgrades.js";
 import { ChunkManager, getOrInitWorldSeed } from "./chunk_manager.js";
+import { isMobile, MOBILE_OPTIMIZATIONS, applyMobileRendererHints } from "./config/mobile.js";
+import { createDynamicSpawner } from "./spawn.js";
+import { createVillageFence } from "./village_fence.js";
+import { createPerformanceTracker, initVfxGating } from "./perf.js";
 
 
-// ------------------------------------------------------------
-// Mobile Device Detection & Optimization
-// ------------------------------------------------------------
-const isMobile = (() => {
-  try {
-    // Check for touch support and mobile user agents
-    const hasTouchScreen = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isSmallScreen = window.innerWidth <= 1024;
-    return hasTouchScreen && (mobileUA || isSmallScreen);
-  } catch (_) {
-    return false;
-  }
-})();
-
-// Mobile-specific performance settings - Aggressive CPU-to-GPU optimizations
-const MOBILE_OPTIMIZATIONS = {
-  maxPixelRatio: 1.5,           // Cap pixel ratio to reduce GPU load
-  enemyCountMultiplier: 0.3,    // Reduce enemy count by 70% (was 50%)
-  vfxDistanceCull: 60,          // More aggressive VFX culling (was 80)
-  hudUpdateMs: 300,             // Slower HUD updates (was 250)
-  minimapUpdateMs: 400,         // Slower minimap updates (was 300)
-  aiStrideMultiplier: 3,        // Much more AI throttling (was 1.5)
-  frameBudgetMs: 6.0,           // Tighter frame budget for 60fps (was 8.0)
-  envDensityReduction: 0.4,     // Reduce environment density more (was 0.6)
-  disableShadows: true,         // Disable shadows (CPU/GPU intensive)
-  reduceDrawCalls: true,        // Merge geometries where possible
-  cullDistance: 100,            // Freeze enemies beyond this distance
-  skipSlowUpdates: true,        // Skip slow debuff indicators
-  simplifyMaterials: true,      // Use simpler materials
-  disableRain: true,            // Rain is very expensive
-};
+/* Mobile Device Detection & Optimization moved to ./config/mobile.js */
 
 // ------------------------------------------------------------
 // Bootstrapping world, UI, effects
@@ -75,34 +48,8 @@ const { renderer, scene, camera, ground, cameraOffset, cameraShake } = initWorld
 const _baseCameraOffset = cameraOffset.clone();
 const ui = new UIManager();
 
-// Mobile: Aggressive GPU/CPU optimizations
-if (isMobile) {
-  try {
-    // Cap pixel ratio to reduce GPU overdraw
-    const currentRatio = renderer.getPixelRatio();
-    const maxRatio = MOBILE_OPTIMIZATIONS.maxPixelRatio;
-    if (currentRatio > maxRatio) {
-      renderer.setPixelRatio(Math.min(currentRatio, maxRatio));
-      console.info(`[Mobile] Capped pixel ratio: ${currentRatio.toFixed(2)} -> ${maxRatio}`);
-    }
-    
-    // Disable shadows entirely on mobile (huge CPU/GPU savings)
-    if (MOBILE_OPTIMIZATIONS.disableShadows) {
-      renderer.shadowMap.enabled = false;
-      console.info('[Mobile] Disabled shadows for performance');
-    }
-    
-    // Force power preference to high-performance
-    try {
-      const gl = renderer.getContext();
-      if (gl) {
-        const ext = gl.getExtension('WEBGL_lose_context');
-        // Context already created, log preference
-        console.info('[Mobile] GPU power preference: high-performance');
-      }
-    } catch (_) {}
-  } catch (_) {}
-}
+/* Mobile: Aggressive GPU/CPU optimizations */
+applyMobileRendererHints(renderer);
 
 // Render quality preference (persisted). Default to "high" on desktop, "medium" on mobile.
 const _renderPrefs = JSON.parse(localStorage.getItem(storageKey("renderPrefs")) || "{}");
@@ -126,17 +73,8 @@ let chunkMgr = null;
 const WORLD_SEED = getOrInitWorldSeed();
 
 
-// Perf collector: smoothed FPS, 1% low, frame ms, and renderer.info snapshot
-const __perf = {
-  prevMs: performance.now(),
-  hist: [],
-  fps: 0,
-  fpsLow1: 0,
-  ms: 0,
-  avgMs: 0,
-  targetFPS: 90, // Target FPS for optimization
-  autoAdjust: true // Enable auto-adjustment of quality settings
-};
+/* Perf tracker (perf.js): smoothed FPS, 1% low, frame ms, and renderer.info snapshot */
+const perfTracker = createPerformanceTracker(renderer, { targetFPS: 90, autoAdjust: true });
 
 // Tiny reusable object pool to avoid allocations in hot loops.
 // Temp vectors/quaternions used across update loops to reduce GC pressure.
@@ -146,39 +84,14 @@ const __tempVecC = new THREE.Vector3();
 const __tempQuat = new THREE.Quaternion();
 let __tempVecQuatOrVec;
 
-// Global VFX gating / quality helper. Tunable at runtime:
-//   window.__vfxQuality = 'high' | 'medium' | 'low' (default derived from renderQuality)
-//   window.__vfxDistanceCull = 120  // meters for distance-based culling (optional)
-//
-// Use shouldSpawnVfx(type, position) before spawning expensive effects.
-if (!window.__vfxQuality) {
-  window.__vfxQuality = (renderQuality === "low") ? "low" : (isMobile ? "medium" : "high");
-}
-if (!window.__vfxDistanceCull) {
-  window.__vfxDistanceCull = isMobile ? MOBILE_OPTIMIZATIONS.vfxDistanceCull : 140;
-}
-function shouldSpawnVfx(kind, pos) {
-  try {
-    const q = window.__vfxQuality || "high";
-    const fpsNow = (__perf && __perf.fps) ? __perf.fps : 60;
-    // Disallow heavy effects at low quality or very low FPS
-    if (q === "low" || fpsNow < 18) return false;
-    // Distance cull if position provided (use camera position)
-    if (pos && camera && camera.position) {
-      const dx = pos.x - camera.position.x;
-      const dz = pos.z - camera.position.z;
-      const d = Math.hypot(dx, dz);
-      if (d > (window.__vfxDistanceCull || 140)) return false;
-    }
-    // Allow for 'medium' quality but still disallow some heavy kinds
-    if (q === "medium") {
-      if (kind === "handSpark" || kind === "largeBeam") return false;
-    }
-    return true;
-  } catch (e) {
-    return true;
-  }
-}
+/* VFX gating based on perf.js tracker */
+const shouldSpawnVfx = initVfxGating({
+  camera,
+  isMobile,
+  mobileOpts: MOBILE_OPTIMIZATIONS,
+  initialQuality: renderQuality,
+  tracker: perfTracker
+});
 
 // Throttle values for UI updates (ms) - mobile uses slower updates
 const HUD_UPDATE_MS = isMobile ? MOBILE_OPTIMIZATIONS.hudUpdateMs : 150;
@@ -194,76 +107,13 @@ try {
 if (!window.__lastHudT) window.__lastHudT = 0;
 if (!window.__lastMinimapT) window.__lastMinimapT = 0;
 function __computePerf(nowMs) {
-  const dtMs = Math.max(0.1, Math.min(1000, nowMs - (__perf.prevMs || nowMs)));
-  __perf.prevMs = nowMs;
-  __perf.ms = dtMs;
-  __perf.hist.push(dtMs);
-  if (__perf.hist.length > 600) __perf.hist.shift(); // ~10s at 60fps
-
-  // Smooth FPS over recent 30 frames (lightweight)
-  const recent = __perf.hist.slice(-30);
-  const avgMs = recent.reduce((a, b) => a + b, 0) / Math.max(1, recent.length);
-  __perf.avgMs = avgMs;
-  __perf.fps = 1000 / avgMs;
-
-  // Compute 1% low (p99) less frequently to avoid sorting every frame.
-  // Throttle window (ms) can be tuned at runtime via window.__PERF_P99_THROTTLE_MS.
-  const PERF_P99_THROTTLE_MS = (window.__PERF_P99_THROTTLE_MS || 1000);
-  if (!window.__lastPerfP99T) window.__lastPerfP99T = 0;
-  if ((performance.now() - window.__lastPerfP99T) >= PERF_P99_THROTTLE_MS) {
-    window.__lastPerfP99T = performance.now();
-    try {
-      const sorted = __perf.hist.slice().sort((a, b) => a - b);
-      const p99Idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.99));
-      const ms99 = sorted[p99Idx] || avgMs;
-      __perf.fpsLow1 = 1000 / ms99;
-    } catch (e) {
-      // keep previous fpsLow1 on error
-    }
-    
-    // Auto-adjust quality settings to maintain target FPS
-    if (__perf.autoAdjust && __perf.hist.length > 120) {
-      try {
-        const currentFPS = __perf.fps;
-        const targetFPS = __perf.targetFPS || 90;
-        
-        // If FPS is consistently below target, reduce quality
-        if (currentFPS < targetFPS * 0.85 && window.__vfxQuality !== "low") {
-          if (window.__vfxQuality === "high") {
-            window.__vfxQuality = "medium";
-            console.info(`[Performance] Auto-adjusted VFX quality to medium (FPS: ${currentFPS.toFixed(1)})`);
-          } else if (window.__vfxQuality === "medium") {
-            window.__vfxQuality = "low";
-            console.info(`[Performance] Auto-adjusted VFX quality to low (FPS: ${currentFPS.toFixed(1)})`);
-          }
-        }
-        // If FPS is consistently above target, increase quality
-        else if (currentFPS > targetFPS * 1.15 && window.__vfxQuality !== "high") {
-          if (window.__vfxQuality === "low") {
-            window.__vfxQuality = "medium";
-            console.info(`[Performance] Auto-adjusted VFX quality to medium (FPS: ${currentFPS.toFixed(1)})`);
-          } else if (window.__vfxQuality === "medium") {
-            window.__vfxQuality = "high";
-            console.info(`[Performance] Auto-adjusted VFX quality to high (FPS: ${currentFPS.toFixed(1)})`);
-          }
-        }
-      } catch (e) {
-        console.warn("Auto-adjust error:", e);
-      }
-    }
-  }
+  try {
+    perfTracker.update(nowMs);
+    perfTracker.maybeAutoAdjustVfxQuality();
+  } catch (_) {}
 }
 function getPerf() {
-  const ri = renderer.info;
-  const r = {
-    calls: ri.render.calls,
-    triangles: ri.render.triangles,
-    lines: ri.render.lines,
-    points: ri.render.points,
-    geometries: ri.memory.geometries,
-    textures: ri.memory.textures
-  };
-  return { fps: __perf.fps, fpsLow1: __perf.fpsLow1, ms: __perf.ms, avgMs: __perf.avgMs, renderer: r };
+  try { return perfTracker.getPerf(); } catch (_) { return { fps: 0, fpsLow1: 0, ms: 0, avgMs: 0 }; }
 }
 
 // Load environment preferences from localStorage (persist rain + density)
@@ -1031,165 +881,26 @@ function applyMapModifiersToEnemy(en) {
     }
   } catch (_) {}
 }
-// Dynamic enemy spawning system - enemies surround the hero
-// Spawns scale with player level (more and stronger enemies)
-const dynamicSpawnConfig = WORLD.dynamicSpawn || {};
 
-// Track spawning state
-let lastSpawnCheckTime = 0;
-let lastPlayerPosition = new THREE.Vector3(0, 0, 0);
-let totalDistanceMoved = 0;
-let __enemyPerfScale = 1.0; // Performance scaling for enemy count (adaptive)
+/* Spawn state moved to spawner module */
 let __adaptNextT = 0; // Next time to check adaptive performance
 
-/**
- * Calculate target enemy count around hero based on level and settings.
- * Scales from minEnemies at level 1 to maxEnemies at high levels.
- */
-function calculateDynamicEnemyCount(playerLevel) {
-  const cfg = dynamicSpawnConfig;
-  const minCount = cfg.minEnemies || 40;
-  const maxCount = cfg.maxEnemies || 80;
-  const perLevel = cfg.enemiesPerLevel || 2;
-  
-  // Scale from min to max based on level
-  const levelBonus = Math.floor((playerLevel - 1) * perLevel);
-  const baseCount = Math.min(maxCount, minCount + levelBonus);
-  
-  // Apply quality multiplier
-  const qualityMultiplier = {
-    high: 1.0,
-    medium: 0.7,
-    low: 0.5,
-  };
-  const mult = qualityMultiplier[renderQuality] || 1.0;
-  const qualityAdjusted = Math.floor(baseCount * mult);
-  
-  // Apply map modifiers
-  const mods = mapManager.getModifiers?.() || {};
-  const withMapMods = Math.floor(qualityAdjusted * (mods.enemyCountMul || 1));
-  
-  // Apply performance scaling
-  const perfAdjusted = Math.floor(withMapMods * (__enemyPerfScale || 1));
-  
-  return Math.max(minCount, perfAdjusted);
-}
 
-/**
- * Count alive enemies within a radius of the hero.
- */
-function countNearbyEnemies(radius) {
-  const heroPos = player.pos();
-  let count = 0;
-  for (const en of enemies) {
-    if (en.alive) {
-      const dist = distance2D(en.pos(), heroPos);
-      if (dist <= radius) count++;
-    }
-  }
-  return count;
-}
 
-/**
- * Spawn a batch of enemies around the hero at current level.
- */
-function spawnEnemyBatch(count, reason = "spawn") {
-  if (count <= 0) return 0;
-  
-  let spawned = 0;
-  for (let i = 0; i < count; i++) {
-    const pos = randomEnemySpawnPos();
-    const e = new Enemy(pos, player.level);
-    applyMapModifiersToEnemy(e);
-    e.mesh.userData.enemyRef = e;
-    scene.add(e.mesh);
-    enemies.push(e);
-    spawned++;
-  }
-  
-  if (spawned > 0) {
-    console.info(`[Dynamic Spawn] ${reason}: +${spawned} enemies (Level ${player.level}, Total: ${enemies.length})`);
-  }
-  
-  return spawned;
-}
 
-/**
- * Dynamic spawning system - maintains enemy density around hero.
- * Hybrid approach: continuous slow spawn + burst spawn on movement.
- */
-function updateDynamicSpawning(dt) {
-  if (!dynamicSpawnConfig.enabled) return;
-  
-  const currentTime = now();
-  const heroPos = player.pos();
-  const cfg = dynamicSpawnConfig;
-  
-  // Track hero movement for burst spawning
-  const moveDist = distance2D(heroPos, lastPlayerPosition);
-  totalDistanceMoved += moveDist;
-  lastPlayerPosition.copy(heroPos);
-  
-  // Burst spawn when hero moves significantly
-  const moveThreshold = cfg.movementThreshold || 50;
-  if (totalDistanceMoved >= moveThreshold) {
-    totalDistanceMoved = 0;
-    const burstSize = cfg.burstSpawnSize || 8;
-    spawnEnemyBatch(burstSize, "movement burst");
-  }
-  
-  // Continuous spawn check (slower, maintains density)
-  const spawnInterval = cfg.spawnInterval || 3;
-  if (currentTime - lastSpawnCheckTime >= spawnInterval) {
-    lastSpawnCheckTime = currentTime;
-    
-    // Count nearby alive enemies
-    const checkRadius = cfg.checkRadius || 250;
-    const nearbyCount = countNearbyEnemies(checkRadius);
-    const targetCount = calculateDynamicEnemyCount(player.level);
-    
-    // Spawn if below target
-    if (nearbyCount < targetCount) {
-      const deficit = targetCount - nearbyCount;
-      const batchSize = Math.min(deficit, cfg.spawnBatchSize || 3);
-      spawnEnemyBatch(batchSize, "continuous");
-    }
-  }
-}
 
-// Legacy function for compatibility (now uses dynamic system)
-function calculateEnemyCountForLevel(playerLevel) {
-  return calculateDynamicEnemyCount(playerLevel);
-}
 
-// Initial enemy spawn around hero (dynamic system)
+/* Enemies container (initial spawn occurs after villages are created) */
 const enemies = [];
-const initialEnemyCount = calculateDynamicEnemyCount(player.level);
-
-console.info(`[Dynamic Spawn] Initial spawn: ${initialEnemyCount} enemies around hero (Level ${player.level})`);
-for (let i = 0; i < initialEnemyCount; i++) {
-  const pos = randomEnemySpawnPos();
-  const e = new Enemy(pos, player.level);
-  applyMapModifiersToEnemy(e);
-  e.mesh.userData.enemyRef = e;
-  scene.add(e.mesh);
-  enemies.push(e);
-}
-
-// Initialize spawn tracking
-lastPlayerPosition.copy(player.pos());
-lastSpawnCheckTime = now();
+/* Dynamic spawner instance declared later after villages are created */
+let spawner = null;
 
 /**
- * Legacy function for map changes - now just triggers a spawn check.
- * The dynamic spawning system handles continuous enemy management.
+ * Legacy function for map changes — now delegates to spawner
  */
 function adjustEnemyCountForCurrentMap() {
   try {
-    // Force an immediate spawn check when map changes
-    lastSpawnCheckTime = 0;
-    totalDistanceMoved = 0;
-    console.info(`[Dynamic Spawn] Map changed - resetting spawn timers`);
+    spawner && spawner.adjustForMapChange();
   } catch (_) {}
 }
 try { window.adjustEnemyCountForMap = adjustEnemyCountForCurrentMap; } catch (_) {}
@@ -1203,79 +914,7 @@ const houses = [
   (() => { const h = createHouse(); h.position.set(-16, 0, -12); scene.add(h); return h; })(),
 ];
 
-/* Village fence: posts + connecting rails (multi-line) for a stronger visual barrier.
-   The logical VILLAGE_POS/REST_RADIUS remain the authoritative gameplay boundary. */
-const fenceGroup = new THREE.Group();
-const FENCE_POSTS = 28;
-const fenceRadius = REST_RADIUS - 0.2;
-
-// create posts
-const postGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.6, 8);
-const postMat = new THREE.MeshStandardMaterial({ color: 0x6b4a2a });
-const postPositions = [];
-// Batch posts as a single InstancedMesh to reduce draw calls
-const postsInst = new THREE.InstancedMesh(postGeo, postMat, FENCE_POSTS);
-// Shared temp transforms
-const _m4 = new THREE.Matrix4();
-const _q = new THREE.Quaternion();
-const _s = new THREE.Vector3(1, 1, 1);
-const _p = new THREE.Vector3();
-for (let i = 0; i < FENCE_POSTS; i++) {
-  const ang = (i / FENCE_POSTS) * Math.PI * 2;
-  const px = VILLAGE_POS.x + Math.cos(ang) * fenceRadius;
-  const pz = VILLAGE_POS.z + Math.sin(ang) * fenceRadius;
-  _p.set(px, 0.8, pz);
-  _q.setFromEuler(new THREE.Euler(0, -ang, 0));
-  _s.set(1, 1, 1);
-  _m4.compose(_p, _q, _s);
-  postsInst.setMatrixAt(i, _m4);
-  postPositions.push({ x: px, z: pz });
-}
-postsInst.instanceMatrix.needsUpdate = true;
-postsInst.castShadow = true;
-postsInst.receiveShadow = true;
-fenceGroup.add(postsInst);
-
- // connecting rails (three horizontal lines)
-const railMat = new THREE.MeshStandardMaterial({ color: 0x4b3620 });
-const railHeights = [0.45, 0.9, 1.35]; // y positions for rails
-// Batch rails using InstancedMesh (FENCE_POSTS segments * 3 heights)
-const _unitRailGeo = new THREE.BoxGeometry(1, 0.06, 0.06);
-const railsCount = FENCE_POSTS * railHeights.length;
-const railsInst = new THREE.InstancedMesh(_unitRailGeo, railMat, railsCount);
-let railIdx = 0;
-for (let i = 0; i < FENCE_POSTS; i++) {
-  const a = postPositions[i];
-  const b = postPositions[(i + 1) % FENCE_POSTS];
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const len = Math.hypot(dx, dz);
-  const angle = Math.atan2(dz, dx);
-  const midX = (a.x + b.x) / 2;
-  const midZ = (a.z + b.z) / 2;
-  for (const h of railHeights) {
-    // Compose transformation: rotation align to segment, translate to midpoint, scale X to segment length
-    const pos = _p.set(midX, h, midZ);
-    const quat = _q.setFromEuler(new THREE.Euler(0, -angle, 0));
-    const scl = _s.set(len, 1, 1);
-    _m4.compose(pos, quat, scl);
-    railsInst.setMatrixAt(railIdx++, _m4);
-  }
-}
-railsInst.instanceMatrix.needsUpdate = true;
-railsInst.castShadow = false;
-railsInst.receiveShadow = true;
-fenceGroup.add(railsInst);
-
-// Low translucent ground ring for visual guidance (subtle)
-const fenceRing = new THREE.Mesh(
-  new THREE.RingGeometry(fenceRadius - 0.08, fenceRadius + 0.08, 64),
-  new THREE.MeshBasicMaterial({ color: COLOR.village, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
-);
-fenceRing.rotation.x = -Math.PI / 2;
-fenceRing.position.copy(VILLAGE_POS);
-fenceGroup.add(fenceRing);
-
+const fenceGroup = createVillageFence(VILLAGE_POS, REST_RADIUS, COLOR);
 scene.add(fenceGroup);
 
 // Portals/Recall
@@ -1309,6 +948,24 @@ const portals = initPortals(scene);
 })();
 // Villages system (dynamic villages, roads, rest)
 const villages = createVillagesSystem(scene, portals);
+
+/* Dynamic enemy spawner: initialize after villages so it can avoid village radii */
+spawner = createDynamicSpawner({
+  scene,
+  player,
+  enemies,
+  mapManager,
+  villages,
+  WORLD,
+  EnemyClass: Enemy,
+  now,
+  distance2D,
+  VILLAGE_POS,
+  REST_RADIUS,
+  renderQuality,
+  applyMapModifiersToEnemy
+});
+spawner.initialSpawn();
 
 // ------------------------------------------------------------
 // Skills system (cooldowns, abilities, storms) and UI
@@ -1681,8 +1338,8 @@ function animate() {
   updatePlayer(dt);
   updateEnemies(dt);
   
-  // Dynamic enemy spawning system (hybrid: continuous + burst on movement)
-  try { updateDynamicSpawning(dt); } catch (e) { console.warn("Dynamic spawn error:", e); }
+  // Dynamic enemy spawning system
+  try { spawner && spawner.update(dt); } catch (e) { console.warn("Dynamic spawn error:", e); }
   
   if (firstPerson && typeof player !== "undefined") {
     // Reuse temp vectors to avoid per-frame allocations in the FP hand code.
@@ -1886,16 +1543,18 @@ function animate() {
   // Adaptive performance: adjust AI stride but maintain minimum enemy count
   try {
     if (!__adaptNextT || t >= __adaptNextT) {
-      const fps = __perf.fps || 60;
+      const fps = (perfTracker.getFPS && perfTracker.getFPS()) || 60;
+      let scale = spawner ? spawner.getPerformanceScale() : 1.0;
       if (fps < 25) {
         // Increase AI throttling instead of reducing enemy count
         __aiStride = Math.min(8, (__aiStride || 1) + 1);
         // Only slightly reduce performance scale, minimum of 1.0 to keep ~50 enemies
-        __enemyPerfScale = Math.max(1.0, (__enemyPerfScale || 1) - 0.05);
+        scale = Math.max(1.0, scale - 0.05);
       } else if (fps > 50) {
         __aiStride = Math.max(1, (__aiStride || 1) - 1);
-        __enemyPerfScale = Math.min(1.2, (__enemyPerfScale || 1) + 0.05);
+        scale = Math.min(1.2, scale + 0.05);
       }
+      spawner && spawner.setPerformanceScale(scale);
       __adaptNextT = t + 1.5;
     }
   } catch (_) {}
