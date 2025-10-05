@@ -26,7 +26,7 @@ export function wireUIBindings(params) {
   const {
     storageKey,
     scene,
-    player,
+    getPlayer,
     ENV_PRESETS,
     initEnvironment,
     updateEnvironmentFollow,
@@ -105,12 +105,13 @@ export function wireUIBindings(params) {
           if (s.env && s.env.root && s.env.root.parent) s.env.root.parent.remove(s.env.root);
         } catch (_) {}
         s.env = initEnvironment(scene, Object.assign({}, preset, { enableRain: s.envRainState, quality: renderQualityRef.get() }));
-        try {
-          if (s.envRainState && s.env && typeof s.env.setRainLevel === 'function') {
-            s.env.setRainLevel(clamp(s.envRainLevel, 0, 2));
-          }
-          updateEnvironmentFollow(s.env, player);
-        } catch (_) {}
+          try {
+            if (s.envRainState && s.env && typeof s.env.setRainLevel === 'function') {
+              s.env.setRainLevel(clamp(s.envRainLevel, 0, 2));
+            }
+            // getPlayer is provided by caller to avoid TDZ; call it at runtime
+            try { updateEnvironmentFollow(s.env, (typeof getPlayer === 'function' ? getPlayer() : player)); } catch (_) {}
+          } catch (_) {}
         envAccess.set(s);
         try {
           localStorage.setItem(

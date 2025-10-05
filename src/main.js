@@ -97,7 +97,7 @@ const WORLD_SEED = getOrInitWorldSeed();
 /* Perf tracker (perf.js): smoothed FPS, 1% low, frame ms, and renderer.info snapshot */
 const perfTracker = createPerformanceTracker(renderer, { targetFPS: 90, autoAdjust: true });
 
-const playerSystem = createPlayerSystem({ now, dir2D, distance2D, WORLD, renderer });
+  const playerSystem = createPlayerSystem({ THREE, now, dir2D, distance2D, WORLD, renderer });
 const cameraSystem = createCameraSystem({ THREE, now, effects });
 
 // Tiny reusable object pool to avoid allocations in hot loops.
@@ -422,7 +422,7 @@ const disposeTopBar = wireTopBar({
     setFirstPerson: (enabled) => setFirstPerson(enabled),
     getFirstPerson: () => firstPerson,
     portals,
-    get player() { return player; },
+    getPlayer: () => player,
     setCenterMsg: (t) => ui.setCenterMsg(t),
     clearCenterMsg: () => ui.clearCenterMsg(),
     startInstructionGuide: startInstructionGuideOverlay
@@ -432,11 +432,11 @@ try { window.__disposeTopBar = disposeTopBar; } catch (_) {}
 
 
 /* UI bindings for environment, render, and audio controls */
-wireUIBindings({
-  storageKey,
-  scene,
-  get player() { return player; },
-  ENV_PRESETS,
+  wireUIBindings({
+    storageKey,
+    scene,
+    getPlayer: () => player,
+    ENV_PRESETS,
   initEnvironment,
   updateEnvironmentFollow,
   envAccess: { get: () => environmentCtx.getState(), set: (st) => environmentCtx.setState(st) },

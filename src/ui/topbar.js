@@ -41,7 +41,7 @@ export function wireTopBar({ elements = {}, actions = {} } = {}) {
     setFirstPerson,
     getFirstPerson,
     portals,
-    player,
+    getPlayer,
     setCenterMsg,
     clearCenterMsg,
     startInstructionGuide,
@@ -98,13 +98,13 @@ export function wireTopBar({ elements = {}, actions = {} } = {}) {
   }
 
   // Portal recall
-  if (btnPortal && portals && typeof portals.recallToVillage === 'function') {
-    on(btnPortal, 'click', () => {
-      try {
-        portals.recallToVillage(player, setCenterMsg, clearCenterMsg);
-      } catch (_) {}
-    });
-  }
+    if (btnPortal && portals && typeof portals.recallToVillage === 'function') {
+      on(btnPortal, 'click', () => {
+        try {
+          portals.recallToVillage(getPlayer(), setCenterMsg, clearCenterMsg);
+        } catch (_) {}
+      });
+    }
 
   // Mark placement
   if (btnMark && portals && typeof portals.addPersistentMarkAt === 'function') {
@@ -117,7 +117,7 @@ export function wireTopBar({ elements = {}, actions = {} } = {}) {
           setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 1200);
           return;
         }
-        const m = portals.addPersistentMarkAt?.(player.pos());
+        const m = portals.addPersistentMarkAt?.(getPlayer().pos());
         if (m) {
           setCenterMsg && setCenterMsg('Flag placed');
           setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 1100);

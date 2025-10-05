@@ -1,7 +1,7 @@
 // Player system: movement, facing, regen, and stop helper
 // Extracted from main.js to keep orchestration light.
 
-export function createPlayerSystem({ now, dir2D, distance2D, WORLD, renderer }) {
+export function createPlayerSystem({ THREE, now, dir2D, distance2D, WORLD, renderer }) {
   /**
    * Stop player: cancel orders and clear any aim previews/cursor state.
    */
