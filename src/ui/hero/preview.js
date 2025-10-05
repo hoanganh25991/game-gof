@@ -1,4 +1,4 @@
-import { SKILLS } from "../../constants.js";
+import { SKILLS, CSS_VAR } from "../../constants.js";
 import { saveLoadout, loadOrDefault } from "../../loadout.js";
 import { SKILL_POOL, DEFAULT_LOADOUT } from "../../skills_pool.js";
 import { now } from "../../utils.js";
@@ -74,7 +74,7 @@ function showKeySelectOverlay(def) {
       borderRadius: "10px",
       padding: "14px",
       color: "var(--system-text)",
-      boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
+      boxShadow: CSS_VAR.shadowMedium,
       textAlign: "center",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif",
     });
@@ -145,13 +145,13 @@ function showKeySelectOverlay(def) {
       padding: "8px 12px",
       borderRadius: "6px",
       border: "1px solid var(--system-border)",
-      background: "rgba(120,40,40,0.85)",
+      background: CSS_VAR.glassStrong,
       color: "var(--theme-white)",
       cursor: "pointer",
       fontWeight: "600",
     });
-    cancel.addEventListener("mouseenter", () => (cancel.style.background = "rgba(160,60,60,0.9)"));
-    cancel.addEventListener("mouseleave", () => (cancel.style.background = "rgba(120,40,40,0.85)"));
+    cancel.addEventListener("mouseenter", () => (cancel.style.background = CSS_VAR.glass));
+    cancel.addEventListener("mouseleave", () => (cancel.style.background = CSS_VAR.glassStrong));
     cancel.addEventListener("click", () => {
       cleanup();
       resolve(null);

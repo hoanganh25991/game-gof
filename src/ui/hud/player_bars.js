@@ -1,4 +1,5 @@
 import { clamp01 } from "../../utils.js";
+import { CSS_VAR, CSS_COLOR } from "../../constants.js";
 
 /**
  * PlayerBarsUI
@@ -73,7 +74,7 @@ export class PlayerBarsUI {
       const prevColor = el.style.color || "";
       el.style.transition = "transform 260ms ease, color 260ms ease";
       el.style.transform = "scale(1.35)";
-      el.style.color = "#ffd86a";
+      el.style.color = CSS_VAR.themeYellow;
       setTimeout(() => {
         el.style.transform = "";
         el.style.color = prevColor;
@@ -89,7 +90,7 @@ export class PlayerBarsUI {
         const prevBox = b.style.boxShadow || "";
         b.style.transition = "transform 260ms ease, box-shadow 260ms ease";
         b.style.transform = "scale(1.08)";
-        b.style.boxShadow = "0 0 18px 8px rgba(255,215,90,0.95)";
+        b.style.boxShadow = "0 0 18px 8px " + CSS_COLOR.yellowGlowStrong;
         setTimeout(() => {
           b.style.transform = prevTransform;
           b.style.boxShadow = prevBox;

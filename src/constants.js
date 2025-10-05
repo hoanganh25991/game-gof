@@ -51,6 +51,59 @@ export const COLOR = {
   ash: 0x696969,         // Ash gray
   volcano: 0x8b4513,     // Volcanic brown
 };
+ 
+// CSS variable references for DOM styling (preferred for live theming)
+export const CSS_VAR = {
+  themeDark: "var(--theme-dark)",
+  themeOrange: "var(--theme-orange)",
+  themeLightOrange: "var(--theme-light-orange)",
+  themeWhite: "var(--theme-white)",
+  themeAccent: "var(--theme-accent)",
+  themeYellow: "var(--theme-yellow)",
+  white: "var(--white)",
+  accent: "var(--accent)",
+  // System UI
+  systemBg: "var(--system-bg)",
+  systemBorder: "var(--system-border)",
+  systemText: "var(--system-text)",
+  systemAccent: "var(--system-accent)",
+  // Common borders / glass
+  borderOrange: "var(--border-orange)",
+  borderOrangeLight: "var(--border-orange-light)",
+  borderOrangeSubtle: "var(--border-orange-subtle)",
+  borderWhiteSubtle: "var(--border-white-subtle)",
+  borderWhiteFaint: "var(--border-white-faint)",
+  glass: "var(--glass)",
+  glassStrong: "var(--glass-strong)",
+  textWarm: "var(--text-warm)",
+  textWarmLight: "var(--text-warm-light)",
+  shadowMedium: "var(--shadow-medium)",
+  shadowStrong: "var(--shadow-strong)",
+  glowOrange: "var(--glow-orange)",
+  glowOrangeStrong: "var(--glow-orange-strong)",
+};
+
+// CSS color fallbacks (exact values) for contexts that do not support CSS variables (e.g., Canvas2D)
+export const CSS_COLOR = {
+  // Mirrors css/base.css tokens
+  glass: "rgba(26, 10, 5, 0.7)",
+  glassStrong: "rgba(26, 10, 5, 0.85)",
+  borderOrange: "rgba(255, 140, 66, 0.35)",
+  borderOrangeLight: "rgba(255, 140, 66, 0.3)",
+  borderOrangeSubtle: "rgba(255, 140, 66, 0.15)",
+  borderWhiteSubtle: "rgba(255, 255, 255, 0.12)",
+  borderWhiteFaint: "rgba(255, 255, 255, 0.06)",
+  // Useful UI colors not in variables but used by Canvas/HUD
+  roadUnderlay: "rgba(210, 200, 190, 0.15)",
+  roadDark: "rgba(43, 36, 32, 0.9)",
+  villageRing: "rgba(90, 255, 139, 0.6)",
+  villageRingFaint: "rgba(90, 255, 139, 0.35)",
+  portal: "rgba(124, 77, 255, 0.9)",
+  portalAlt: "rgba(180, 120, 255, 0.9)",
+  enemyDot: "rgba(255, 80, 80, 0.95)",
+  yellowGlowStrong: "rgba(255, 215, 90, 0.95)",
+  playerDot: "rgba(126, 204, 255, 1)",
+};
 
 export const WORLD = {
   groundSize: 500,     // local visual grid chunk size

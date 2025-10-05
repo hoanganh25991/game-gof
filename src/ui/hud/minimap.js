@@ -1,4 +1,4 @@
-import { VILLAGE_POS, REST_RADIUS } from "../../constants.js";
+import { VILLAGE_POS, REST_RADIUS, CSS_COLOR } from "../../constants.js";
 
 /**
  * MinimapUI
@@ -81,9 +81,9 @@ export class MinimapUI {
 
     // Clear and background
     ctx.clearRect(0, 0, cssW, cssH);
-    ctx.fillStyle = "rgba(26, 10, 5, 0.7)";
+    ctx.fillStyle = CSS_COLOR.glass;
     ctx.fillRect(0, 0, cssW, cssH);
-    ctx.strokeStyle = "rgba(255, 140, 66, 0.35)";
+    ctx.strokeStyle = CSS_COLOR.borderOrange;
     ctx.lineWidth = 1;
     ctx.strokeRect(0.5, 0.5, Math.max(0, cssW - 1), Math.max(0, cssH - 1));
 
@@ -103,7 +103,7 @@ export class MinimapUI {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         // Underlay (lighter edge)
-        ctx.strokeStyle = "rgba(210, 200, 190, 0.15)";
+        ctx.strokeStyle = CSS_COLOR.roadUnderlay;
         ctx.lineWidth = 4;
         if (usePolys) {
           for (const poly of polys) {
@@ -128,7 +128,7 @@ export class MinimapUI {
           }
         }
         // Main road line (dark)
-        ctx.strokeStyle = "rgba(43, 36, 32, 0.9)"; // ~0x2b2420
+        ctx.strokeStyle = CSS_COLOR.roadDark;
         ctx.lineWidth = 2;
         if (usePolys) {
           for (const poly of polys) {
@@ -157,7 +157,7 @@ export class MinimapUI {
     } catch (_) {}
 
     // Origin village ring
-    ctx.strokeStyle = "rgba(90,255,139,0.6)";
+    ctx.strokeStyle = CSS_COLOR.villageRing;
     ctx.beginPath();
     ctx.arc(
       cx + (VILLAGE_POS.x - center.x) * scale,
@@ -171,7 +171,7 @@ export class MinimapUI {
     // Dynamic villages (discovered)
     try {
       const list = villages?.listVillages?.() || [];
-      ctx.strokeStyle = "rgba(90,255,139,0.35)";
+      ctx.strokeStyle = CSS_COLOR.villageRingFaint;
       for (const v of list) {
         const p = w2p(v.center.x, v.center.z);
         ctx.beginPath();
@@ -186,13 +186,13 @@ export class MinimapUI {
     if (villagePortal) {
       const pos = villagePortal.group.position;
       const p = w2p(pos.x, pos.z);
-      ctx.fillStyle = "rgba(124,77,255,0.9)";
+      ctx.fillStyle = CSS_COLOR.portal;
       ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
     }
     if (returnPortal) {
       const pos = returnPortal.group.position;
       const p = w2p(pos.x, pos.z);
-      ctx.fillStyle = "rgba(180,120,255,0.9)";
+      ctx.fillStyle = CSS_COLOR.portalAlt;
       ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
     }
 
@@ -202,14 +202,14 @@ export class MinimapUI {
         if (!en.alive) return;
         const ep = en.pos();
         const p = w2p(ep.x, ep.z);
-        ctx.fillStyle = "rgba(255,80,80,0.95)";
+        ctx.fillStyle = CSS_COLOR.enemyDot;
         ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
       });
     }
 
     // Player
     const pp = w2p(center.x, center.z);
-    ctx.fillStyle = "rgba(126,204,255,1)";
+    ctx.fillStyle = CSS_COLOR.playerDot;
     ctx.beginPath();
     ctx.arc(pp.x, pp.y, 3, 0, Math.PI * 2);
     ctx.fill();
