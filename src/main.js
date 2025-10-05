@@ -37,6 +37,8 @@ import { isMobile, MOBILE_OPTIMIZATIONS, applyMobileRendererHints } from "./conf
 import { createDynamicSpawner } from "./spawn.js";
 import { createVillageFence } from "./village_fence.js";
 import { createPerformanceTracker, initVfxGating } from "./perf.js";
+import { createPlayerSystem } from "./player_system.js";
+import { createIndicators } from "./ui/indicators.js";
 
 
 /* Mobile Device Detection & Optimization moved to ./config/mobile.js */
@@ -68,6 +70,14 @@ if (isMobile && !_renderPrefs.quality) {
 }
 
 const effects = new EffectsManager(scene, { quality: renderQuality });
+const indicators = createIndicators({
+  effects,
+  COLOR,
+  createGroundRing,
+  isMobile,
+  MOBILE_OPTIMIZATIONS,
+  handWorldPos
+});
 const mapManager = createMapManager();
 let chunkMgr = null;
 const WORLD_SEED = getOrInitWorldSeed();
@@ -75,6 +85,8 @@ const WORLD_SEED = getOrInitWorldSeed();
 
 /* Perf tracker (perf.js): smoothed FPS, 1% low, frame ms, and renderer.info snapshot */
 const perfTracker = createPerformanceTracker(renderer, { targetFPS: 90, autoAdjust: true });
+
+const playerSystem = createPlayerSystem({ now, dir2D, distance2D, WORLD, renderer });
 
 // Tiny reusable object pool to avoid allocations in hot loops.
 // Temp vectors/quaternions used across update loops to reduce GC pressure.
@@ -798,10 +810,6 @@ const aimPreview = null;
 
 const attackPreview = null;
 
-const selectionRing = createGroundRing(0.9, 1.05, COLOR.fire, 0.55);
-selectionRing.visible = true;
-effects.indicators.add(selectionRing);
-
 // Center message helpers wired to UI
 const setCenterMsg = (t) => ui.setCenterMsg(t);
 const clearCenterMsg = () => ui.clearCenterMsg();
@@ -971,7 +979,7 @@ spawner.initialSpawn();
 // Skills system (cooldowns, abilities, storms) and UI
 // ------------------------------------------------------------
 const skills = new SkillsSystem(player, enemies, effects, ui.getCooldownElements(), villages);
-try { window.__skillsRef = skills; } catch (_) {}
+try { window.__skillsRef = skills; player.skills = skills; } catch (_) {}
 try { initHeroPreview(skills, { heroScreen }); } catch (_) {}
 
 // Touch controls (joystick + skill wheel)
@@ -1162,7 +1170,7 @@ window.addEventListener("keydown", (e) => {
   } else if (k === "b") {
     portals.recallToVillage(player, setCenterMsg, clearCenterMsg);
   } else if (k === "s") {
-    stopPlayer();
+    stopPlayerLocal();
   } else if (k === "m") {
     try {
       const remain = portals.getMarkCooldownMs?.() ?? 0;
@@ -1257,6 +1265,10 @@ if (isMobile) {
   console.info(`[Mobile] AI stride: ${__aiStride}, Billboard stride: ${__bbStride}, Cull distance: ${MOBILE_OPTIMIZATIONS.cullDistance}m`);
 }
 
+/* Delegate wrappers to PlayerSystem */
+const updatePlayerWrapper = (dt) => playerSystem.updatePlayer(dt, { player, lastMoveDir });
+const stopPlayerLocal = () => playerSystem.stopPlayer(player, aimPreview, attackPreview);
+
 function animate() {
   requestAnimationFrame(animate);
   const t = now();
@@ -1335,7 +1347,7 @@ function animate() {
     }
   } catch (_) {}
 
-  updatePlayer(dt);
+  updatePlayerWrapper(dt);
   updateEnemies(dt);
   
   // Dynamic enemy spawning system
@@ -1482,7 +1494,7 @@ function animate() {
   // When entering a village, connect it to previous visited village with a road
 
   if (!__overBudget()) {
-    updateIndicators(dt);
+    indicators.update(dt, { now, player, enemies, selectedUnit });
     portals.update(dt);
     villages.updateRest(player, dt);
     updateDeathRespawn();
@@ -1616,133 +1628,7 @@ function randomEnemySpawnPos() {
   return cand;
 }
 
-function stopPlayer() {
-  // cancel movement/attack orders
-  player.moveTarget = null;
-  player.attackMove = false;
-  player.target = null;
 
-  // ensure no aim-related UI or state (aiming removed)
-  player.aimMode = false;
-  player.aimModeSkill = null;
-  try {
-    if (aimPreview) aimPreview.visible = false;
-    if (attackPreview) attackPreview.visible = false;
-    renderer.domElement.style.cursor = "default";
-  } catch (_) {}
-
-  // brief hold to prevent instant re-acquire
-  player.holdUntil = now() + 0.4;
-}
-
-function updatePlayer(dt) {
-  // Regen
-  player.hp = Math.min(player.maxHP, player.hp + player.hpRegen * dt);
-  player.mp = Math.min(player.maxMP, player.mp + player.mpRegen * dt);
-  player.idlePhase += dt;
-
-  // Dead state
-  if (!player.alive) {
-    player.mesh.position.y = 1.1;
-    return;
-  }
-
-  // Freeze: no movement
-  if (player.frozen) {
-    player.mesh.position.y = 1.1;
-    return;
-  }
-
-  // Auto-acquire nearest enemy if idle and in range (disabled — manual control)
-  // Automatic target acquisition was removed so the player fully controls targeting and attacking.
-  /*
-  if (!player.moveTarget && (!player.target || !player.target.alive) && (!player.holdUntil || now() >= player.holdUntil)) {
-    const nearest = getNearestEnemy(player.pos(), WORLD.attackRange + 0.5, enemies);
-    if (nearest) player.target = nearest;
-  }
-  */
-
-  // Attack-move: user-initiated attack-move is respected but automatic acquisition/auto-attack is disabled.
-  if (player.attackMove) {
-    // Intentionally left blank to avoid auto-acquiring targets while attack-moving.
-    // Player must explicitly initiate attacks (e.g. press 'a' then click an enemy).
-  }
-
-  // Movement towards target or moveTarget
-  let moveDir = null;
-  if (player.target && player.target.alive) {
-    const d = distance2D(player.pos(), player.target.pos());
-    // Do NOT auto-move or auto-basic-attack when a target is set.
-    // If the player explicitly used attack-move (player.attackMove) then allow moving toward the target.
-    if (player.attackMove && d > (WORLD.attackRange * (WORLD.attackRangeMult || 1)) * 0.95) {
-      moveDir = dir2D(player.pos(), player.target.pos());
-    } else {
-      // Otherwise, only auto-face the target when nearby (no auto-attack).
-      if (d <= (WORLD.attackRange * (WORLD.attackRangeMult || 1)) * 1.5) {
-        const v = dir2D(player.pos(), player.target.pos());
-        const targetYaw = Math.atan2(v.x, v.z);
-        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, targetYaw, 0));
-        player.mesh.quaternion.slerp(q, Math.min(1, player.turnSpeed * 1.5 * dt));
-        player.lastFacingYaw = targetYaw;
-        player.lastFacingUntil = now() + 0.6;
-      }
-    }
-  } else if (player.moveTarget) {
-    const d = distance2D(player.pos(), player.moveTarget);
-    if (d > 0.6) {
-      moveDir = dir2D(player.pos(), player.moveTarget);
-    } else {
-      player.moveTarget = null;
-    }
-  }
-
-  if (moveDir) {
-    const spMul = (player.speedBoostUntil && now() < player.speedBoostUntil && player.speedBoostMul) ? player.speedBoostMul : 1;
-    const effSpeed = player.speed * spMul;
-    player.mesh.position.x += moveDir.x * effSpeed * dt;
-    player.mesh.position.z += moveDir.z * effSpeed * dt;
-
-    // Rotate towards movement direction smoothly
-    const targetYaw = Math.atan2(moveDir.x, moveDir.z);
-    const euler = new THREE.Euler(0, targetYaw, 0);
-    const q = new THREE.Quaternion().setFromEuler(euler);
-    player.mesh.quaternion.slerp(q, Math.min(1, player.turnSpeed * dt));
-
-    // record move direction for camera look-ahead
-    lastMoveDir.set(moveDir.x, 0, moveDir.z);
-  } else {
-    // stationary: face current target if any
-    if (player.target && player.target.alive) {
-      const v = dir2D(player.pos(), player.target.pos());
-      const targetYaw = Math.atan2(v.x, v.z);
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, targetYaw, 0));
-      player.mesh.quaternion.slerp(q, Math.min(1, player.turnSpeed * 1.5 * dt));
-      player.lastFacingYaw = targetYaw;
-      player.lastFacingUntil = now() + 0.6;
-    } else if (player.lastFacingUntil && now() < player.lastFacingUntil) {
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, player.lastFacingYaw || 0, 0));
-      player.mesh.quaternion.slerp(q, Math.min(1, player.turnSpeed * 0.8 * dt));
-    }
-    // decay look-ahead
-    lastMoveDir.multiplyScalar(Math.max(0, 1 - dt * 3));
-  }
-
-  // Keep y at ground
-  player.mesh.position.y = 1.1;
-
-  // Idle glow pulse and brief brace squash
-  const ud = player.mesh.userData || {};
-  if (ud.handLight) ud.handLight.intensity = 1.2 + Math.sin((player.idlePhase || 0) * 2.2) * 0.22;
-  if (ud.fireOrb && ud.fireOrb.material) {
-    ud.fireOrb.material.emissiveIntensity = 2.2 + Math.sin((player.idlePhase || 0) * 2.2) * 0.35;
-  }
-  if (player.braceUntil && now() < player.braceUntil) {
-    const n = Math.max(0, (player.braceUntil - now()) / 0.18);
-    player.mesh.scale.set(1, 0.94 + 0.06 * n, 1);
-  } else {
-    player.mesh.scale.set(1, 1, 1);
-  }
-}
 
 function updateEnemies(dt) {
   __aiOffset = (__aiOffset + 1) % __aiStride;
@@ -1955,56 +1841,6 @@ function updateEnemies(dt) {
   } catch (_) {}
 }
 
-function updateIndicators(dt) {
-  // Selection ring: follow currently selected unit
-  if (selectedUnit && selectedUnit.alive) {
-    selectionRing.visible = true;
-    const p = selectedUnit.pos();
-    selectionRing.position.set(p.x, 0.02, p.z);
-    const col = selectedUnit.team === "enemy" ? COLOR.village : COLOR.fire;
-    selectionRing.material.color.setHex(col);
-  } else {
-    selectionRing.visible = false;
-  }
-
-  // Subtle rotation for aim ring for feedback
-
-  // Mobile: Skip slow debuff indicators (expensive CPU work)
-  if (!isMobile || !MOBILE_OPTIMIZATIONS.skipSlowUpdates) {
-    // Slow debuff indicator rings
-    const t = now();
-    enemies.forEach((en) => {
-      const slowed = en.slowUntil && t < en.slowUntil;
-      if (slowed) {
-        if (!en._slowRing) {
-          const r = createGroundRing(0.6, 0.9, COLOR.ember, 0.7);
-          effects.indicators.add(r);
-          en._slowRing = r;
-        }
-        const p = en.pos();
-        en._slowRing.position.set(p.x, 0.02, p.z);
-        en._slowRing.visible = true;
-      } else if (en._slowRing) {
-        effects.indicators.remove(en._slowRing);
-        en._slowRing.geometry.dispose?.();
-        en._slowRing = null;
-      }
-    });
-  }
-
-  // Hand charged micro-sparks when any skill is ready
-  const anyReady = !(skills.isOnCooldown("Q") && skills.isOnCooldown("W") && skills.isOnCooldown("E") && skills.isOnCooldown("R"));
-  const t = now();
-  if (anyReady && (window.__nextHandSparkT ?? 0) <= t) {
-    // Use temp vectors to avoid allocating from/to per spark
-    const from = handWorldPos(player);
-    __tempVecA.copy(from);
-    __tempVecB.set((Math.random() - 0.5) * 0.6, 0.2 + Math.random() * 0.3, (Math.random() - 0.5) * 0.6);
-    __tempVecC.copy(from).add(__tempVecB);
-    effects.spawnFireStream(__tempVecA, __tempVecC, COLOR.ember, 0.06, 5, 0.2);
-    window.__nextHandSparkT = t + 0.5 + Math.random() * 0.5;
-  }
-}
 
 function updateDeathRespawn() {
   const t = now();
