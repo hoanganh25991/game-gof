@@ -31,6 +31,7 @@ import { updateSkillBarLabels } from "./ui/icons.js";
 import { promptBasicUpliftIfNeeded } from "./uplift.js";
 import { setupDesktopControls } from "./ui/deskop-controls.js"
 import * as payments from './payments.js';
+import { initPaymentsBootstrap } from "./payments_boot.js";
 import { getSkillUpgradeManager } from "./skill_upgrades.js";
 import { ChunkManager, getOrInitWorldSeed } from "./chunk_manager.js";
 import { isMobile, MOBILE_OPTIMIZATIONS, applyMobileRendererHints } from "./config/mobile.js";
@@ -39,6 +40,7 @@ import { createVillageFence } from "./village_fence.js";
 import { createPerformanceTracker, initVfxGating } from "./perf.js";
 import { createPlayerSystem } from "./player_system.js";
 import { createIndicators } from "./ui/indicators.js";
+import { createEnemiesSystem } from "./enemies_system.js";
 
 
 /* Mobile Device Detection & Optimization moved to ./config/mobile.js */
@@ -204,131 +206,8 @@ initI18n();
 // Bottom Middle = Desktop Controls
 setupDesktopControls();
 
-/* Payments (Digital Goods / Play Billing + App-priced TWA support)
-   - Supports two modes:
-     1) In-app SKUs (PRODUCT_IDS non-empty): use Digital Goods API as before.
-     2) App-priced (no SKUs): trust license status provided by TWA wrapper (preferred)
-        or verify a Play Licensing/Play Integrity token on the server.
-   - For app-priced TWA: implement license check in the Android wrapper and post a message
-     to the web page with { type: 'TWA_LICENSE_STATUS', entitled: boolean, licenseToken?: string }.
-     The web page will store entitlement in localStorage and (optionally) verify licenseToken on your server.
-*/
-(function initPayments() {
-  // Run async init without blocking boot
-  (async () => {
-    try {
-      await payments.initDigitalGoods(); // harmless if unsupported
-      // Configure product SKUs here if you're using in-app products.
-      // For an app-priced distribution (one-time paid app with no SKUs), leave PRODUCT_IDS empty.
-      const PRODUCT_IDS = []; // Example: ['com.example.app.productId'] for in-app SKU mode.
-
-      if (Array.isArray(PRODUCT_IDS) && PRODUCT_IDS.length > 0) {
-        // In-app SKU flow (unchanged)
-        const purchases = await payments.checkOwned(PRODUCT_IDS);
-        if (purchases && purchases.length > 0) {
-          try { localStorage.setItem(storageKey("app.purchased"), '1'); } catch (_) {}
-          window.__appPurchased = true;
-          console.info('[payments] detected owned product(s):', purchases.map(p => p.itemId));
-          // Optionally verify purchase tokens on server:
-          // for (const p of purchases) await payments.verifyOnServer({ packageName: 'com.example.app', productId: p.itemId, purchaseToken: p.purchaseToken });
-        } else {
-          // fall back to previously-saved local state
-          window.__appPurchased = !!localStorage.getItem(storageKey("app.purchased"));
-        }
-      } else {
-        // App-priced flow (no SKUs)
-        // 1) Use any previously persisted local flag while we attempt to get a definitive license status.
-        window.__appPurchased = !!localStorage.getItem(storageKey("app.purchased"));
-
-        // 2) Listen for license messages from the Android TWA wrapper.
-        //    The wrapper should post a message to the page with:
-        //      { type: 'TWA_LICENSE_STATUS', entitled: true|false, licenseToken?: '<token-for-server-verification>' }
-        window.addEventListener('message', async (ev) => {
-          try {
-            const data = ev.data;
-            if (!data || typeof data !== 'object') return;
-            if (data.type === 'TWA_LICENSE_STATUS') {
-              const entitled = !!data.entitled;
-              window.__appPurchased = entitled;
-              try { localStorage.setItem(storageKey("app.purchased"), entitled ? '1' : '0'); } catch (_) {}
-              console.info('[payments] received TWA_LICENSE_STATUS', { entitled });
-
-              // If the wrapper provides a token suitable for server-side verification (Play Integrity or LVL),
-              // verify it on your server for stronger security.
-              if (data.licenseToken) {
-                try {
-                  const resp = await payments.verifyLicenseOnServer({ licenseData: data.licenseToken });
-                  if (resp && resp.ok && resp.entitled) {
-                    window.__appPurchased = true;
-                    try { localStorage.setItem(storageKey("app.purchased"), '1'); } catch (_) {}
-                    console.info('[payments] server verified license token OK');
-                  } else {
-                    console.warn('[payments] server license verification returned not-entitled', resp);
-                  }
-                } catch (e) {
-                  console.warn('[payments] license verify on server failed', e);
-                }
-              }
-            }
-          } catch (e) {
-            // ignore message handler failures
-            console.warn('[payments] message handler error', e);
-          }
-        }, false);
-
-        // 3) Helper to request the wrapper to perform a license check (the wrapper must listen for this message).
-        //    The Android wrapper should respond by posting TWA_LICENSE_STATUS back to the page.
-        window.requestLicenseStatus = function requestLicenseStatus() {
-          try {
-            // This will send a message to the embedding context (the Android TWA wrapper).
-            // The wrapper must listen for this and respond with a TWA_LICENSE_STATUS message.
-            window.postMessage({ type: 'REQUEST_TWA_LICENSE_STATUS' }, '*');
-          } catch (e) {
-            console.warn('[payments] requestLicenseStatus failed', e);
-          }
-        };
-
-        // Ask wrapper for current license state (non-blocking)
-        try { window.requestLicenseStatus(); } catch (_) {}
-      }
-    } catch (e) {
-      console.warn('[payments] initialization failed', e);
-      window.__appPurchased = !!localStorage.getItem(storageKey("app.purchased"));
-    }
-  })();
-
-  // Expose helper to restore purchases / re-check license on demand (e.g., settings "Restore purchases" button)
-  window.restorePurchases = async function restorePurchases() {
-    try {
-      await payments.initDigitalGoods();
-      const PRODUCT_IDS = []; // same configuration as above; fill if using SKUs
-
-      if (Array.isArray(PRODUCT_IDS) && PRODUCT_IDS.length > 0) {
-        const all = await payments.listPurchases();
-        if (all && all.length) {
-          const found = (all || []).some(p => p && PRODUCT_IDS.includes(p.itemId));
-          if (found) {
-            try { localStorage.setItem(storageKey("app.purchased"), '1'); } catch (_) {}
-            window.__appPurchased = true;
-          }
-        }
-        return all;
-      } else {
-        // App-priced flow: request the wrapper to re-check license and return immediately.
-        try {
-          window.requestLicenseStatus && window.requestLicenseStatus();
-          return { ok: true, note: 'Requested wrapper license status' };
-        } catch (err) {
-          console.warn('[payments] restorePurchases (app priced) failed', err);
-          throw err;
-        }
-      }
-    } catch (err) {
-      console.warn('[payments] restorePurchases failed', err);
-      throw err;
-    }
-  };
-})();
+/* Payments bootstrap */
+initPaymentsBootstrap({ payments, storageKey });
 
 /* Audio: preferences + initialize on first user gesture. Do not auto-start music if disabled. */
 const _audioPrefs = JSON.parse(localStorage.getItem(storageKey("audioPrefs")) || "{}");
@@ -975,6 +854,29 @@ spawner = createDynamicSpawner({
 });
 spawner.initialSpawn();
 
+// Enemies System (AI, movement, attacks, respawn, billboarding, mobile culling)
+const enemiesSystem = createEnemiesSystem({
+  THREE,
+  WORLD,
+  VILLAGE_POS,
+  REST_RADIUS,
+  dir2D,
+  distance2D,
+  now,
+  audio,
+  effects,
+  scene,
+  player,
+  enemies,
+  villages,
+  mapManager,
+  isMobile,
+  MOBILE_OPTIMIZATIONS,
+  camera,
+  shouldSpawnVfx,
+  applyMapModifiersToEnemy
+});
+
 // ------------------------------------------------------------
 // Skills system (cooldowns, abilities, storms) and UI
 // ------------------------------------------------------------
@@ -1037,202 +939,15 @@ if (typeof touch !== "undefined" && touch) inputService.setTouchAdapter(touch);
 // ------------------------------------------------------------
 // Input Handling
 // ------------------------------------------------------------
-renderer.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
-
-let keyHoldA = false;
-
-/* Autofire helper: attempt immediate auto-basic attack on nearest enemy within effective range.
-   Respects cooldown in skills.tryBasicAttack, and enables attackMove if target is beyond range. */
-function attemptAutoBasic() {
-  if (!player.alive || player.frozen) return;
-  try {
-    const effRange = WORLD.attackRange * (WORLD.attackRangeMult || 1);
-    const nearest = getNearestEnemy(player.pos(), effRange, enemies);
-    if (!nearest) return;
-    player.target = nearest;
-    player.moveTarget = null;
-    try {
-      const d = distance2D(player.pos(), nearest.pos());
-      player.attackMove = d > effRange * 0.95;
-    } catch (err) {
-      player.attackMove = false;
-    }
-    effects.spawnTargetPing(nearest, COLOR.village);
-    skills.tryBasicAttack(player, nearest);
-  } catch (e) {}
-}
-
-/* Keyboard movement (arrow keys) */
-const keyMove = { up: false, down: false, left: false, right: false };
-function getKeyMoveDir() {
-  const x = (keyMove.right ? 1 : 0) + (keyMove.left ? -1 : 0);
-  const y = (keyMove.down ? 1 : 0) + (keyMove.up ? -1 : 0);
-  const len = Math.hypot(x, y);
-  if (len === 0) return { active: false, x: 0, y: 0 };
-  return { active: true, x: x / len, y: y / len };
-}
 
 
-renderer.domElement.addEventListener("mousedown", (e) => {
-  raycast.updateMouseNDC(e);
-  if (e.button === 2) { // Right click: move / select (no auto-attack/move)
-    if (player.frozen) {
-      portals.handleFrozenPortalClick(raycast, camera, player, clearCenterMsg);
-      return;
-    }
-    const obj = raycast.raycastEnemyOrGround();
-    if (obj && obj.type === "enemy") {
-      // Select enemy manually instead of auto-targeting/auto-attacking.
-      selectedUnit = obj.enemy;
-      effects.spawnTargetPing(obj.enemy, COLOR.village);
-    } else {
-      const p = raycast.raycastGround();
-      if (p) {
-        // Manual move order; do not enable auto-attack.
-        player.moveTarget = p.clone();
-        player.target = null;
-        player.attackMove = false;
-        effects.spawnMovePing(p);
-      }
-    }
-  } else if (e.button === 0) { // Left click: basic attack on enemy; ignore ground
-    const obj = raycast.raycastPlayerOrEnemyOrGround();
-
-    if (player.frozen) {
-      portals.handleFrozenPortalClick(raycast, camera, player, clearCenterMsg);
-      return;
-    }
-
-    const effRange = WORLD.attackRange * (WORLD.attackRangeMult || 1);
-
-    if (obj && obj.type === "enemy") {
-      selectedUnit = obj.enemy;
-      if (obj.enemy && obj.enemy.alive) {
-        player.target = obj.enemy;
-        player.moveTarget = null;
-        try {
-          const d = distance2D(player.pos(), obj.enemy.pos());
-          player.attackMove = d > effRange * 0.95;
-        } catch (err) {
-          player.attackMove = false;
-        }
-        effects.spawnTargetPing(obj.enemy, COLOR.village);
-        try { skills.tryBasicAttack(player, obj.enemy); } catch (_) {}
-      }
-    } else {
-      // Ignore player/ground on left click (no move/order)
-      selectedUnit = player;
-    }
-  }
-});
 
 
-window.addEventListener("keydown", (e) => {
-  if (e.repeat) return;
-  const k = e.key.toLowerCase();
-  if (k === "a") {
-    // Ensure any existing aim mode is cancelled (defensive - some UI flows may have set aim)
-    try {
-      player.aimMode = false;
-      player.aimModeSkill = null;
-      if (aimPreview) aimPreview.visible = false;
-      if (attackPreview) attackPreview.visible = false;
-      renderer.domElement.style.cursor = "default";
-    } catch (e) {}
 
-    keyHoldA = true; // enable autofire while held
-    // Auto-select nearest enemy and attempt basic attack.
-    const nearest = getNearestEnemy(player.pos(), WORLD.attackRange * (WORLD.attackRangeMult || 1), enemies);
-    if (nearest) {
-      // select and perform basic attack immediately
-      player.target = nearest;
-      player.moveTarget = null;
-      try {
-        const d = distance2D(player.pos(), nearest.pos());
-        player.attackMove = d > (WORLD.attackRange * (WORLD.attackRangeMult || 1)) * 0.95;
-      } catch (err) {
-        player.attackMove = false;
-      }
-      effects.spawnTargetPing(nearest);
-      // Attempt basic attack (skills.tryBasicAttack will check cooldown/range)
-      try { skills.tryBasicAttack(player, nearest); } catch (err) { /* ignore */ }
-    } else {
-      // No nearby enemy: do nothing (explicitly avoid entering ATTACK aim mode)
-    }
-  } else if (k === "q") {
-    skills.castSkill("Q");
-  } else if (k === "w") {
-    skills.castSkill("W");
-  } else if (k === "e") {
-    skills.castSkill("E");
-  } else if (k === "r") {
-    skills.castSkill("R");
-  } else if (k === "b") {
-    portals.recallToVillage(player, setCenterMsg, clearCenterMsg);
-  } else if (k === "s") {
-    stopPlayerLocal();
-  } else if (k === "m") {
-    try {
-      const remain = portals.getMarkCooldownMs?.() ?? 0;
-      if (remain > 0) {
-        const s = Math.ceil(remain / 1000);
-        setCenterMsg(`Mark ready in ${s}s`);
-        setTimeout(() => clearCenterMsg(), 1200);
-      } else {
-        const m = portals.addPersistentMarkAt?.(player.pos());
-        if (m) {
-          setCenterMsg("Flag placed");
-          setTimeout(() => clearCenterMsg(), 1100);
-        }
-      }
-    } catch (_) {}
-  } else if (k === "escape") {
-    // no-op (aiming removed)
-  }
-});
 
-window.addEventListener("keyup", (e) => {
-  const k = (e.key || "").toLowerCase();
-  if (k === "a") {
-    keyHoldA = false;
-  }
-});
 
-/* Arrow keys: continuous movement while held */
-window.addEventListener("keydown", (e) => {
-  const k = e.key;
-  if (k === "ArrowUp" || k === "ArrowDown" || k === "ArrowLeft" || k === "ArrowRight") {
-    try { e.preventDefault(); } catch (_) {}
-    if (k === "ArrowUp") keyMove.up = true;
-    if (k === "ArrowDown") keyMove.down = true;
-    if (k === "ArrowLeft") keyMove.left = true;
-    if (k === "ArrowRight") keyMove.right = true;
 
-    // Immediate ping on arrow press (match right-click), and start cadence
-    try {
-      const dir = getKeyMoveDir ? getKeyMoveDir() : { active: false };
-      if (dir && dir.active && effects && effects.spawnMovePing) {
-        const base = player.pos();
-        const speed = 10;
-        const px = base.x + dir.x * speed;
-        const pz = base.z + dir.y * speed;
-        effects.spawnMovePing(new THREE.Vector3(px, 0, pz));
-        __arrowContPingT = now() + __MOVE_PING_INTERVAL;
-      } else {
-        __arrowContPingT = 0;
-      }
-    } catch (_) {}
-  }
-});
-window.addEventListener("keyup", (e) => {
-  const k = e.key;
-  if (k === "ArrowUp" || k === "ArrowDown" || k === "ArrowLeft" || k === "ArrowRight") {
-    if (k === "ArrowUp") keyMove.up = false;
-    if (k === "ArrowDown") keyMove.down = false;
-    if (k === "ArrowLeft") keyMove.left = false;
-    if (k === "ArrowRight") keyMove.right = false;
-  }
-});
+
 
 // ------------------------------------------------------------
 // Systems Update Loop
@@ -1245,7 +960,6 @@ let __aiStride = renderQuality === "low" ? 3 : (renderQuality === "medium" ? 2 :
 if (isMobile) {
   __aiStride = Math.ceil(__aiStride * MOBILE_OPTIMIZATIONS.aiStrideMultiplier);
 }
-let __aiOffset = 0;
 const __MOVE_PING_INTERVAL = 0.3; // seconds between continuous move pings (joystick/arrow). Match right-click cadence.
 let __joyContPingT = 0;
 let __arrowContPingT = 0;
@@ -1256,10 +970,6 @@ if (isMobile) {
 }
 let __bbOffset = 0;
 
-// Mobile: Track frozen enemies (beyond cull distance) to skip their AI entirely
-let __frozenEnemies = new Set();
-let __lastCullCheckT = 0;
-const __CULL_CHECK_INTERVAL = 0.5; // Check every 500ms instead of every frame
 
 if (isMobile) {
   console.info(`[Mobile] AI stride: ${__aiStride}, Billboard stride: ${__bbStride}, Cull distance: ${MOBILE_OPTIMIZATIONS.cullDistance}m`);
@@ -1320,10 +1030,6 @@ function animate() {
       dy = (ks.down ? 1 : 0) + (ks.up ? -1 : 0);
       const len = Math.hypot(dx, dy);
       if (len > 0) { dx /= len; dy /= len; active = true; }
-    } else {
-      // Fallback to legacy local state if service not present
-      const dir = getKeyMoveDir ? getKeyMoveDir() : { active: false };
-      if (dir && dir.active) { dx = dir.x; dy = dir.y; active = true; }
     }
 
     if (active && !player.frozen && !player.aimMode) {
@@ -1348,7 +1054,7 @@ function animate() {
   } catch (_) {}
 
   updatePlayerWrapper(dt);
-  updateEnemies(dt);
+  enemiesSystem.update(dt, { aiStride: __aiStride, bbStride: __bbStride, bbOffset: __bbOffset });
   
   // Dynamic enemy spawning system
   try { spawner && spawner.update(dt); } catch (e) { console.warn("Dynamic spawn error:", e); }
@@ -1501,15 +1207,7 @@ function animate() {
   }
 
   if (!__overBudget()) {
-    // Billboard enemy hp bars to face camera (throttled)
     __bbOffset = (__bbOffset + 1) % __bbStride;
-    enemies.forEach((en, idx) => {
-      if (!en.alive) return;
-      // Mobile: Skip billboarding for frozen/culled enemies
-      if (isMobile && __frozenEnemies.has(en)) return;
-      if ((idx % __bbStride) !== __bbOffset) return;
-      if (en.hpBar && en.hpBar.container) en.hpBar.container.lookAt(camera.position);
-    });
   }
 
   if (!__overBudget()) {
@@ -1578,268 +1276,9 @@ animate();
 // Helpers and per-system updates
 // ------------------------------------------------------------
 
-// Pick a random valid spawn position for enemies around the hero.
-// Ensures spawns are outside the village rest radius and within the world enemy spawn radius.
-function randomEnemySpawnPos() {
-  // Dynamic enemy spawn around the hero for continuous gameplay.
-  const angle = Math.random() * Math.PI * 2;
-  const minR = WORLD.enemySpawnMinRadius || 30;
-  const maxR = WORLD.enemySpawnRadius || 220;
-  const r = minR + Math.random() * (maxR - minR);
-
-  // Base candidate around player's current position
-  const center = player.pos();
-  const cand = new THREE.Vector3(
-    center.x + Math.cos(angle) * r,
-    0,
-    center.z + Math.sin(angle) * r
-  );
-
-  // Keep out of village rest radius if near village
-  const dvx = cand.x - VILLAGE_POS.x;
-  const dvz = cand.z - VILLAGE_POS.z;
-  const dVillage = Math.hypot(dvx, dvz);
-  if (dVillage < REST_RADIUS + 2) {
-    const push = (REST_RADIUS + 2) - dVillage + 0.5;
-    const nx = dvx / (dVillage || 1);
-    const nz = dvz / (dVillage || 1);
-    cand.x += nx * push;
-    cand.z += nz * push;
-  }
-
-  // Keep out of any discovered dynamic village rest radius
-  try {
-    const list = villages?.listVillages?.() || [];
-    for (const v of list) {
-      const dvx2 = cand.x - v.center.x;
-      const dvz2 = cand.z - v.center.z;
-      const d2 = Math.hypot(dvx2, dvz2);
-      const r2 = (v.radius || 0) + 2;
-      if (d2 < r2) {
-        const nx2 = dvx2 / (d2 || 1);
-        const nz2 = dvz2 / (d2 || 1);
-        const push2 = r2 - d2 + 0.5;
-        cand.x += nx2 * push2;
-        cand.z += nz2 * push2;
-      }
-    }
-  } catch (_) {}
-
-  return cand;
-}
 
 
 
-function updateEnemies(dt) {
-  __aiOffset = (__aiOffset + 1) % __aiStride;
-  
-  // Mobile: Periodic culling check to freeze distant enemies
-  if (isMobile && MOBILE_OPTIMIZATIONS.cullDistance) {
-    const t = now();
-    if (t - __lastCullCheckT > __CULL_CHECK_INTERVAL) {
-      __lastCullCheckT = t;
-      __frozenEnemies.clear();
-      const cullDist = MOBILE_OPTIMIZATIONS.cullDistance;
-      const playerPos = player.pos();
-      
-      enemies.forEach((en) => {
-        if (!en.alive) return;
-        const dist = distance2D(en.pos(), playerPos);
-        if (dist > cullDist) {
-          __frozenEnemies.add(en);
-          // Stop their movement target to save cycles
-          en.moveTarget = null;
-        }
-      });
-    }
-  }
-  
-  enemies.forEach((en, __idx) => {
-    // Skip AI updates for frozen enemies entirely
-    if (isMobile && __frozenEnemies.has(en)) {
-      // Still update HP bar position if visible, but skip AI
-      if ((__idx % __bbStride) === __bbOffset && en.hpBar?.container) {
-        en.hpBar.container.lookAt(camera.position);
-      }
-      return;
-    }
-    
-    if ((__idx % __aiStride) !== __aiOffset) return;
-    if (!en.alive) {
-      // Death cleanup, SFX, and XP grant + schedule respawn
-      if (!en._xpGranted) {
-        try { audio.sfx("enemy_die"); } catch (e) {}
-        en._xpGranted = true;
-        player.gainXP(en.xpOnDeath);
-        // schedule respawn to maintain density
-        en._respawnAt = now() + (WORLD.enemyRespawnDelay || 8);
-      }
-      // Handle respawn to maintain enemy density; scale stats with current hero level
-      if (en._respawnAt && now() >= en._respawnAt) {
-        const pos = randomEnemySpawnPos();
-        en.respawn(pos, player.level);
-        applyMapModifiersToEnemy(en);
-      }
-      return;
-    }
-    const toPlayer = player.alive ? distance2D(en.pos(), player.pos()) : Infinity;
-
-    // Despawn enemies far from the hero to save memory and rely on dynamic spawner to refill density
-    const DESPAWN_DIST =
-      (WORLD?.dynamicSpawn?.despawnRadius) ||
-      ((WORLD.enemySpawnRadius || 220) * 1.6);
-    if (toPlayer > DESPAWN_DIST) {
-      try { scene.remove(en.mesh); } catch (_) {}
-      en._despawned = true;
-      return;
-    }
-
-    if (toPlayer < WORLD.aiAggroRadius) {
-      // chase player
-      const d = toPlayer;
-      const ar = en.attackRange || WORLD.aiAttackRange;
-      if (d > ar) {
-        const v = dir2D(en.pos(), player.pos());
-        const spMul = en.slowUntil && now() < en.slowUntil ? en.slowFactor || 0.5 : 1;
-        // Tentative next position
-        const nx = en.mesh.position.x + v.x * en.speed * spMul * dt;
-        const nz = en.mesh.position.z + v.z * en.speed * spMul * dt;
-        const nextDistToVillage = Math.hypot(nx - VILLAGE_POS.x, nz - VILLAGE_POS.z);
-        if (nextDistToVillage <= REST_RADIUS - 0.25) {
-          // Clamp to fence boundary so enemies cannot enter origin village
-          const dirFromVillage = dir2D(VILLAGE_POS, en.pos());
-          en.mesh.position.x = VILLAGE_POS.x + dirFromVillage.x * (REST_RADIUS - 0.25);
-          en.mesh.position.z = VILLAGE_POS.z + dirFromVillage.z * (REST_RADIUS - 0.25);
-        } else {
-          // Check dynamic villages
-          const nextPos = new THREE.Vector3(nx, 0, nz);
-          let clamped = false;
-          try {
-            const inside = villages?.isInsideAnyVillage?.(nextPos);
-            if (inside && inside.inside && inside.key !== "origin") {
-              const dirFrom = dir2D(inside.center, en.pos());
-              const rad = Math.max(0.25, (inside.radius || REST_RADIUS) - 0.25);
-              en.mesh.position.x = inside.center.x + dirFrom.x * rad;
-              en.mesh.position.z = inside.center.z + dirFrom.z * rad;
-              clamped = true;
-            }
-          } catch (_) {}
-          if (!clamped) {
-            en.mesh.position.x = nx;
-            en.mesh.position.z = nz;
-          }
-        }
-        // face
-        const yaw = Math.atan2(v.x, v.z);
-        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));
-        en.mesh.quaternion.slerp(q, 0.2);
-      } else {
-        // Attack
-        const t = now();
-        if (t >= (en.nextAttackReady || 0)) {
-          const cd = en.attackCooldown || WORLD.aiAttackCooldown;
-          en.nextAttackReady = t + cd;
-          // Visual / Effect per enemy kind
-          // Reuse temp vectors to avoid allocations in hot attack path
-          __tempVecA.copy(en.pos()).add(__tempVecB.set(0, 1.4, 0)); // from
-          __tempVecC.copy(player.pos()).add(__tempVecB.set(0, 1.2, 0)); // to
-
-          try {
-            // Centralized VFX gating: use shouldSpawnVfx(kind, pos) to decide whether to spawn heavy effects.
-            if (en.attackEffect === "melee") {
-              // impact strike at player (light-weight)
-              try { effects.spawnStrike(player.pos(), 0.9, 0xff9955); } catch (_) {}
-            } else if (en.attackEffect === "fire") {
-              try {
-                if (shouldSpawnVfx("fire", __tempVecA)) {
-                  // Enemy fire attack: spawn fireball projectile
-                  effects.spawnFireball(__tempVecA.clone(), __tempVecC.clone(), {
-                    color: en.beamColor || 0xff6347,
-                    size: 0.3,
-                    speed: 20,
-                    onComplete: (hitPos) => {
-                      effects.spawnStrike(hitPos, 0.8, en.beamColor || 0xff6347);
-                    }
-                  });
-                }
-              } catch (_) {}
-            } else {
-              // default ranged attack (archer/mage): spawn projectile
-              try {
-                if (shouldSpawnVfx("largeBeam", __tempVecA)) {
-                  effects.spawnFireball(__tempVecA.clone(), __tempVecC.clone(), {
-                    color: en.beamColor || 0xff8080,
-                    size: 0.25,
-                    speed: 22,
-                    onComplete: (hitPos) => {
-                      effects.spawnHitDecal(hitPos, COLOR.ember);
-                    }
-                  });
-                }
-              } catch (_) {}
-            }
-          } catch (e) {}
-          // Damage
-          player.takeDamage(en.attackDamage);
-          // SFX: player hit by enemy
-          try { audio.sfx("player_hit"); } catch (e) {}
-          // floating damage popup on player
-          try { effects.spawnDamagePopup(player.pos(), en.attackDamage, 0xffd0d0); } catch (e) {}
-        }
-      }
-    } else {
-      // Wander around their spawn origin
-      if (!en.moveTarget || Math.random() < 0.005) {
-        const ang = Math.random() * Math.PI * 2;
-        const r = Math.random() * WORLD.aiWanderRadius;
-        __tempVecA.copy(en.pos()).add(__tempVecB.set(Math.cos(ang) * r, 0, Math.sin(ang) * r));
-        en.moveTarget = __tempVecA.clone();
-      }
-      const d = distance2D(en.pos(), en.moveTarget);
-      if (d > 0.8) {
-        const v = dir2D(en.pos(), en.moveTarget);
-        const spMul = en.slowUntil && now() < en.slowUntil ? en.slowFactor || 0.5 : 1;
-        en.mesh.position.x += v.x * en.speed * spMul * 0.6 * dt;
-        en.mesh.position.z += v.z * en.speed * spMul * 0.6 * dt;
-      }
-    }
-
-    // keep y
-    en.mesh.position.y = 1.0;
-
-    // Update HP bar
-    en.updateHPBar();
-
-    // Death cleanup, SFX, and XP grant + schedule respawn
-    if (!en.alive && !en._xpGranted) {
-      try { audio.sfx("enemy_die"); } catch (e) {}
-      en._xpGranted = true;
-      player.gainXP(en.xpOnDeath);
-      // schedule respawn to maintain enemy density
-      en._respawnAt = now() + (WORLD.enemyRespawnDelay || 8);
-    }
-    // Handle respawn to maintain enemy density; scale stats with current hero level
-    if (!en.alive && en._respawnAt && now() >= en._respawnAt) {
-      const pos = randomEnemySpawnPos();
-      en.respawn(pos, player.level);
-    }
-  });
-
-  // Cleanup: remove despawned enemies from the array and refresh cached meshes
-  try {
-    let removed = 0;
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      const e = enemies[i];
-      if (e && e._despawned) {
-        enemies.splice(i, 1);
-        removed++;
-      }
-    }
-    if (removed > 0) {
-      try { __refreshEnemyMeshes && __refreshEnemyMeshes(); } catch (_) {}
-    }
-  } catch (_) {}
-}
 
 
 function updateDeathRespawn() {
