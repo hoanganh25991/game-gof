@@ -2254,7 +2254,7 @@ function updateEnemies(dt) {
                     size: 0.25,
                     speed: 22,
                     onComplete: (hitPos) => {
-                      effects.spawnStrike(hitPos, 0.7, en.beamColor || 0xff8080);
+                      effects.spawnHitDecal(hitPos, COLOR.ember);
                     }
                   });
                 }
