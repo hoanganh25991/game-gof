@@ -91,7 +91,7 @@ export function placeStructures(params = {}) {
   }
 
   // Density counts (copied logic from original)
-  const __templeCountForDensity = (__q === "low") ? 0 : 1;
+  const __templeCountForDensity = (__q === "low") ? 1 : 2;
   const __villaCountForDensity = (__q === "low") ? 2 : (__q === "medium" ? 4 : 7);
   const __columnCountForDensity = (__q === "low") ? 4 : (__q === "medium" ? 8 : 14);
   const __statueCountForDensity = (__q === "low") ? 3 : (__q === "medium" ? 5 : 8);
