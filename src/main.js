@@ -44,6 +44,7 @@ import { createEnemiesSystem } from "./enemies_system.js";
 import { wireUIBindings } from "./ui/bindings.js";
 import { wireMarkCooldownUI } from "./ui/mark_cooldown.js";
 import { wireTopBar } from "./ui/topbar.js";
+import { createCameraSystem } from "./camera_system.js";
 
 
 /* Mobile Device Detection & Optimization moved to ./config/mobile.js */
@@ -92,6 +93,7 @@ const WORLD_SEED = getOrInitWorldSeed();
 const perfTracker = createPerformanceTracker(renderer, { targetFPS: 90, autoAdjust: true });
 
 const playerSystem = createPlayerSystem({ now, dir2D, distance2D, WORLD, renderer });
+const cameraSystem = createCameraSystem({ THREE, now, effects });
 
 // Tiny reusable object pool to avoid allocations in hot loops.
 // Temp vectors/quaternions used across update loops to reduce GC pressure.
@@ -861,97 +863,7 @@ function animate() {
   try { spawner && spawner.update(dt); } catch (e) { console.warn("Dynamic spawn error:", e); }
   
   if (firstPerson && typeof player !== "undefined") {
-    // Reuse temp vectors to avoid per-frame allocations in the FP hand code.
-    // left/right are aliases into the shared pool (copied into mid when needed).
-    const ud = player.mesh.userData || {};
-    const left = __tempVecA;
-    const right = __tempVecB;
-    left.set(0, 0, 0);
-    right.set(0, 0, 0);
-    if (ud.leftHandAnchor && ud.handAnchor) {
-      // getWorldPosition writes into the provided vector
-      ud.leftHandAnchor.getWorldPosition(left);
-      ud.handAnchor.getWorldPosition(right);
-    } else {
-      const p = player.pos();
-      // single branch covers both handAnchor variants with identical offsets
-      left.set(p.x - 0.4, p.y + 1.15, p.z + 0.25);
-      right.set(p.x + 0.4, p.y + 1.15, p.z + 0.25);
-    }
-
-    // Midpoint between hands, and forward vector from player orientation
-    // mid stored in __tempVecC (copied from left/right), forward reuses __tempVecA
-    const mid = __tempVecC.copy(left).add(right).multiplyScalar(0.5);
-    const forward = __tempVecA.set(0, 0, 1).applyQuaternion(player.mesh.quaternion).normalize();
-
-    // FP hand VFX and gestures (two hands, fire-in-hand, move/attack animations)
-    try {
-      const ud2 = player.mesh.userData || {};
-      const speed = lastMoveDir.length();
-      const tnow = now();
-
-      // Movement/idle crackle scheduling around hands
-      if (!ud2.nextCrackleT || tnow >= ud2.nextCrackleT) {
-        const strength = 0.6 + speed * 2.0;
-        effects.spawnHandCrackle(player, false, strength);
-        effects.spawnHandCrackle(player, true, strength * 0.8);
-        ud2.nextCrackleT = tnow + (speed > 0.1 ? 0.18 + Math.random() * 0.2 : 0.55 + Math.random() * 0.35);
-      }
-
-      // Boost orb/light intensity based on movement and a small flicker
-      const flick = Math.sin(tnow * 10) * 0.2;
-      if (ud2.fireOrb && ud2.fireOrb.material) {
-        ud2.fireOrb.material.emissiveIntensity = 2.1 + speed * 0.6 + flick;
-      }
-      if (ud2.leftFireOrb && ud2.leftFireOrb.material) {
-        ud2.leftFireOrb.material.emissiveIntensity = 1.9 + speed * 0.5 + flick * 0.8;
-      }
-      if (ud2.handLight) ud2.handLight.intensity = 1.2 + speed * 0.8;
-      if (ud2.leftHandLight) ud2.leftHandLight.intensity = 1.0 + speed * 0.7;
-
-      // Randomized gesture wobble while moving or idle, plus brace lift when attacking
-      const rArm = ud2.rightArm, lArm = ud2.leftArm;
-      if (rArm && lArm) {
-        const moveAmp = 0.12 * Math.min(1, speed * 3);
-        const idleAmp = 0.06;
-        const phase = tnow * 6 + Math.random() * 0.05; // slight desync
-        const amp = (speed > 0.02 ? moveAmp : idleAmp);
-        const braceN = player.braceUntil && tnow < player.braceUntil ? Math.max(0, (player.braceUntil - tnow) / 0.18) : 0;
-
-        // Base pose + sinusoidal bob + brace squash
-        rArm.rotation.x = -Math.PI * 0.12 + Math.sin(phase) * amp - braceN * 0.15;
-        lArm.rotation.x =  Math.PI * 0.12 + Math.cos(phase) * amp - braceN * 0.12;
-
-        // Subtle sway and random micro-gestures
-        rArm.rotation.y = 0.02 + Math.sin(phase * 0.5) * amp * 0.5 + (Math.random() - 0.5) * 0.01;
-        lArm.rotation.y = -0.02 + Math.cos(phase * 0.5) * amp * 0.5 + (Math.random() - 0.5) * 0.01;
-
-        // Occasional quick gesture twitch
-        if (!ud2.nextGestureT || tnow >= ud2.nextGestureT) {
-          rArm.rotation.z += (Math.random() - 0.5) * 0.08;
-          lArm.rotation.z += (Math.random() - 0.5) * 0.08;
-          ud2.nextGestureT = tnow + 0.35 + Math.random() * 0.5;
-        }
-      }
-    } catch (e) {}
-
-    // Position camera slightly behind the hands (negative forward)
-    // and bias framing so the visible model sits near the center-bottom of the screen
-    const fpBack = 4.5;      // match pre-refactor feel (further behind the hands)
-    const fpUp = 2.0;        // minimal vertical raise of camera to avoid occlusion
-    const fpLookAhead = 3.0;  // look further ahead so enemies occupy the center
-    const fpLookUp = 1.1;     // tilt camera upward more so hands/model sit lower in the frame
-
-    // Compute desired camera position and look target without aliasing pooled vectors.
-    // desiredPos -> __tempVecB, mid in __tempVecC, forward in __tempVecA
-    __tempVecB.copy(mid).addScaledVector(forward, -fpBack);
-    __tempVecB.y += fpUp;
-    camera.position.lerp(__tempVecB, 1 - Math.pow(0.001, dt));
-
-    // lookTarget -> reuse __tempVecB after lerp
-    const lookTarget = __tempVecB.copy(mid).addScaledVector(forward, fpLookAhead);
-    lookTarget.y += fpLookUp;
-    camera.lookAt(lookTarget);
+    cameraSystem.updateFirstPerson(camera, player, lastMoveDir, dt);
   } else {
     updateCamera(camera, player, lastMoveDir, dt, cameraOffset, cameraShake);
   }
