@@ -45,6 +45,7 @@ import { wireUIBindings } from "./ui/bindings.js";
 import { wireMarkCooldownUI } from "./ui/mark_cooldown.js";
 import { wireTopBar } from "./ui/topbar.js";
 import { createCameraSystem } from "./camera_system.js";
+import { createRespawnSystem } from "./respawn_system.js";
 
 
 /* Mobile Device Detection & Optimization moved to ./config/mobile.js */
@@ -573,6 +574,8 @@ player.onDeath = () => {
   player.target = null;
 };
 
+const respawnSystem = createRespawnSystem({ THREE, now, VILLAGE_POS, setCenterMsg, clearCenterMsg, player });
+
 /* Map modifiers helper */
 function applyMapModifiersToEnemy(en) {
   try {
@@ -916,7 +919,7 @@ function animate() {
     indicators.update(dt, { now, player, enemies, selectedUnit });
     portals.update(dt);
     villages.updateRest(player, dt);
-    updateDeathRespawn();
+    respawnSystem.update();
   }
 
   if (!__overBudget()) {
@@ -994,21 +997,6 @@ animate();
 
 
 
-function updateDeathRespawn() {
-  const t = now();
-  if (!player.alive && player.deadUntil && t >= player.deadUntil) {
-    // Respawn at village
-    player.alive = true;
-    player.mesh.visible = true;
-    player.mesh.position.copy(VILLAGE_POS).add(new THREE.Vector3(1.5, 0, 0));
-    player.hp = player.maxHP;
-    player.mp = player.maxMP;
-    player.moveTarget = null;
-    player.target = null;
-    player.invulnUntil = now() + 2;
-    clearCenterMsg();
-  }
-}
 
 // ------------------------------------------------------------
 // Window resize
