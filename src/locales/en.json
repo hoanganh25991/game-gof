@@ -62,6 +62,7 @@
       "hp": "HP",
       "mp": "MP",
       "title": "Hero",
+      "skillPoints": "Skill Points",
       "attack": "Attack",
       "attackSpeed": "Attack Speed",
       "defense": "Defense",
