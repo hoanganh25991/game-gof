@@ -70,7 +70,7 @@ export class EffectsManager {
     this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.6 });
   }
 
-  spawnTargetPing(entity, color = 0xff6060) {
+  spawnTargetPing(entity, color = COLOR.ember) {
     if (!entity || !entity.alive) return;
     const p = entity.pos();
     const ring = createGroundRing(0.65, 0.9, color, 0.85);
@@ -304,7 +304,7 @@ export class EffectsManager {
   }
 
   // ----- Impact helpers -----
-  spawnHitDecal(center, color = 0xff6347) {
+  spawnHitDecal(center, color = COLOR.ember) {
     const ring = createGroundRing(0.2, 0.55, color, 0.5);
     ring.position.set(center.x, 0.02, center.z);
     this.indicators.add(ring);

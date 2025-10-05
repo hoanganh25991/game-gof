@@ -162,3 +162,4 @@ export const FX = {
 // Village and recall/portals
 export const VILLAGE_POS = new THREE.Vector3(0, 0, 0);
 export const REST_RADIUS = 20;
+export const HERO_MODEL_URL = null;

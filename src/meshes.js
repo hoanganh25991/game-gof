@@ -1,7 +1,7 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { GLTFLoader } from "../vendor/three/examples/jsm/loaders/GLTFLoader.js";
 import { COLOR } from "./constants.js";
-import { HERO_MODEL_URL } from "./config.js";
+import { HERO_MODEL_URL } from "./constants.js";
 
 // Creates the GoF character mesh (placeholder geometry with optional GLTF replacement if ?model=URL).
 // Note: This function does NOT add the mesh to the scene; caller should add it.

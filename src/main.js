@@ -3,7 +3,6 @@
 // Behavior is preserved; tuning values unchanged.
 
 import * as THREE from "../vendor/three/build/three.module.js";
-import { DEBUG } from "./config.js";
 import { COLOR, WORLD, SKILLS, VILLAGE_POS, REST_RADIUS, SCALING, storageKey } from "./constants.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "./world.js";
 import { UIManager } from "./ui/hud/index.js";
@@ -484,7 +483,7 @@ const __startMusicOnce = (ev) => {
   if (!musicEnabled) return;
   try {
     // FreePD CC0: "Ice and Snow" — soft, atmospheric, focus-friendly
-    audio.ensureBackgroundMusic("audio/ice-and-snow.mp3", { volume: 0.35, loop: true });
+    audio.ensureBackgroundMusic("audio/background-music-soft-calm-333111.mp3", { volume: 0.35, loop: true });
   } catch (e) {
     // Fallback to generative if streaming fails
     try { audio.setMusicVolume(0.35); audio.startMusic(); } catch (_) {}
@@ -659,7 +658,7 @@ function showHeroScreen(initialTab = "skills") {
     applyMapModifiersToEnemy,
     adjustEnemyCountForMap: adjustEnemyCountForCurrentMap,
   };
-  try { audio.ensureBackgroundMusic("audio/ice-and-snow.mp3", { volume: 0.35, loop: true }); } catch (_) {}
+  try { audio.ensureBackgroundMusic("audio/background-music-soft-calm-333111.mp3", { volume: 0.35, loop: true }); } catch (_) {}
   try { renderHeroScreenUI(initialTab, ctx); } catch (_) {}
 }
 btnHeroScreen?.addEventListener("click", () => { showHeroScreen("skills"); heroScreen?.classList.remove("hidden"); });
@@ -883,7 +882,7 @@ if (musicToggle) {
     if (musicEnabled) {
       // Start background music immediately
       try {
-        audio.ensureBackgroundMusic("audio/ice-and-snow.mp3", { volume: 0.35, loop: true });
+        audio.ensureBackgroundMusic("audio/background-music-soft-calm-333111.mp3", { volume: 0.35, loop: true });
       } catch (e) {
         try { audio.setMusicVolume(0.35); audio.startMusic(); } catch (_) {}
       }
@@ -983,12 +982,6 @@ effects.indicators.add(selectionRing);
 // Center message helpers wired to UI
 const setCenterMsg = (t) => ui.setCenterMsg(t);
 const clearCenterMsg = () => ui.clearCenterMsg();
-try {
-  if (DEBUG) {
-    setCenterMsg(`ATK rng=${WORLD.attackRange} x${WORLD.attackRangeMult} dmg=${WORLD.basicAttackDamage}`);
-    setTimeout(() => clearCenterMsg(), 1800);
-  }
-} catch (e) {}
 
 /* ------------------------------------------------------------
    Entities and Game State
@@ -1391,7 +1384,6 @@ const inputService = createInputService({
   effects,
   skills,
   WORLD,
-  DEBUG,
   aimPreview,
   attackPreview,
   setCenterMsg,

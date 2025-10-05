@@ -324,7 +324,7 @@ export class SkillsSystem {
         // Impact explosion at target
         this.effects.spawnStrike(hitPos, 1.2, COLOR.fire);
         if (hasValidTarget) {
-          this.effects.spawnHitDecal(target.pos(), COLOR.fire);
+          this.effects.spawnHitDecal(target.pos(), COLOR.ember);
         }
       }
     });
@@ -500,7 +500,7 @@ export class SkillsSystem {
     // popup for chain hit
     try { this.effects.spawnDamagePopup(current.pos(), dmgHit, this._fx(SK).impact); } catch (e) {}
     this.effects.spawnStrike(current.pos(), 1.2, this._fx(SK).impact);
-    this.effects.spawnHitDecal(current.pos(), this._fx(SK).impact);
+    this.effects.spawnHitDecal(current.pos(), this._fx(SK).ring);
     try { this.effects.spawnRingPulse(current.pos(), 1.2, this._fx(SK).ring, 0.3, 0.5, 0.45); } catch (_) {}
       lastPoint = hitPoint;
       candidates = this.enemies
@@ -570,7 +570,7 @@ export class SkillsSystem {
         try { this.effects.spawnDamagePopup(en.pos(), dmg, this._fx(SK).impact); } catch (e) {}
         try {
           this.effects.spawnStrike(en.pos(), 1.0, this._fx(SK).impact);
-          this.effects.spawnHitDecal(en.pos(), this._fx(SK).impact);
+          this.effects.spawnHitDecal(en.pos(), this._fx(SK).ring);
         } catch (_) {}
         // Visual arcs from the center to each enemy hit
         try {
@@ -707,7 +707,7 @@ export class SkillsSystem {
     target.takeDamage(dmg);
     try { this.effects.spawnDamagePopup(target.pos(), dmg, this._fx(SK).impact); } catch(e) {}
     this.effects.spawnStrike(target.pos(), 1.0, this._fx(SK).impact);
-    try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).impact); } catch(e) {}
+    try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).ring); } catch(e) {}
   }
 
   _castNova(key) {
@@ -745,7 +745,7 @@ export class SkillsSystem {
         try { this.effects.spawnDamagePopup(en.pos(), dmg, this._fx(SK).impact); } catch(e) {}
         try {
           this.effects.spawnStrike(en.pos(), 1.0, this._fx(SK).impact);
-          this.effects.spawnHitDecal(en.pos(), this._fx(SK).impact);
+          this.effects.spawnHitDecal(en.pos(), this._fx(SK).ring);
         } catch (e2) {}
         // Visual arcs from caster to each enemy hit
         try {
@@ -938,7 +938,7 @@ export class SkillsSystem {
         speed: 35,
         onComplete: () => {
           this.effects.spawnStrike(target.pos(), 1.2, this._fx(SK).impact);
-          try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).impact); } catch (_) {}
+          try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).ring); } catch (_) {}
         }
       });
       audio.sfx("cast_beam");
@@ -969,7 +969,10 @@ export class SkillsSystem {
     this.player.mesh.position.set(to.x, this.player.mesh.position.y, to.z);
     try {
       this.effects.spawnStrike(this.player.pos(), 3, fx.impact);
-      this.effects.spawnHitDecal(this.player.pos(), fx.impact);
+      this.effects.spawnHitDecal(this.player.pos(), fx.ring);
+      this.effects.spawnRingPulse(this.player.pos(), 2.5, fx.ring, 0.45, 0.7, 0.4);
+      this.effects.spawnStrike(this.player.pos(), 3, fx.impact);
+      this.effects.spawnHitDecal(this.player.pos(), fx.ring);
       this.effects.spawnRingPulse(this.player.pos(), 2.5, fx.ring, 0.45, 0.7, 0.4);
       const a = fromPos.clone().add(new THREE.Vector3(0, 0.8, 0));
       const b = this.player.pos().clone().add(new THREE.Vector3(0, 0.8, 0));

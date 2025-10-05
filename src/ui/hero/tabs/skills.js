@@ -56,7 +56,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
   const upgradeManager = getSkillUpgradeManager();
   const skillPointsDisplay = document.createElement("div");
   skillPointsDisplay.className = "skill-points-display";
-  skillPointsDisplay.style.cssText = "padding: 12px; background: rgba(255,140,0,0.15); border-radius: 8px; margin-bottom: 12px; text-align: center; font-size: 16px; font-weight: bold; color: #ffd700;";
+  skillPointsDisplay.style.cssText = "padding: 12px; background: color-mix(in srgb, var(--theme-orange) 15%, transparent); border-radius: 8px; margin-bottom: 12px; text-align: center; font-size: 16px; font-weight: bold; color: var(--theme-yellow);";
   skillPointsDisplay.innerHTML = `⭐ ${tt("hero.info.skillPoints") || "Skill Points"}: <span id="skillPointsCount">${upgradeManager.getSkillPoints()}</span>`;
   rightCol.appendChild(skillPointsDisplay);
 
@@ -107,7 +107,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     // Add skill level badge
     if (isUnlocked && skillLevel > 1) {
       const levelBadge = document.createElement("div");
-      levelBadge.style.cssText = "position: absolute; top: 4px; right: 4px; background: #ff8c00; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;";
+      levelBadge.style.cssText = "position: absolute; top: 4px; right: 4px; background: var(--theme-light-orange); color: var(--theme-white); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;";
       levelBadge.textContent = skillLevel;
       thumb.style.position = "relative";
       thumb.appendChild(levelBadge);

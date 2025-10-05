@@ -60,7 +60,7 @@ function showKeySelectOverlay(def) {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "rgba(0,0,0,0.35)",
+      background: "var(--glass)",
       zIndex: "9999",
       backdropFilter: "blur(2px)",
     });
@@ -69,11 +69,11 @@ function showKeySelectOverlay(def) {
     Object.assign(box.style, {
       minWidth: "300px",
       maxWidth: "90vw",
-      background: "rgba(10,20,30,0.9)",
-      border: "1px solid rgba(255,255,255,0.15)",
+      background: "var(--system-bg)",
+      border: "1px solid var(--system-border)",
       borderRadius: "10px",
       padding: "14px",
-      color: "#dfefff",
+      color: "var(--system-text)",
       boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
       textAlign: "center",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif",
@@ -102,15 +102,15 @@ function showKeySelectOverlay(def) {
       Object.assign(btn.style, {
         padding: "12px 6px",
         borderRadius: "8px",
-        border: "1px solid rgba(255,255,255,0.2)",
-        background: "rgba(40,60,90,0.85)",
-        color: "#eaf6ff",
+        border: "1px solid var(--system-border)",
+        background: "var(--system-bg)",
+        color: "var(--system-text)",
         fontSize: "18px",
         fontWeight: "700",
         cursor: "pointer",
       });
-      btn.addEventListener("mouseenter", () => (btn.style.background = "rgba(60,90,140,0.9)"));
-      btn.addEventListener("mouseleave", () => (btn.style.background = "rgba(40,60,90,0.85)"));
+      btn.addEventListener("mouseenter", () => (btn.style.background = "var(--system-bg)"));
+      btn.addEventListener("mouseleave", () => (btn.style.background = "var(--system-bg)"));
       btn.addEventListener("click", () => {
         cleanup();
         resolve(k);
@@ -144,9 +144,9 @@ function showKeySelectOverlay(def) {
     Object.assign(cancel.style, {
       padding: "8px 12px",
       borderRadius: "6px",
-      border: "1px solid rgba(255,255,255,0.2)",
+      border: "1px solid var(--system-border)",
       background: "rgba(120,40,40,0.85)",
-      color: "#fff",
+      color: "var(--theme-white)",
       cursor: "pointer",
       fontWeight: "600",
     });
@@ -217,7 +217,7 @@ async function showCastingOverlayAndCast(skills, def, key) {
     border: "none",
     borderRadius: "0",
     padding: "0",
-    color: "#e8f6ff",
+    color: "var(--system-text)",
     textAlign: "center",
     boxShadow: "none",
   });
@@ -226,8 +226,8 @@ async function showCastingOverlayAndCast(skills, def, key) {
   Object.assign(number.style, {
     fontSize: "42px",
     fontWeight: "800",
-    color: "#bfe9ff",
-    textShadow: "0 0 12px rgba(100,180,255,0.6)",
+    color: "var(--system-text)",
+    textShadow: "0 0 12px var(--glow-orange)",
     minHeight: "1.2em",
   });
 

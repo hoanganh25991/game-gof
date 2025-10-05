@@ -100,9 +100,7 @@
   position: absolute;
   right: 12px;
   top: 12px;
-  width: 208px;
-  height: 208px;
-  background: radial-gradient(220px 220px at 50% 50%, var(--bg-dark-fire) 0%, rgba(26,13,8,0.65) 60%, rgba(15,8,4,0.7) 100%);
+  background: var(--glass);
   border: 1px solid var(--border-orange);
   border-radius: 10px;
   box-shadow: var(--shadow-medium);

@@ -21,11 +21,11 @@
 #__previewKeySelect .preview-box {
   min-width: 300px;
   max-width: 90vw;
-  background: rgba(10,20,30,0.9);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--system-bg);
+  border: 1px solid var(--system-border);
   border-radius: 10px;
   padding: 14px;
-  color: #dfefff;
+  color: var(--system-text);
   box-shadow: 0 6px 18px rgba(0,0,0,0.4);
   text-align: center;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
@@ -56,9 +56,9 @@
 .preview-key-btn {
   padding: 12px 6px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(40,60,90,0.85);
-  color: #eaf6ff;
+  border: 1px solid var(--system-border);
+  background: var(--system-bg);
+  color: var(--system-text);
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
@@ -69,7 +69,7 @@
 
 .preview-key-btn:hover,
 .preview-key-btn:focus {
-  background: rgba(60,90,140,0.9);
+  background: var(--system-bg);
   outline: none;
 }
 
@@ -95,7 +95,7 @@
 .preview-cancel {
   padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid var(--system-border);
   background: rgba(120,40,40,0.85);
   color: #fff;
   cursor: pointer;
@@ -131,7 +131,7 @@
   border: none;
   border-radius: 0;
   padding: 0;
-  color: #e8f6ff;
+  color: var(--system-text);
   text-align: center;
   box-shadow: none;
 }
@@ -140,8 +140,8 @@
 .__preview-number {
   font-size: 42px;
   font-weight: 800;
-  color: #bfe9ff;
-  text-shadow: 0 0 12px rgba(100,180,255,0.6);
+  color: var(--system-text);
+  text-shadow: 0 0 12px var(--glow-orange);
   min-height: 1.2em;
   opacity: 1;
   transform: scale(1);

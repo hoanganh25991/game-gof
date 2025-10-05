@@ -13,7 +13,7 @@
  */
 
 import * as THREE from "../vendor/three/build/three.module.js";
-import { distance2D, dir2D, now } from "./utils.js";
+import { distance2D, now } from "./utils.js";
 
 export function createInputService({
   renderer,
@@ -25,7 +25,6 @@ export function createInputService({
   effects,
   skills,
   WORLD,
-  DEBUG,
   setCenterMsg,
   clearCenterMsg,
 }) {

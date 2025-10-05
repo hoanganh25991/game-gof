@@ -81,9 +81,9 @@ export class MinimapUI {
 
     // Clear and background
     ctx.clearRect(0, 0, cssW, cssH);
-    ctx.fillStyle = "rgba(10,20,40,0.6)";
+    ctx.fillStyle = "rgba(26, 10, 5, 0.7)";
     ctx.fillRect(0, 0, cssW, cssH);
-    ctx.strokeStyle = "rgba(124,196,255,0.3)";
+    ctx.strokeStyle = "rgba(255, 140, 66, 0.35)";
     ctx.lineWidth = 1;
     ctx.strokeRect(0.5, 0.5, Math.max(0, cssW - 1), Math.max(0, cssH - 1));
 
