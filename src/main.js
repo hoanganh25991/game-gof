@@ -41,6 +41,9 @@ import { createPerformanceTracker, initVfxGating } from "./perf.js";
 import { createPlayerSystem } from "./player_system.js";
 import { createIndicators } from "./ui/indicators.js";
 import { createEnemiesSystem } from "./enemies_system.js";
+import { wireUIBindings } from "./ui/bindings.js";
+import { wireMarkCooldownUI } from "./ui/mark_cooldown.js";
+import { wireTopBar } from "./ui/topbar.js";
 
 
 /* Mobile Device Detection & Optimization moved to ./config/mobile.js */
@@ -402,220 +405,42 @@ function showHeroScreen(initialTab = "skills") {
   try { audio.ensureBackgroundMusic("audio/background-music-soft-calm-333111.mp3", { volume: 0.35, loop: true }); } catch (_) {}
   try { renderHeroScreenUI(initialTab, ctx); } catch (_) {}
 }
-btnHeroScreen?.addEventListener("click", () => { showHeroScreen("skills"); heroScreen?.classList.remove("hidden"); });
-
-// Generic top-right screen-close icons (ensure any element with .screen-close closes its parent .screen)
-document.querySelectorAll(".screen-close").forEach((b) => {
-  b.addEventListener("click", (e) => {
-    const sc = e.currentTarget.closest(".screen");
-    if (sc) sc.classList.add("hidden");
-  });
-});
-
-// intro may be absent (we removed it), keep safe guard
-btnStart?.addEventListener("click", () => { introScreen?.classList.add("hidden"); });
-// use the setter so projection updates correctly
-btnCamera?.addEventListener("click", () => { setFirstPerson(!firstPerson); });
-// Portal button: recall to nearest portal (same as pressing 'B')
-btnPortal?.addEventListener("click", () => {
-  try { portals.recallToVillage(player, setCenterMsg, clearCenterMsg); } catch (e) {}
-});
-// Place persistent Mark/Flag (3-minute cooldown)
-btnMark?.addEventListener("click", () => {
-  try {
-    const remain = portals.getMarkCooldownMs?.() ?? 0;
-    if (remain > 0) {
-      const s = Math.ceil(remain / 1000);
-      setCenterMsg(`Mark ready in ${s}s`);
-      setTimeout(() => clearCenterMsg(), 1200);
-      return;
-    }
-    const m = portals.addPersistentMarkAt?.(player.pos());
-    if (m) {
-      setCenterMsg("Flag placed");
-      setTimeout(() => clearCenterMsg(), 1100);
-    }
-  } catch (_) {}
-});
-
-
-// Environment controls (Settings panel)
-// - #envRainToggle : checkbox to enable rain
-// - #envDensity : range [0..2] for sparse / default / dense world
-const envRainToggle = document.getElementById("envRainToggle");
-const envDensity = document.getElementById("envDensity");
-// Initialize controls from stored prefs
-if (envRainToggle) {
-  envRainToggle.checked = !!envRainState;
-  envRainToggle.addEventListener("change", (ev) => {
-    envRainState = !!ev.target.checked;
-    if (env && typeof env.toggleRain === "function") env.toggleRain(envRainState);
-    if (envRainState && env && typeof env.setRainLevel === "function") {
-      try { env.setRainLevel(Math.min(Math.max(0, envRainLevel), 2)); } catch (_) {}
-    }
-    // persist
-    try { localStorage.setItem(storageKey("envPrefs"), JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
-  });
-}
-if (envDensity) {
-  // set initial slider value on UI scale (1..10)
-  const len = ENV_PRESETS.length;
-  const idx = Math.min(Math.max(0, envDensityIndex), len - 1);
-  const uiVal = 1 + Math.round((idx / Math.max(1, len - 1)) * 9);
-  envDensity.value = String(uiVal);
-  const onEnvDensityChange = (ev) => {
-    const vv = parseInt(ev.target.value, 10);
-    const len = ENV_PRESETS.length;
-    const ui = Math.min(Math.max(1, Number.isFinite(vv) ? vv : 5), 10);
-    envDensityIndex = Math.min(Math.max(0, Math.round(((ui - 1) / 9) * (len - 1))), len - 1);
-    const preset = ENV_PRESETS[envDensityIndex];
-    // Recreate environment with new density while preserving rain state and rain level
-    try { if (env && env.root && env.root.parent) env.root.parent.remove(env.root); } catch (e) {}
-    env = initEnvironment(scene, Object.assign({}, preset, { enableRain: envRainState, quality: renderQuality }));
-    try {
-      if (envRainState && env && typeof env.setRainLevel === "function") {
-        env.setRainLevel(Math.min(Math.max(0, envRainLevel), 2));
-      }
-      updateEnvironmentFollow(env, player);
-    } catch (e) {}
-    // persist
-    try { localStorage.setItem(storageKey("envPrefs"), JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
-  };
-  envDensity.addEventListener("change", onEnvDensityChange);
-}
-
-/* Rain density slider (0=low,1=medium,2=high) */
-const rainDensity = document.getElementById("rainDensity");
-if (rainDensity) {
-  try {
-    const lvl = Math.min(Math.max(0, Number.isFinite(parseInt(_envPrefs.rainLevel, 10)) ? parseInt(_envPrefs.rainLevel, 10) : 1), 2);
-    const uiVal = 1 + Math.round((lvl / 2) * 9);
-    rainDensity.value = String(uiVal);
-  } catch (_) {}
-  const onRainDensityChange = (ev) => {
-    const vv = parseInt(ev.target.value, 10);
-    const ui = Math.min(Math.max(1, Number.isFinite(vv) ? vv : 5), 10);
-    const lvl = Math.round(((ui - 1) / 9) * 2);
-    envRainLevel = Math.min(Math.max(0, lvl), 2);
-    try { env && typeof env.setRainLevel === "function" && env.setRainLevel(envRainLevel); } catch (_) {}
-    try { localStorage.setItem(storageKey("envPrefs"), JSON.stringify({ rain: envRainState, density: envDensityIndex, rainLevel: envRainLevel })); } catch (_) {}
-  };
-  rainDensity.addEventListener("change", onRainDensityChange);
-}
-
-/* Render quality: native select (low/medium/high) */
-function initQualitySelect() {
-  const sel = document.getElementById("qualitySelect");
-  if (!sel) return;
-
-  // Initialize from persisted prefs or current variable
-  let q = renderQuality;
-  try {
-    const prefs = JSON.parse(localStorage.getItem(storageKey("renderPrefs")) || "{}");
-    if (prefs && typeof prefs.quality === "string") q = prefs.quality;
-  } catch (_) {}
-
-  // Fallback to high if unexpected
-  if (q !== "low" && q !== "medium" && q !== "high") q = "high";
-  try { sel.value = q; } catch (_) {}
-
-  // Bind once
-  if (!sel.dataset.bound) {
-    sel.addEventListener("change", () => {
-      const v = String(sel.value || "high").toLowerCase();
-      const valid = v === "low" || v === "medium" || v === "high";
-      const nextQ = valid ? v : "high";
-      // Persist preference before full reload
-      try {
-        const prev = JSON.parse(localStorage.getItem(storageKey("renderPrefs")) || "{}");
-        prev.quality = nextQ;
-        localStorage.setItem(storageKey("renderPrefs"), JSON.stringify(prev));
-      } catch (_) {}
-      try { localStorage.setItem(storageKey("pendingReloadReason"), "quality-change"); } catch (_) {}
-      // Reload to apply enemy density and fully reinitialize subsystems for the new quality
-      window.location.reload();
-    });
-    sel.dataset.bound = "1";
+/* Top bar wiring consolidated */
+const disposeTopBar = wireTopBar({
+  elements: { btnHeroScreen, heroScreen, btnStart, introScreen, btnCamera, btnPortal, btnMark },
+  actions: {
+    showHeroScreen: () => showHeroScreen("skills"),
+    setFirstPerson: (enabled) => setFirstPerson(enabled),
+    getFirstPerson: () => firstPerson,
+    portals,
+    player,
+    setCenterMsg,
+    clearCenterMsg,
+    startInstructionGuide: startInstructionGuideOverlay
   }
-}
-try { initQualitySelect(); } catch (_) {}
-try { initZoomControl && initZoomControl(); } catch (_) {}
+});
+try { window.__disposeTopBar = disposeTopBar; } catch (_) {}
 
-/* Render zoom: range slider (0.6..1.6) */
-function initZoomControl() {
-  const sel = document.getElementById("zoomSlider");
-  if (!sel) return;
 
-  // Initialize from persisted prefs or UI default 2 (≈0.711)
-  let z = 0.6 + (1 / 9) * 1.0;
-  try {
-    const prefs = JSON.parse(localStorage.getItem(storageKey("renderPrefs")) || "{}");
-    if (typeof prefs.zoom === "number") z = prefs.zoom;
-  } catch (_) {}
+/* UI bindings for environment, render, and audio controls */
+wireUIBindings({
+  storageKey,
+  scene,
+  player,
+  ENV_PRESETS,
+  initEnvironment,
+  updateEnvironmentFollow,
+  envAccess: { get: () => environmentCtx.getState(), set: (st) => environmentCtx.setState(st) },
+  renderQualityRef: { get: () => renderCtx.getQuality(), set: (q) => renderCtx.setQuality(q) },
+  cameraOffset,
+  baseCameraOffset: _baseCameraOffset,
+  audioCtl,
+  audio
+});
 
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  z = clamp(Number.isFinite(parseFloat(z)) ? parseFloat(z) : (0.6 + (1 / 9) * 1.0), 0.6, 1.6);
 
-  try {
-    const uiVal = 1 + Math.round(((z - 0.6) / 1.0) * 9);
-    sel.value = String(Math.max(1, Math.min(10, uiVal)));
-  } catch (_) {}
 
-  // Apply immediately on init
-  try {
-    cameraOffset.copy(_baseCameraOffset.clone().multiplyScalar(z));
-  } catch (_) {}
 
-  // Bind once
-  if (!sel.dataset.bound) {
-    const onChange = () => {
-      const ui = Math.max(1, Math.min(10, parseInt(sel.value, 10) || 5));
-      const zoom = 0.6 + ((ui - 1) / 9) * 1.0;
-      try {
-        cameraOffset.copy(_baseCameraOffset.clone().multiplyScalar(zoom));
-      } catch (_) {}
-      try {
-        const prev = JSON.parse(localStorage.getItem(storageKey("renderPrefs")) || "{}");
-        prev.zoom = zoom;
-        localStorage.setItem(storageKey("renderPrefs"), JSON.stringify(prev));
-      } catch (_) {}
-    };
-    sel.addEventListener("change", onChange);
-    sel.dataset.bound = "1";
-  }
-}
-
-/* Settings: Audio toggles (Music / SFX) */
-const musicToggle = document.getElementById("musicToggle");
-const sfxToggle = document.getElementById("sfxToggle");
-if (musicToggle) {
-  musicToggle.checked = !!musicEnabled;
-  musicToggle.addEventListener("change", () => {
-    musicEnabled = !!musicToggle.checked;
-    try { localStorage.setItem(storageKey("audioPrefs"), JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {}
-    if (musicEnabled) {
-      // Start background music immediately
-      try {
-        audio.ensureBackgroundMusic("audio/background-music-soft-calm-333111.mp3", { volume: 0.35, loop: true });
-      } catch (e) {
-        try { audio.setMusicVolume(0.35); audio.startMusic(); } catch (_) {}
-      }
-    } else {
-      // Stop any music
-      try { audio.stopStreamMusic(); } catch (_) {}
-      try { audio.stopMusic(); } catch (_) {}
-      try { audio.setMusicVolume(0); } catch (_) {}
-    }
-  });
-}
-if (sfxToggle) {
-  sfxToggle.checked = !!sfxEnabled;
-  sfxToggle.addEventListener("change", () => {
-    sfxEnabled = !!sfxToggle.checked;
-    try { audio.setSfxVolume(sfxEnabled ? 0.5 : 0.0); } catch (_) {}
-    try { localStorage.setItem(storageKey("audioPrefs"), JSON.stringify({ music: musicEnabled, sfx: sfxEnabled })); } catch (_) {}
-  });
-}
 
 // Settings UI initialized via setupSettingsScreen()
 
@@ -807,32 +632,8 @@ scene.add(fenceGroup);
 // Portals/Recall
 const portals = initPortals(scene);
 // Init Mark cooldown UI after portals are created
-(function initMarkCooldownUI() {
-  if (!btnMark || !portals?.getMarkCooldownMs) return;
-  function fmt(ms) {
-    const s = Math.max(0, Math.ceil(ms / 1000));
-    const m = Math.floor(s / 60);
-    const r = s % 60;
-    return m > 0 ? `${m}m ${r}s` : `${r}s`;
-  }
-  function tick() {
-    try {
-      const remain = portals.getMarkCooldownMs();
-      if (remain > 0) {
-        btnMark.disabled = true;
-        btnMark.title = `Mark cooldown: ${fmt(remain)}`;
-        btnMark.style.opacity = "0.5";
-      } else {
-        btnMark.disabled = false;
-        btnMark.title = "Mark (3m cd)";
-        btnMark.style.opacity = "";
-      }
-    } catch (_) {}
-  }
-  try { clearInterval(window.__markCoolInt); } catch (_) {}
-  window.__markCoolInt = setInterval(tick, 500);
-  tick();
-})();
+const disposeMarkCooldownUI = wireMarkCooldownUI({ btnMark, portals, intervalMs: 500 });
+try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
 // Villages system (dynamic villages, roads, rest)
 const villages = createVillagesSystem(scene, portals);
 
@@ -1315,9 +1116,3 @@ addResizeHandler(renderer, camera);
 // Guide overlay wiring (modular version)
 // ------------------------------------------------------------
 try { window.startInstructionGuide = startInstructionGuideOverlay; } catch (_) {}
-document.addEventListener("click", (ev) => {
-  const tEl = ev.target;
-  if (tEl && tEl.id === "btnInstructionGuide") {
-    try { startInstructionGuideOverlay(); } catch (_) {}
-  }
-});
