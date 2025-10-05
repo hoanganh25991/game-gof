@@ -57,6 +57,10 @@ const { renderer, scene, camera, ground, cameraOffset, cameraShake } = initWorld
 const _baseCameraOffset = cameraOffset.clone();
 const ui = new UIManager();
 
+// Center message helpers wired to UI
+const setCenterMsg = (t) => ui.setCenterMsg(t);
+const clearCenterMsg = () => ui.clearCenterMsg();
+
 /* Mobile: Aggressive GPU/CPU optimizations */
 applyMobileRendererHints(renderer);
 
@@ -262,6 +266,8 @@ const btnPortal = document.getElementById("btnPortal");
 const btnMark = document.getElementById("btnMark");
 const langVi = document.getElementById("langVi");
 const langEn = document.getElementById("langEn");
+// Portals/Recall - moved earlier to avoid TDZ when passed to wireTopBar
+const portals = initPortals(scene);
 let firstPerson = false;
 // preserve original camera defaults
 const _defaultCameraNear = camera.near || 0.1;
@@ -342,12 +348,12 @@ setupSettingsScreen({
   audioCtl,
 });
 
-// Wire "Restore purchases" button in Settings to the restorePurchases() helper.
-// Provides lightweight UI feedback (center message) while the request is processed.
-(function wireRestoreButton() {
-  const btn = document.getElementById('btnRestorePurchases');
-  if (!btn) return;
-  btn.addEventListener('click', async () => {
+ // Wire "Restore purchases" button in Settings to the restorePurchases() helper.
+ // Provides lightweight UI feedback (center message) while the request is processed.
+ (function wireRestoreButton() {
+   const btn = document.getElementById('btnRestorePurchases');
+   if (!btn) return;
+   btn.addEventListener('click', async () => {
     try {
       btn.disabled = true;
       setCenterMsg && setCenterMsg('Checking purchases...');
@@ -384,9 +390,9 @@ setupSettingsScreen({
   });
 })();
 
-// Hero open/close
-// Thin wrapper to render hero screen using modular UI
-function showHeroScreen(initialTab = "skills") {
+ // Hero open/close
+ // Thin wrapper to render hero screen using modular UI
+ function showHeroScreen(initialTab = "skills") {
   const ctx = {
     t,
     player,
@@ -416,9 +422,9 @@ const disposeTopBar = wireTopBar({
     setFirstPerson: (enabled) => setFirstPerson(enabled),
     getFirstPerson: () => firstPerson,
     portals,
-    player,
-    setCenterMsg,
-    clearCenterMsg,
+    get player() { return player; },
+    setCenterMsg: (t) => ui.setCenterMsg(t),
+    clearCenterMsg: () => ui.clearCenterMsg(),
     startInstructionGuide: startInstructionGuideOverlay
   }
 });
@@ -429,7 +435,7 @@ try { window.__disposeTopBar = disposeTopBar; } catch (_) {}
 wireUIBindings({
   storageKey,
   scene,
-  player,
+  get player() { return player; },
   ENV_PRESETS,
   initEnvironment,
   updateEnvironmentFollow,
@@ -517,10 +523,6 @@ const aimPreview = null;
 
 const attackPreview = null;
 
-// Center message helpers wired to UI
-const setCenterMsg = (t) => ui.setCenterMsg(t);
-const clearCenterMsg = () => ui.clearCenterMsg();
-
 /* ------------------------------------------------------------
    Entities and Game State
 ------------------------------------------------------------ */
@@ -574,7 +576,7 @@ player.onDeath = () => {
   player.target = null;
 };
 
-const respawnSystem = createRespawnSystem({ THREE, now, VILLAGE_POS, setCenterMsg, clearCenterMsg, player });
+const respawnSystem = createRespawnSystem({ THREE, now, VILLAGE_POS, setCenterMsg: (t) => ui.setCenterMsg(t), clearCenterMsg: () => ui.clearCenterMsg(), player });
 
 /* Map modifiers helper */
 function applyMapModifiersToEnemy(en) {
@@ -635,7 +637,7 @@ const fenceGroup = createVillageFence(VILLAGE_POS, REST_RADIUS, COLOR);
 scene.add(fenceGroup);
 
 // Portals/Recall
-const portals = initPortals(scene);
+// portals initialized earlier to avoid TDZ before wireTopBar
 // Init Mark cooldown UI after portals are created
 const disposeMarkCooldownUI = wireMarkCooldownUI({ btnMark, portals, intervalMs: 500 });
 try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
@@ -730,10 +732,11 @@ const inputService = createInputService({
   effects,
   skills,
   WORLD,
+
   aimPreview,
   attackPreview,
-  setCenterMsg,
-  clearCenterMsg,
+  setCenterMsg: (t) => ui.setCenterMsg(t),
+  clearCenterMsg: () => ui.clearCenterMsg(),
 });
 inputService.attachCaptureListeners();
 if (typeof touch !== "undefined" && touch) inputService.setTouchAdapter(touch);
