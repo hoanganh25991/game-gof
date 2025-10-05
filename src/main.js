@@ -32,7 +32,7 @@ import { promptBasicUpliftIfNeeded } from "./uplift.js";
 import { setupDesktopControls } from "./ui/deskop-controls.js"
 import * as payments from './payments.js';
 import { getSkillUpgradeManager } from "./skill_upgrades.js";
-import { ChunkingManager, getOrInitWorldSeed } from "./chunking_manager.js";
+import { ChunkManager, getOrInitWorldSeed } from "./chunk_manager.js";
 
 
 // ------------------------------------------------------------
@@ -314,7 +314,7 @@ if (WORLD && WORLD.chunking && WORLD.chunking.enabled) {
     flowers: Math.max(0, Math.floor((envPreset.flowerCount || 0) * densityScale)),
   };
   try {
-    chunkMgr = new ChunkingManager(scene, {
+    chunkMgr = new ChunkManager(scene, {
       chunkSize: size,
       radius: Math.max(1, chunkCfg.radius || 2),
       seed: WORLD_SEED,
@@ -1392,7 +1392,7 @@ function attemptAutoBasic() {
     } catch (err) {
       player.attackMove = false;
     }
-    effects.spawnTargetPing(nearest);
+    effects.spawnTargetPing(nearest, COLOR.village);
     skills.tryBasicAttack(player, nearest);
   } catch (e) {}
 }
@@ -1419,7 +1419,7 @@ renderer.domElement.addEventListener("mousedown", (e) => {
     if (obj && obj.type === "enemy") {
       // Select enemy manually instead of auto-targeting/auto-attacking.
       selectedUnit = obj.enemy;
-      effects.spawnTargetPing(obj.enemy);
+      effects.spawnTargetPing(obj.enemy, COLOR.village);
     } else {
       const p = raycast.raycastGround();
       if (p) {
@@ -1451,7 +1451,7 @@ renderer.domElement.addEventListener("mousedown", (e) => {
         } catch (err) {
           player.attackMove = false;
         }
-        effects.spawnTargetPing(obj.enemy);
+        effects.spawnTargetPing(obj.enemy, COLOR.village);
         try { skills.tryBasicAttack(player, obj.enemy); } catch (_) {}
       }
     } else {
@@ -2302,7 +2302,7 @@ function updateIndicators(dt) {
     selectionRing.visible = true;
     const p = selectedUnit.pos();
     selectionRing.position.set(p.x, 0.02, p.z);
-    const col = selectedUnit.team === "enemy" ? 0xff6060 : COLOR.fire;
+    const col = selectedUnit.team === "enemy" ? COLOR.village : COLOR.fire;
     selectionRing.material.color.setHex(col);
   } else {
     selectionRing.visible = false;
