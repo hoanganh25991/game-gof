@@ -4,4 +4,5 @@ todo*.md
 scripts
 android-build
 aab-output
+.DS_Store
 sample_*
