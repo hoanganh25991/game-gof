@@ -1,3 +1,5 @@
+import { setLanguage, getLanguage } from "../../../i18n.js";
+
 /**
  * General tab: audio, render quality, zoom, and fullscreen controls.
  * Wires controls within the Settings screen General panel.
@@ -17,6 +19,9 @@ export function renderGeneralTab(panelEl, ctx = {}) {
   } catch (_) {}
   try {
     initFullscreenControl();
+  } catch (_) {}
+  try {
+    initLanguageControls();
   } catch (_) {}
 
   panelEl.dataset.rendered = "1";
@@ -343,6 +348,45 @@ function initFullscreenControl() {
     });
     el.dataset.bound = "1";
   }
+}
+
+/* ---------------- Language ---------------- */
+function initLanguageControls() {
+  const langVi = document.getElementById("langVi");
+  const langEn = document.getElementById("langEn");
+
+  function update() {
+    const lang = (typeof getLanguage === "function" ? getLanguage() : "vi");
+    const on = (el, isActive) => {
+      if (!el) return;
+      // Keep class for any theme CSS that may target it
+      try { el.classList.toggle("active", !!isActive); } catch (_) {}
+      // Use theme tokens from css/base.css to ensure consistency
+      if (isActive) {
+        el.style.background = "linear-gradient(180deg, var(--theme-accent), var(--theme-light-orange))";
+        el.style.color = "var(--theme-orange)";
+        el.style.borderColor = "var(--border-orange)";
+        el.style.boxShadow = "var(--shadow-medium), 0 0 10px var(--glow-orange)";
+      } else {
+        el.style.background = "var(--glass)";
+        el.style.color = "var(--theme-white)";
+        el.style.borderColor = "var(--border-white-subtle)";
+        el.style.boxShadow = "var(--shadow-medium)";
+      }
+    };
+    on(langVi, lang === "vi");
+    on(langEn, lang === "en");
+  }
+
+  if (langVi && !langVi.dataset.bound) {
+    langVi.addEventListener("click", () => { try { setLanguage("vi"); } catch (_) {} update(); });
+    langVi.dataset.bound = "1";
+  }
+  if (langEn && !langEn.dataset.bound) {
+    langEn.addEventListener("click", () => { try { setLanguage("en"); } catch (_) {} update(); });
+    langEn.dataset.bound = "1";
+  }
+  try { update(); } catch (_) {}
 }
 
 /* ---------------- Utils ---------------- */

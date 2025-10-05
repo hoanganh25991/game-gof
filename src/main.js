@@ -697,33 +697,6 @@ btnMark?.addEventListener("click", () => {
   } catch (_) {}
 });
 
-function updateFlagActive() {
-  try {
-    const lang = (typeof getLanguage === "function" ? getLanguage() : "vi");
-    const on = (el, isActive) => {
-      if (!el) return;
-      // Keep class for any theme CSS that may target it
-      try { el.classList.toggle("active", !!isActive); } catch (_) {}
-      // Inline highlight to match checkbox (fire orange) so it's always visible
-      if (isActive) {
-        el.style.background = "linear-gradient(180deg, #ffb366, #ff8c42)";
-        el.style.color = "var(--theme-orange)";
-        el.style.borderColor = "rgba(255,140,66,0.6)";
-        el.style.boxShadow = "0 6px 18px rgba(0,0,0,0.35), 0 0 10px rgba(255,140,66,0.28)";
-      } else {
-        el.style.background = "rgba(10,25,48,0.6)";
-        el.style.color = "#fff";
-        el.style.borderColor = "rgba(124,196,255,0.35)";
-        el.style.boxShadow = "0 6px 14px rgba(0,0,0,0.35)";
-      }
-    };
-    on(langVi, lang === "vi");
-    on(langEn, lang === "en");
-  } catch (_) {}
-}
-langVi?.addEventListener("click", () => { setLanguage("vi"); updateFlagActive(); });
-langEn?.addEventListener("click", () => { setLanguage("en"); updateFlagActive(); });
-try { updateFlagActive(); } catch (_) {}
 
 // Environment controls (Settings panel)
 // - #envRainToggle : checkbox to enable rain
