@@ -33,23 +33,68 @@ export const STORAGE_KEYS = {
   unlockedSkills: storageKey("unlocked_skills"),
 };
 
+// Utilities to resolve theme colors from css/base.css variables at runtime
+const __styleCache = { computed: null };
+
+function getRootComputedStyle(){
+  if (typeof window === "undefined" || typeof document === "undefined") return null;
+  if (!__styleCache.computed) {
+    __styleCache.computed = getComputedStyle(document.documentElement);
+  }
+  return __styleCache.computed;
+}
+
+function readCssVar(varName){
+  const cs = getRootComputedStyle();
+  if (!cs) return "";
+  return cs.getPropertyValue(varName)?.trim() || "";
+}
+
+function parseCssColorToHexInt(value){
+  if (!value) return null;
+  const v = value.trim();
+  const hex = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hex) {
+    let h = hex[1];
+    if (h.length === 3) h = h.split("").map(c => c + c).join("");
+    return Number("0x" + h);
+  }
+  const rgb = v.match(/^rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)$/i);
+  if (rgb) {
+    const r = Math.max(0, Math.min(255, Math.round(parseFloat(rgb[1]))));
+    const g = Math.max(0, Math.min(255, Math.round(parseFloat(rgb[2]))));
+    const b = Math.max(0, Math.min(255, Math.round(parseFloat(rgb[3]))));
+    return (r << 16) | (g << 8) | b;
+  }
+  return null;
+}
+
+// Exported helper: resolve CSS var to 0xRRGGBB with fallback integer
+export function cssVarToHexInt(varName, fallbackInt){
+  const raw = readCssVar(varName);
+  const parsed = parseCssColorToHexInt(raw);
+  return (parsed === null || Number.isNaN(parsed)) ? fallbackInt : parsed;
+}
+
 export const COLOR = {
-  // Fire theme colors
-  fire: 0xff4500,        // Orange-red fire
-  darkFire: 0x8b0000,    // Dark red/crimson
-  midFire: 0xff6347,     // Tomato red
-  white: 0xfff5e6,       // Warm white
-  hp: 0xff6b6b,          // Warm red for HP
-  mp: 0xff8c00,          // Dark orange for mana (fire energy)
-  xp: 0xffd700,          // Gold for XP
-  enemy: 0x4a0e0e,       // Dark burnt color for enemies
-  enemyDark: 0x2b0505,   // Very dark burnt
-  portal: 0xff1493,      // Hot pink/magenta portal
-  village: 0xffb347,     // Warm orange for village
-  lava: 0xff4500,        // Lava orange-red
-  ember: 0xffa500,       // Ember orange
-  ash: 0x696969,         // Ash gray
-  volcano: 0x8b4513,     // Volcanic brown
+  // Values resolve from css/base.css :root at runtime with fallbacks to previous literals
+  get fire() { return cssVarToHexInt("--theme-orange", 0xff4500); },          // primary fire orange
+  get darkFire() { return cssVarToHexInt("--dark-orange", 0x8b0000); },       // deep dark
+  get midFire() { return cssVarToHexInt("--theme-light-orange", 0xff6347); }, // lighter orange
+  get white() { return cssVarToHexInt("--white", 0xfff5e6); },                // warm text white
+  get hp() { return cssVarToHexInt("--hp", 0xff6b6b); },                      // HP red
+  get mp() { return cssVarToHexInt("--mp", 0xff8c00); },                      // MP blue (fallback: dark orange)
+  get xp() { return cssVarToHexInt("--xp", 0xffd700); },                      // XP gold/orange
+
+  // Not currently defined in css variables - keep literals for now
+  enemy: 0x4a0e0e,
+  enemyDark: 0x2b0505,
+  portal: 0xff1493,
+  village: 0xffb347,
+  lava: 0xff4500,
+  ember: 0xffa500,
+  ash: 0x696969,
+  volcano: 0x8b4513,
 };
  
 // CSS variable references for DOM styling (preferred for live theming)

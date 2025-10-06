@@ -387,6 +387,16 @@ export const SKILL_POOL = [
   }
 ];
 
+export const SKILL_COLOR_TOKENS = Object.freeze({
+  // extra shared color tokens used outside the skills system
+  portal: 0xff1493,
+  village: 0xffb347,
+  lava: 0xff4500,
+  ember: 0xffa500,
+  ash: 0x696969,
+  volcano: 0x8b4513,
+});
+
 /**
  * Default starting loadout (4 skill IDs)
  */
