@@ -6,6 +6,7 @@ import { handWorldPos } from "./entities.js";
 import { createGroundRing } from "./effects.js";
 import { audio } from "./audio.js";
 import { getBasicUplift } from "./uplift.js";
+import { SKILL_FX } from "./skills_fx.js";
 
 /**
  * SkillsSystem centralizes cooldowns, basic attack, Q/W/E/R skills,
@@ -76,9 +77,10 @@ export class SkillsSystem {
     return Math.max(1, Math.floor((base || 0) * levelMult * buffMult));
   }
   
-  // VFX helpers driven by skill.effects configuration
+  // VFX helpers driven by SKILL_FX configuration (moved out of skills_pool)
   _fx(def) {
-    const e = (def && def.effects) || {};
+    const id = def && def.id;
+    const e = (id && SKILL_FX[id]) || {};
     return {
       beam: e.beamColor ?? e.beam ?? COLOR.fire,      // Orange-red fire beam
       impact: e.impactColor ?? e.impact ?? COLOR.midFire,  // Tomato red impact
