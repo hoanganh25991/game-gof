@@ -3,7 +3,7 @@
 // Behavior is preserved; tuning values unchanged.
 
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey } from "./constants.js";
+import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey, CSS_READY } from "./constants.js";
 import { setLoadoutAndApply, getSkill, setSkill } from "./skill_api.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "./world.js";
 import { UIManager } from "./ui/hud/index.js";
@@ -47,6 +47,7 @@ import { wireMarkCooldownUI } from "./ui/mark_cooldown.js";
 import { wireTopBar } from "./ui/topbar.js";
 import { createCameraSystem } from "./camera_system.js";
 import { createRespawnSystem } from "./respawn_system.js";
+await CSS_READY;
 
 
 /* Mobile Device Detection & Optimization moved to ./config/mobile.js */

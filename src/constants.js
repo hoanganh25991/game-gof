@@ -51,6 +51,41 @@ function readCssVar(varName) {
   return cs.getPropertyValue(varName)?.trim() || "";
 }
 
+/**
+ * CSS readiness: resolves when base.css :root variables are available.
+ * No fallbacks; we simply delay until computed styles contain our keys.
+ * Dispatches a 'css-vars-ready' event on window when ready.
+ */
+export const CSS_READY = (() => {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return Promise.resolve(true);
+  }
+  const keys = ["--theme-orange", "--system-text", "--glass"];
+  const hasVars = () => {
+    try {
+      const cs = getComputedStyle(document.documentElement);
+      return keys.every((k) => (cs.getPropertyValue(k) || "").trim().length > 0);
+    } catch (_) { return false; }
+  };
+  if (hasVars()) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let rafId = 0;
+    const check = () => {
+      if (hasVars()) {
+        // Bust cached computed style so subsequent reads see final values
+        try { __styleCache.computed = null; } catch (_) {}
+        try { window.dispatchEvent(new Event("css-vars-ready")); } catch (_) {}
+        if (rafId) cancelAnimationFrame(rafId);
+        resolve(true);
+        return;
+      }
+      rafId = requestAnimationFrame(check);
+    };
+    try { window.addEventListener("load", check, { once: true }); } catch (_) {}
+    check();
+  });
+})();
+
 export const COLOR = {
   // Values resolve from css/base.css :root at runtime with fallbacks to previous literals
   get fire() { return readCssVar("--theme-orange"); },          // primary fire orange
@@ -71,13 +106,13 @@ export const COLOR = {
   enemy: 0x4a0e0e,
   enemyDark: 0x2b0505,
 
-  // Extra color tokens resolved from CSS_COLOR (numeric; fall back to previous literals)
-  get portal() { return readCssVar(CSS_COLOR.portal); },
-  get village() { return readCssVar(CSS_COLOR.village); },
-  get lava() { return readCssVar(CSS_COLOR.lava); },
-  get ember() { return readCssVar(CSS_COLOR.ember); },
-  get ash() { return readCssVar(CSS_COLOR.ash); },
-  get volcano() { return readCssVar(CSS_COLOR.volcano); },
+  // Extra color tokens resolved from CSS_COLOR (string values suitable for Canvas/CSS)
+  get portal() { return CSS_COLOR.portal; },
+  get village() { return CSS_COLOR.village; },
+  get lava() { return CSS_COLOR.lava; },
+  get ember() { return CSS_COLOR.ember; },
+  get ash() { return CSS_COLOR.ash; },
+  get volcano() { return CSS_COLOR.volcano; },
 };
 
 // CSS variable references for DOM styling (preferred for live theming)
