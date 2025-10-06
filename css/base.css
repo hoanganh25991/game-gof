@@ -25,50 +25,50 @@
   --bg: #0a0503;
 
   /* Glass / overlay tokens */
-  --glass: rgba(26, 10, 5, 0.7);
-  --glass-strong: rgba(26, 10, 5, 0.85);
+  --glass: #1A0A05B3;
+  --glass-strong: #1A0A05D9;
   --accent: var(--theme-accent);
 
   /* System (settings / hero / flash) theme tokens */
-  --system-bg: linear-gradient(180deg, rgba(40,20,10,0.95), rgba(30,15,8,0.95));
-  --system-border: rgba(255,107,53,0.3);
+  --system-bg: linear-gradient(180deg, #28140AF2, #1E0F08F2);
+  --system-border: #FF6B354D;
   --system-text: #ffe6d9;
   --system-accent: var(--theme-accent);
 
   /* Common color values - for consistency */
-  --border-orange: rgba(255, 140, 66, 0.35);
-  --border-orange-light: rgba(255, 140, 66, 0.3);
-  --border-orange-subtle: rgba(255, 140, 66, 0.15);
-  --border-white-subtle: rgba(255, 255, 255, 0.12);
-  --border-white-faint: rgba(255, 255, 255, 0.06);
+  --border-orange: #FF8C4259;
+  --border-orange-light: #FF8C424D;
+  --border-orange-subtle: #FF8C4226;
+  --border-white-subtle: #FFFFFF1F;
+  --border-white-faint: #FFFFFF0F;
   
   /* Background gradients */
   --bg-radial-fire: radial-gradient(1200px 1200px at 70% 30%, #2a1510 0%, #1a0f0a 50%, #0a0503 100%);
-  --bg-dark-fire: rgba(40, 20, 10, 0.6);
-  --bg-darker-fire: rgba(26, 13, 8, 0.8);
+  --bg-dark-fire: #28140A99;
+  --bg-darker-fire: #1A0D08CC;
   
   /* Text colors */
   --text-warm: #ffe6d9;
   --text-warm-light: #ffd4b3;
   
   /* Shadow values */
-  --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-strong: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --shadow-medium: 0 8px 30px #00000059;
+  --shadow-strong: 0 8px 30px #00000073;
   
   /* Glow effects */
-  --glow-orange: rgba(255, 140, 66, 0.6);
-  --glow-orange-strong: rgba(255, 140, 66, 0.8);
+  --glow-orange: #FF8C4299;
+  --glow-orange-strong: #FF8C42CC;
 
   /* Canvas/HUD utility colors */
-  --road-underlay: rgba(210, 200, 190, 0.15);
-  --road-dark: rgba(43, 36, 32, 0.9);
-  --village-ring: rgba(90, 255, 139, 0.6);
-  --village-ring-faint: rgba(90, 255, 139, 0.35);
-  --portal: rgba(124, 77, 255, 0.9);
-  --portal-alt: rgba(180, 120, 255, 0.9);
-  --enemy-dot: rgba(255, 80, 80, 0.95);
-  --yellow-glow-strong: rgba(255, 215, 90, 0.95);
-  --player-dot: rgba(126, 204, 255, 1);
+  --road-underlay: #D2C8BE26;
+  --road-dark: #2B2420E6;
+  --village-ring: #5AFF8B99;
+  --village-ring-faint: #5AFF8B59;
+  --portal: #7C4DFFE6;
+  --portal-alt: #B478FFE6;
+  --enemy-dot: #FF5050F2;
+  --yellow-glow-strong: #FFD75AF2;
+  --player-dot: #7ECCFFFF;
 
   /* Skill/environment shared tokens (used by JS via CSS_COLOR) */
   --ember: #ffa500;
