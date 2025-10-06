@@ -14,6 +14,8 @@
  * - No raycast coupling
  */
 
+import { COLOR } from "./constants";
+
 export function createEnemiesSystem({
   THREE,
   WORLD,
@@ -237,7 +239,7 @@ export function createEnemiesSystem({
                     size: 0.3,
                     speed: 20,
                     onComplete: (hitPos) => {
-                      effects.spawnStrike(hitPos, 0.8, en.beamColor || 0xff6347);
+                      effects.spawnHitDecal(hitPos, 0.8, COLOR.fire);
                     }
                   });
                 }
