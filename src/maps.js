@@ -202,8 +202,74 @@ export function createMapManager() {
     const enemyDmgMul = (cur.enemyDmgMul || 1) * pow(ENDLESS.dmgGrowthPerDepth, depth);
     const enemySpeedMul = pow(ENDLESS.speedGrowthPerDepth, depth);
     const enemyCountMul = pow(ENDLESS.countGrowthPerDepth, depth);
+
+    // Deterministic enemy color variant per map index (darker on higher maps/endless depth)
+    const baseTint = (typeof cur.enemyTint === "number" ? (cur.enemyTint >>> 0) : 0xff6b35) >>> 0;
+    // Helpers: int RGB <-> HSL
+    const _rgbToHslInt = (n) => {
+      let r = ((n >> 16) & 0xff) / 255;
+      let g = ((n >> 8) & 0xff) / 255;
+      let b = (n & 0xff) / 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [h, s, l];
+    };
+    const _hslToRgbInt = (h, s, l) => {
+      let r, g, b;
+      if (s === 0) {
+        r = g = b = l; // achromatic
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+      }
+      const ri = Math.max(0, Math.min(255, Math.round(r * 255)));
+      const gi = Math.max(0, Math.min(255, Math.round(g * 255)));
+      const bi = Math.max(0, Math.min(255, Math.round(b * 255)));
+      return ((ri << 16) | (gi << 8) | bi) >>> 0;
+    };
+
+    // Darkness factor by act index and endless depth
+    // Acts: up to ~25% darker by last defined map; Endless: +4% per depth up to +40%
+    const actSpan = Math.max(1, maps.length - 1);
+    const actIdx = Math.max(1, Math.min(currentIndex, maps.length));
+    const actDark = actSpan > 0 ? (actIdx - 1) / actSpan * 0.25 : 0.0;
+    const depthDark = Math.min(0.4, Math.max(0, depth) * 0.04);
+    const darkness = Math.max(0, Math.min(0.65, actDark + depthDark));
+
+    // Small deterministic hue shift per map for variety (wraps every 360/37 maps)
+    const hueShift = ((currentIndex * 37) % 360) / 360 * 0.02; // up to +0.02
+
+    const [h0, s0, l0] = _rgbToHslInt(baseTint);
+    const h = (h0 + hueShift) % 1;
+    const s = Math.max(0, Math.min(1, s0 * (0.98 + depth * 0.005))); // slightly boost saturation with depth
+    const l = Math.max(0, Math.min(1, l0 * (1 - darkness))); // darken with index/depth
+
+    const enemyTintVar = _hslToRgbInt(h, s, l);
+
     return {
-      enemyTint: cur.enemyTint,
+      enemyTint: enemyTintVar,
+      enemyTintBase: baseTint,
       enemyHpMul,
       enemyDmgMul,
       enemySpeedMul,
