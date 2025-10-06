@@ -14,7 +14,7 @@
  * - No raycast coupling
  */
 
-import { COLOR } from "./constants";
+import { COLOR } from "./constants.js";
 
 export function createEnemiesSystem({
   THREE,
@@ -231,11 +231,11 @@ export function createEnemiesSystem({
             try {
               if (en.attackEffect === "melee") {
                 // lightweight strike
-                try { effects.spawnStrike(player.pos(), 0.9, 0xff9955); } catch (_) {}
+                try { effects.spawnStrike(player.pos(), 0.9, COLOR.accent); } catch (_) {}
               } else if (en.attackEffect === "fire") {
                 if (shouldSpawnVfx && shouldSpawnVfx("fire", tA)) {
                   effects.spawnFireball(tA.clone(), tC.clone(), {
-                    color: en.beamColor || 0xff6347,
+                    color: en.beamColor || COLOR.midFire,
                     size: 0.3,
                     speed: 20,
                     onComplete: (hitPos) => {
@@ -247,11 +247,11 @@ export function createEnemiesSystem({
                 // default ranged
                 if (shouldSpawnVfx && shouldSpawnVfx("largeBeam", tA)) {
                   effects.spawnFireball(tA.clone(), tC.clone(), {
-                    color: en.beamColor || 0xff8080,
+                    color: en.beamColor || COLOR.midFire,
                     size: 0.25,
                     speed: 22,
                     onComplete: (hitPos) => {
-                      effects.spawnHitDecal(hitPos, 0xff4500);
+                      effects.spawnHitDecal(hitPos, COLOR.fire);
                     }
                   });
                 }
@@ -260,7 +260,7 @@ export function createEnemiesSystem({
             // Apply damage
             player.takeDamage(en.attackDamage);
             try { audio.sfx("player_hit"); } catch (_) {}
-            try { effects.spawnDamagePopup(player.pos(), en.attackDamage, 0xffd0d0); } catch (_) {}
+            try { effects.spawnDamagePopup(player.pos(), en.attackDamage, COLOR.textWarm); } catch (_) {}
           }
         }
       } else {

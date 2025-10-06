@@ -58,6 +58,24 @@
   /* Glow effects */
   --glow-orange: rgba(255, 140, 66, 0.6);
   --glow-orange-strong: rgba(255, 140, 66, 0.8);
+
+  /* Canvas/HUD utility colors */
+  --road-underlay: rgba(210, 200, 190, 0.15);
+  --road-dark: rgba(43, 36, 32, 0.9);
+  --village-ring: rgba(90, 255, 139, 0.6);
+  --village-ring-faint: rgba(90, 255, 139, 0.35);
+  --portal: rgba(124, 77, 255, 0.9);
+  --portal-alt: rgba(180, 120, 255, 0.9);
+  --enemy-dot: rgba(255, 80, 80, 0.95);
+  --yellow-glow-strong: rgba(255, 215, 90, 0.95);
+  --player-dot: rgba(126, 204, 255, 1);
+
+  /* Skill/environment shared tokens (used by JS via CSS_COLOR) */
+  --ember: #ffa500;
+  --lava: #ff4500;
+  --village-color: #ffb347;
+  --ash: #696969;
+  --volcano: #8b4513;
 }
 
 *{ box-sizing: border-box; }

@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
-import { WORLD, storageKey } from "./constants.js";
+import { WORLD, storageKey, COLOR } from "./constants.js";
 import { createHouse, createGreekTemple, createVilla, createGreekColumn, createCypressTree, createOliveTree, createGreekStatue, createObelisk } from "./meshes.js";
 import { placeStructures } from "./structures.js";
 
@@ -82,14 +82,14 @@ export function initEnvironment(scene, options = {}) {
   const rng = createSeededRNG(cfg.seed);
 
   // atmospheric fog tuned for fire/volcanic theme
-  scene.fog = scene.fog || new THREE.FogExp2(0x1a0a05, 0.0009);
+  scene.fog = scene.fog || new THREE.FogExp2(COLOR.themeDark, 0.0009);
 
   // Ambient & directional light to match fire / volcanic theme (complements existing lights)
-  const ambient = new THREE.AmbientLight(0x331a0f, 0.68);
+  const ambient = new THREE.AmbientLight(COLOR.enemyDark, 0.68);
   root.add(ambient);
 
   // warm directional light to enhance fire ambiance (soft)
-  const sun = new THREE.DirectionalLight(0xffaa66, 0.36);
+  const sun = new THREE.DirectionalLight(COLOR.accent, 0.36);
   sun.position.set(60, 80, -40);
   sun.castShadow = false;
   root.add(sun);
@@ -185,7 +185,7 @@ export function initEnvironment(scene, options = {}) {
     const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.24), new THREE.MeshStandardMaterial({ color: 0x4a2a1a }));
     stem.position.y = 0.12;
     g.add(stem);
-    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshStandardMaterial({ color: 0xff6347, emissive: 0xff4500 }));
+    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: COLOR.fire }));
     petal.position.y = 0.28;
     g.add(petal);
     g.scale.setScalar(0.9 + Math.random() * 0.6);
@@ -228,7 +228,7 @@ export function initEnvironment(scene, options = {}) {
   const stemGeo = new THREE.CylinderGeometry(0.02, 0.02, 1);
   const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a2a1a });
   const petalGeo = new THREE.SphereGeometry(1, 6, 6);
-  const petalMat = new THREE.MeshStandardMaterial({ color: 0xff6347, emissive: 0xff4500 });
+  const petalMat = new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: COLOR.fire });
   const stemInst = new THREE.InstancedMesh(stemGeo, stemMat, cfg.flowerCount);
   const petalInst = new THREE.InstancedMesh(petalGeo, petalMat, cfg.flowerCount);
 
@@ -341,7 +341,7 @@ export function initEnvironment(scene, options = {}) {
           const intensity = __houseLights === "dim" ? 0.4 : 0.9;
           const dist = __houseLights === "dim" ? 4 : 6;
           const decay = 2;
-          const lanternLight = new THREE.PointLight(0xffd8a8, intensity, dist, decay);
+          const lanternLight = new THREE.PointLight(COLOR.yellow, intensity, dist, decay);
           lanternLight.position.set(0.6, 0.8, 0.6);
           lanternLight.castShadow = false;
           house.add(lanternLight);
@@ -349,7 +349,7 @@ export function initEnvironment(scene, options = {}) {
 
         const lanternBulb = new THREE.Mesh(
           new THREE.SphereGeometry(0.08, 8, 8),
-          new THREE.MeshStandardMaterial({ emissive: 0xffd8a8, emissiveIntensity: (__houseLights === "none" ? 0.9 : 1.2), color: 0x663300, roughness: 0.7 })
+          new THREE.MeshStandardMaterial({ emissive: COLOR.yellow, emissiveIntensity: (__houseLights === "none" ? 0.9 : 1.2), color: COLOR.volcano, roughness: 0.7 })
         );
         lanternBulb.position.set(0.6, 0.8, 0.6);
         house.add(lanternBulb);
@@ -424,7 +424,7 @@ export function initEnvironment(scene, options = {}) {
   if (cfg.enableWater) {
     const geo = new THREE.CircleGeometry(cfg.waterRadius, 64);
     const mat = new THREE.MeshStandardMaterial({
-      color: 0xff4500,
+      color: COLOR.fire,
       metalness: 0.35,
       roughness: 0.35,
       transparent: true,
@@ -460,7 +460,7 @@ export function initEnvironment(scene, options = {}) {
     }
     const geom = new THREE.BufferGeometry();
     geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const mat = new THREE.PointsMaterial({ color: 0xff6347, size: 0.08, transparent: true, opacity: 0.8 });
+    const mat = new THREE.PointsMaterial({ color: COLOR.midFire, size: 0.08, transparent: true, opacity: 0.8 });
     const pts = new THREE.Points(geom, mat);
     pts.name = "rain";
     root.add(pts);

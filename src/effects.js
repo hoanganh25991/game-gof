@@ -80,13 +80,13 @@ export class EffectsManager {
   }
 
   showNoTargetHint(player, radius) {
-    const ring = createGroundRing(Math.max(0.1, radius - 0.2), radius + 0.2, 0xffa500, 0.35);
+    const ring = createGroundRing(Math.max(0.1, radius - 0.2), radius + 0.2, COLOR.ember, 0.35);
     const p = player.pos();
     ring.position.set(p.x, 0.02, p.z);
     this.indicators.add(ring);
     this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material });
     // subtle spark at player for feedback
-    this.spawnStrike(player.pos(), 1.2, 0xffa500);
+    this.spawnStrike(player.pos(), 1.2, COLOR.ember);
   }
 
   // ----- Projectile helpers -----
@@ -114,7 +114,7 @@ export class EffectsManager {
     // Add outer glow layer
     const glowGeo = new THREE.SphereGeometry(size * 1.4, 12, 12);
     const glowMat = new THREE.MeshBasicMaterial({ 
-      color: 0xffaa00, 
+      color: COLOR.accent, 
       transparent: true, 
       opacity: 0.4 
     });
@@ -163,9 +163,9 @@ export class EffectsManager {
 
     // FIRE EFFECT: Multiple thick passes with gradient colors (yellow core, orange-red edges)
     const fireColors = [
-      0xffff00,  // Bright yellow core
-      0xffa500,  // Orange middle
-      0xff4500,  // Orange-red outer
+      COLOR.yellow,  // Bright yellow core
+      COLOR.accent,  // Orange middle
+      COLOR.fire,    // Orange-red outer
     ];
     
     const passes = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
@@ -215,7 +215,7 @@ export class EffectsManager {
       const emberEnd = emberPos.clone().add(up.clone().multiplyScalar(0.5 + Math.random() * 1.5));
       emberEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 0.8));
       const g2 = new THREE.BufferGeometry().setFromPoints([emberPos, emberEnd]);
-      const emberColor = Math.random() > 0.5 ? 0xffaa00 : 0xff6600;
+      const emberColor = Math.random() > 0.5 ? COLOR.accent : COLOR.ember;
       const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(emberColor), transparent: true, opacity: 0.7 });
       const l2 = new THREE.Line(g2, m2);
       this.transient.add(l2);
@@ -237,10 +237,10 @@ export class EffectsManager {
 
     // FIRE EFFECT: Gradient from yellow core to orange-red edges
     const fireColors = [
-      0xffff00,  // Bright yellow core
-      0xffaa00,  // Yellow-orange
-      0xff6600,  // Orange
-      0xff4500,  // Orange-red outer
+      COLOR.yellow,  // Bright yellow core
+      COLOR.accent,  // Yellow-orange
+      COLOR.ember,   // Orange
+      COLOR.fire,    // Orange-red outer
     ];
 
     const countCap = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
@@ -288,7 +288,7 @@ export class EffectsManager {
       const emberEnd = emberPos.clone().add(up.clone().multiplyScalar(0.6 + Math.random() * 1.8));
       emberEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 1.2));
       const g2 = new THREE.BufferGeometry().setFromPoints([emberPos, emberEnd]);
-      const emberColor = Math.random() > 0.6 ? 0xffaa00 : (Math.random() > 0.5 ? 0xff6600 : 0xff4500);
+      const emberColor = Math.random() > 0.6 ? COLOR.accent : (Math.random() > 0.5 ? COLOR.ember : COLOR.fire);
       const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(emberColor), transparent: true, opacity: 0.75 });
       const l2 = new THREE.Line(g2, m2);
       this.transient.add(l2);
@@ -297,7 +297,7 @@ export class EffectsManager {
     }
   }
 
-  spawnArcNoisePath(from, to, color = 0xff6347, life = 0.08, passes = 2) {
+  spawnArcNoisePath(from, to, color = COLOR.midFire, life = 0.08, passes = 2) {
     for (let i = 0; i < passes; i++) {
       this.spawnFireStream(from, to, color, life, 6, 0.2);
     }
@@ -314,10 +314,10 @@ export class EffectsManager {
   spawnStrike(point, radius = 2, color = COLOR.fire) {
     // FIRE PILLAR: Multiple layered beams erupting from ground with gradient colors
     const fireColors = [
-      0xffff00,  // Bright yellow core
-      0xffaa00,  // Yellow-orange
-      0xff6600,  // Orange
-      0xff4500,  // Orange-red outer
+      COLOR.yellow,  // Bright yellow core
+      COLOR.accent,  // Yellow-orange
+      COLOR.ember,   // Orange
+      COLOR.fire,    // Orange-red outer
     ];
     
     const pillarPasses = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
@@ -348,7 +348,7 @@ export class EffectsManager {
         0.8 + Math.random() * 1.5, 
         Math.sin(ang) * r
       ));
-      const burstColor = Math.random() > 0.5 ? 0xffaa00 : 0xff6600;
+      const burstColor = Math.random() > 0.5 ? COLOR.accent : COLOR.ember;
       this.spawnBeam(point.clone().add(new THREE.Vector3(0, 0.2, 0)), p2, burstColor, 0.12);
     }
     
@@ -367,7 +367,7 @@ export class EffectsManager {
         2 + Math.random() * 3,
         (Math.random() - 0.5) * 1.5
       ));
-      const emberColor = Math.random() > 0.6 ? 0xffff00 : (Math.random() > 0.5 ? 0xffaa00 : 0xff6600);
+      const emberColor = Math.random() > 0.6 ? COLOR.yellow : (Math.random() > 0.5 ? COLOR.accent : COLOR.ember);
       this.spawnBeam(emberStart, emberEnd, emberColor, 0.1 + Math.random() * 0.1);
     }
   }
@@ -491,7 +491,7 @@ export class EffectsManager {
     const p = left ? leftHandWorldPos(player) : handWorldPos(player);
     const s = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 12, 12),
-      new THREE.MeshBasicMaterial({ color: 0xff6347, transparent: true, opacity: 0.9 })
+      new THREE.MeshBasicMaterial({ color: COLOR.midFire, transparent: true, opacity: 0.9 })
     );
     s.position.copy(p);
     this.transient.add(s);
@@ -499,7 +499,7 @@ export class EffectsManager {
   }
 
   // Colored variant for skill-tinted flashes
-  spawnHandFlashColored(player, color = 0xff6347, left = false) {
+  spawnHandFlashColored(player, color = COLOR.midFire, left = false) {
     const p = left ? leftHandWorldPos(player) : handWorldPos(player);
     const s = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 12, 12),
@@ -573,7 +573,7 @@ export class EffectsManager {
       const len = 0.35 + Math.random() * 0.5 * strength;
       const to = origin.clone().add(dir.multiplyScalar(len));
       // Fire sparks/embers
-      this.spawnBeam(origin.clone(), to, 0xff6347, 0.06);
+      this.spawnBeam(origin.clone(), to, COLOR.midFire, 0.06);
     }
   }
 
@@ -582,7 +582,7 @@ export class EffectsManager {
     if (!player) return;
     const a = handWorldPos(player);
     const b = leftHandWorldPos(player);
-    this.spawnFireStreamAuto(a, b, 0xff6347, life);
+    this.spawnFireStreamAuto(a, b, COLOR.midFire, life);
   }
 
   // ----- Frame update -----

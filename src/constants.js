@@ -1,5 +1,4 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { SKILL_COLOR_TOKENS } from "./skills_pool.js";
 
 export const LOCAL_STORAGE_PREFIX = "gof";
 
@@ -34,10 +33,11 @@ export const STORAGE_KEYS = {
   unlockedSkills: storageKey("unlocked_skills"),
 };
 
+
 // Utilities to resolve theme colors from css/base.css variables at runtime
 const __styleCache = { computed: null };
 
-function getRootComputedStyle(){
+function getRootComputedStyle() {
   if (typeof window === "undefined" || typeof document === "undefined") return null;
   if (!__styleCache.computed) {
     __styleCache.computed = getComputedStyle(document.documentElement);
@@ -45,13 +45,13 @@ function getRootComputedStyle(){
   return __styleCache.computed;
 }
 
-function readCssVar(varName){
+function readCssVar(varName) {
   const cs = getRootComputedStyle();
   if (!cs) return "";
   return cs.getPropertyValue(varName)?.trim() || "";
 }
 
-function parseCssColorToHexInt(value){
+function parseCssColorToHexInt(value) {
   if (!value) return null;
   const v = value.trim();
   const hex = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -71,7 +71,7 @@ function parseCssColorToHexInt(value){
 }
 
 // Exported helper: resolve CSS var to 0xRRGGBB with fallback integer
-export function cssVarToHexInt(varName, fallbackInt){
+export function cssVarToHexInt(varName, fallbackInt) {
   const raw = readCssVar(varName);
   const parsed = parseCssColorToHexInt(raw);
   return (parsed === null || Number.isNaN(parsed)) ? fallbackInt : parsed;
@@ -79,27 +79,33 @@ export function cssVarToHexInt(varName, fallbackInt){
 
 export const COLOR = {
   // Values resolve from css/base.css :root at runtime with fallbacks to previous literals
-  get fire() { return cssVarToHexInt("--theme-orange", 0xff4500); },          // primary fire orange
-  get darkFire() { return cssVarToHexInt("--dark-orange", 0x8b0000); },       // deep dark
-  get midFire() { return cssVarToHexInt("--theme-light-orange", 0xff6347); }, // lighter orange
-  get white() { return cssVarToHexInt("--white", 0xfff5e6); },                // warm text white
-  get hp() { return cssVarToHexInt("--hp", 0xff6b6b); },                      // HP red
-  get mp() { return cssVarToHexInt("--mp", 0xff8c00); },                      // MP blue (fallback: dark orange)
-  get xp() { return cssVarToHexInt("--xp", 0xffd700); },                      // XP gold/orange
+  get fire() { return cssVarToHexInt("--theme-orange"); },          // primary fire orange
+  get darkFire() { return cssVarToHexInt("--dark-orange"); },       // deep dark
+  get midFire() { return cssVarToHexInt("--theme-light-orange"); }, // lighter orange
+  get white() { return cssVarToHexInt("--white"); },                // warm text white
+  get hp() { return cssVarToHexInt("--hp"); },                      // HP red
+  get mp() { return cssVarToHexInt("--mp"); },                      // MP blue (fallback: dark orange)
+  get xp() { return cssVarToHexInt("--xp"); },                      // XP gold/orange
+  // Extended theme tokens (from css/base.css)
+  get accent() { return cssVarToHexInt("--theme-accent"); },
+  get yellow() { return cssVarToHexInt("--theme-yellow"); },
+  get themeDark() { return cssVarToHexInt("--theme-dark"); },
+  get textWarm() { return cssVarToHexInt("--text-warm"); },
+  get textWarmLight() { return cssVarToHexInt("--text-warm-light"); },
 
   // Not currently defined in css variables - keep literals for now
   enemy: 0x4a0e0e,
   enemyDark: 0x2b0505,
 
-  // Source of truth from skills_pool.js
-  get portal() { return SKILL_COLOR_TOKENS.portal; },
-  get village() { return SKILL_COLOR_TOKENS.village; },
-  get lava() { return SKILL_COLOR_TOKENS.lava; },
-  get ember() { return SKILL_COLOR_TOKENS.ember; },
-  get ash() { return SKILL_COLOR_TOKENS.ash; },
-  get volcano() { return SKILL_COLOR_TOKENS.volcano; },
+  // Extra color tokens resolved from CSS_COLOR (numeric; fall back to previous literals)
+  get portal() { return parseCssColorToHexInt(CSS_COLOR.portal); },
+  get village() { return parseCssColorToHexInt(CSS_COLOR.village); },
+  get lava() { return parseCssColorToHexInt(CSS_COLOR.lava); },
+  get ember() { return parseCssColorToHexInt(CSS_COLOR.ember); },
+  get ash() { return parseCssColorToHexInt(CSS_COLOR.ash); },
+  get volcano() { return parseCssColorToHexInt(CSS_COLOR.volcano); },
 };
- 
+
 // CSS variable references for DOM styling (preferred for live theming)
 export const CSS_VAR = {
   themeDark: "var(--theme-dark)",
@@ -131,26 +137,37 @@ export const CSS_VAR = {
   glowOrangeStrong: "var(--glow-orange-strong)",
 };
 
-// CSS color fallbacks (exact values) for contexts that do not support CSS variables (e.g., Canvas2D)
+/**
+ * CSS color values intended for non-CSS contexts (e.g., Canvas2D), resolved dynamically
+ * from css/base.css at runtime when possible. Falls back to literals if unavailable.
+ */
 export const CSS_COLOR = {
-  // Mirrors css/base.css tokens
-  glass: "rgba(26, 10, 5, 0.7)",
-  glassStrong: "rgba(26, 10, 5, 0.85)",
-  borderOrange: "rgba(255, 140, 66, 0.35)",
-  borderOrangeLight: "rgba(255, 140, 66, 0.3)",
-  borderOrangeSubtle: "rgba(255, 140, 66, 0.15)",
-  borderWhiteSubtle: "rgba(255, 255, 255, 0.12)",
-  borderWhiteFaint: "rgba(255, 255, 255, 0.06)",
-  // Useful UI colors not in variables but used by Canvas/HUD
-  roadUnderlay: "rgba(210, 200, 190, 0.15)",
-  roadDark: "rgba(43, 36, 32, 0.9)",
-  villageRing: "rgba(90, 255, 139, 0.6)",
-  villageRingFaint: "rgba(90, 255, 139, 0.35)",
-  portal: "rgba(124, 77, 255, 0.9)",
-  portalAlt: "rgba(180, 120, 255, 0.9)",
-  enemyDot: "rgba(255, 80, 80, 0.95)",
-  yellowGlowStrong: "rgba(255, 215, 90, 0.95)",
-  playerDot: "rgba(126, 204, 255, 1)",
+  // Mirrors css/base.css tokens (resolved at runtime with fallbacks)
+  get glass() { return readCssVar("--glass"); },
+  get glassStrong() { return readCssVar("--glass-strong"); },
+  get borderOrange() { return readCssVar("--border-orange"); },
+  get borderOrangeLight() { return readCssVar("--border-orange-light"); },
+  get borderOrangeSubtle() { return readCssVar("--border-orange-subtle"); },
+  get borderWhiteSubtle() { return readCssVar("--border-white-subtle"); },
+  get borderWhiteFaint() { return readCssVar("--border-white-faint"); },
+
+  // Useful UI colors promoted to CSS variables (resolved dynamically with fallbacks)
+  get roadUnderlay() { return readCssVar("--road-underlay"); },
+  get roadDark() { return readCssVar("--road-dark"); },
+  get villageRing() { return readCssVar("--village-ring"); },
+  get villageRingFaint() { return readCssVar("--village-ring-faint"); },
+  get portal() { return readCssVar("--portal"); },
+  get portalAlt() { return readCssVar("--portal-alt"); },
+  get enemyDot() { return readCssVar("--enemy-dot"); },
+  get yellowGlowStrong() { return readCssVar("--yellow-glow-strong"); },
+  get playerDot() { return readCssVar("--player-dot"); },
+
+  // Skill/environment tokens (string colors; override via CSS vars if desired)
+  get ember() { return readCssVar("--ember"); },
+  get lava() { return readCssVar("--lava"); },
+  get village() { return readCssVar("--village-color"); },
+  get ash() { return readCssVar("--ash"); },
+  get volcano() { return readCssVar("--volcano"); },
 };
 
 export const WORLD = {
@@ -208,7 +225,7 @@ export const STATS_BASE = {
   xpToLevel: 200,
 };
 
- 
+
 // Progression and balancing knobs (tweak for desired pacing)
 export const SCALING = {
   // XP curve multiplier applied to xpToLevel each time the hero levels up
@@ -252,7 +269,7 @@ export const FX = {
   popupDurationScale: 1.5 * 2, // >1 = damage popups linger longer
   sfxOnCast: true          // play a generic "cast" sound immediately on skill cast
 };
- 
+
 // Village and recall/portals
 export const VILLAGE_POS = new THREE.Vector3(0, 0, 0);
 export const REST_RADIUS = 20;

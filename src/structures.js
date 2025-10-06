@@ -1,4 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
+import { COLOR } from "./constants.js";
 /**
  * placeStructures(params)
  * - Extracted placement logic for Greek-inspired structures and nature extras from src/environment.js
@@ -116,7 +117,7 @@ export function placeStructures(params = {}) {
         archGroup.add(t);
 
         if (__q !== "low" && acquireLight(2)) {
-          const torchL = new THREE.PointLight(0xffd8a8, __q === "medium" ? 0.5 : 0.8, 14, 2);
+          const torchL = new THREE.PointLight(COLOR.yellow, __q === "medium" ? 0.5 : 0.8, 14, 2);
           torchL.position.set(pos.x + 2.5, 1.2, pos.z - 4.5);
           const torchR = torchL.clone();
           torchR.position.set(pos.x - 2.5, 1.2, pos.z - 4.5);
@@ -177,7 +178,7 @@ export function placeStructures(params = {}) {
         s.rotation.y = seededRange(rng, -Math.PI, Math.PI);
         archGroup.add(s);
         if (__q !== "low" && acquireLight(1)) {
-          const l = new THREE.PointLight(0xffe0b8, __q === "medium" ? 0.35 : 0.55, 10, 2);
+          const l = new THREE.PointLight(COLOR.yellow, __q === "medium" ? 0.35 : 0.55, 10, 2);
           l.position.set(pos.x, 1.0, pos.z);
           root.add(l);
         }
