@@ -51,59 +51,33 @@ function readCssVar(varName) {
   return cs.getPropertyValue(varName)?.trim() || "";
 }
 
-function parseCssColorToHexInt(value) {
-  if (!value) return null;
-  const v = value.trim();
-  const hex = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if (hex) {
-    let h = hex[1];
-    if (h.length === 3) h = h.split("").map(c => c + c).join("");
-    return Number("0x" + h);
-  }
-  const rgb = v.match(/^rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)$/i);
-  if (rgb) {
-    const r = Math.max(0, Math.min(255, Math.round(parseFloat(rgb[1]))));
-    const g = Math.max(0, Math.min(255, Math.round(parseFloat(rgb[2]))));
-    const b = Math.max(0, Math.min(255, Math.round(parseFloat(rgb[3]))));
-    return (r << 16) | (g << 8) | b;
-  }
-  return null;
-}
-
-// Exported helper: resolve CSS var to 0xRRGGBB with fallback integer
-export function cssVarToHexInt(varName, fallbackInt) {
-  const raw = readCssVar(varName);
-  const parsed = parseCssColorToHexInt(raw);
-  return (parsed === null || Number.isNaN(parsed)) ? fallbackInt : parsed;
-}
-
 export const COLOR = {
   // Values resolve from css/base.css :root at runtime with fallbacks to previous literals
-  get fire() { return cssVarToHexInt("--theme-orange"); },          // primary fire orange
-  get darkFire() { return cssVarToHexInt("--dark-orange"); },       // deep dark
-  get midFire() { return cssVarToHexInt("--theme-light-orange"); }, // lighter orange
-  get white() { return cssVarToHexInt("--white"); },                // warm text white
-  get hp() { return cssVarToHexInt("--hp"); },                      // HP red
-  get mp() { return cssVarToHexInt("--mp"); },                      // MP blue (fallback: dark orange)
-  get xp() { return cssVarToHexInt("--xp"); },                      // XP gold/orange
+  get fire() { return readCssVar("--theme-orange"); },          // primary fire orange
+  get darkFire() { return readCssVar("--dark-orange"); },       // deep dark
+  get midFire() { return readCssVar("--theme-light-orange"); }, // lighter orange
+  get white() { return readCssVar("--white"); },                // warm text white
+  get hp() { return readCssVar("--hp"); },                      // HP red
+  get mp() { return readCssVar("--mp"); },                      // MP blue (fallback: dark orange)
+  get xp() { return readCssVar("--xp"); },                      // XP gold/orange
   // Extended theme tokens (from css/base.css)
-  get accent() { return cssVarToHexInt("--theme-accent"); },
-  get yellow() { return cssVarToHexInt("--theme-yellow"); },
-  get themeDark() { return cssVarToHexInt("--theme-dark"); },
-  get textWarm() { return cssVarToHexInt("--text-warm"); },
-  get textWarmLight() { return cssVarToHexInt("--text-warm-light"); },
+  get accent() { return readCssVar("--theme-accent"); },
+  get yellow() { return readCssVar("--theme-yellow"); },
+  get themeDark() { return readCssVar("--theme-dark"); },
+  get textWarm() { return readCssVar("--text-warm"); },
+  get textWarmLight() { return readCssVar("--text-warm-light"); },
 
   // Not currently defined in css variables - keep literals for now
   enemy: 0x4a0e0e,
   enemyDark: 0x2b0505,
 
   // Extra color tokens resolved from CSS_COLOR (numeric; fall back to previous literals)
-  get portal() { return parseCssColorToHexInt(CSS_COLOR.portal); },
-  get village() { return parseCssColorToHexInt(CSS_COLOR.village); },
-  get lava() { return parseCssColorToHexInt(CSS_COLOR.lava); },
-  get ember() { return parseCssColorToHexInt(CSS_COLOR.ember); },
-  get ash() { return parseCssColorToHexInt(CSS_COLOR.ash); },
-  get volcano() { return parseCssColorToHexInt(CSS_COLOR.volcano); },
+  get portal() { return readCssVar(CSS_COLOR.portal); },
+  get village() { return readCssVar(CSS_COLOR.village); },
+  get lava() { return readCssVar(CSS_COLOR.lava); },
+  get ember() { return readCssVar(CSS_COLOR.ember); },
+  get ash() { return readCssVar(CSS_COLOR.ash); },
+  get volcano() { return readCssVar(CSS_COLOR.volcano); },
 };
 
 // CSS variable references for DOM styling (preferred for live theming)
