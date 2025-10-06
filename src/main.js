@@ -19,7 +19,7 @@ import { initI18n, setLanguage, getLanguage, t } from "./i18n.js";
 import { initSplash } from "./splash.js";
 import { initTouchControls } from "./touch.js";
 import { createInputService } from "./input_service.js";
-import { SKILL_POOL, DEFAULT_LOADOUT } from "./skills_pool.js";
+import { SKILLS_POOL, DEFAULT_LOADOUT } from "./skills_pool.js";
 import { loadOrDefault, saveLoadout, resolveLoadout } from "./loadout.js";
 import { audio } from "./audio.js";
 import { createVillagesSystem } from "./villages.js";
@@ -405,7 +405,7 @@ setupSettingsScreen({
   const ctx = {
     t,
     player,
-    SKILL_POOL,
+    SKILL_POOL: SKILLS_POOL,
     DEFAULT_LOADOUT,
     currentLoadout,
     setLoadoutAndSave,
@@ -464,7 +464,7 @@ try { window.__disposeTopBar = disposeTopBar; } catch (_) {}
 
 // Selection/aim indicators
 /* Load and apply saved loadout so runtime SKILLS.Q/W/E/R reflect player's choice */
-let currentLoadout = loadOrDefault(SKILL_POOL, DEFAULT_LOADOUT);
+let currentLoadout = loadOrDefault(SKILLS_POOL, DEFAULT_LOADOUT);
 
 /**
  * Apply an array of 4 skill ids to the runtime mapping using the skill_api.
@@ -487,7 +487,7 @@ function applyLoadoutToSKILLS(loadoutIds) {
  * Persist and apply a new loadout.
  */
 function setLoadoutAndSave(ids) {
-  const resolved = resolveLoadout(SKILL_POOL, ids, DEFAULT_LOADOUT);
+  const resolved = resolveLoadout(SKILLS_POOL, ids, DEFAULT_LOADOUT);
   currentLoadout = resolved;
   setLoadoutAndApply(currentLoadout, {
     upgradeMapper: (id, base) => {
@@ -523,7 +523,7 @@ try { window.updateSkillBarLabels = updateSkillBarLabels; } catch (e) {}
 window.addEventListener("loadout-changed", () => {
   try {
     // Reload and apply loadout to runtime SKILLS mapping and refresh the HUD skillbar.
-    currentLoadout = loadOrDefault(SKILL_POOL, DEFAULT_LOADOUT);
+    currentLoadout = loadOrDefault(SKILLS_POOL, DEFAULT_LOADOUT);
     applyLoadoutToSKILLS(currentLoadout);
     updateSkillBarLabels();
     

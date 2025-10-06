@@ -23,16 +23,16 @@
  *      (id, baseSkill) => upgradedSkill
  *    This keeps upgrade logic outside the API and avoids coupling to skill_upgrades.js.
  */
-import { SKILL_POOL, DEFAULT_LOADOUT } from "./skills_pool.js";
+import { SKILLS_POOL, DEFAULT_LOADOUT } from "./skills_pool.js";
 
 const KEYS = ["Q", "W", "E", "R"];
 
 // Internal runtime state
-let _currentLoadout = (DEFAULT_LOADOUT && Array.isArray(DEFAULT_LOADOUT) && DEFAULT_LOADOUT.slice(0,4)) || SKILL_POOL.slice(0,4).map(s => s.id);
+let _currentLoadout = (DEFAULT_LOADOUT && Array.isArray(DEFAULT_LOADOUT) && DEFAULT_LOADOUT.slice(0,4)) || SKILLS_POOL.slice(0,4).map(s => s.id);
 const _map = new Map(); // key -> skill object (shallow copies)
 
 // Build id -> definition map for fast lookup
-const _idMap = new Map(SKILL_POOL.map((s) => [s.id, s]));
+const _idMap = new Map(SKILLS_POOL.map((s) => [s.id, s]));
 
 /**
  * Create a shallow copy of a pool entry (to avoid mutating the canonical pool)

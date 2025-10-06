@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { COLOR, FX } from "./constants.js";
-import { now } from "./utils.js";
+import { now, parseThreeColor } from "./utils.js";
 import { handWorldPos, leftHandWorldPos } from "./entities.js";
 
 // Normalize color inputs from various formats ("0x66ffc2", "#66ffc2", 0x66ffc2, 6750146)
@@ -8,13 +8,14 @@ function normalizeColor(c, fallback = COLOR.fire) {
   try {
     if (typeof c === "number" && Number.isFinite(c)) return c >>> 0;
     if (typeof c === "string") {
-      const s = c.trim();
-      if (/^0x[0-9a-fA-F]{6}$/.test(s)) return Number(s);
-      if (/^#[0-9a-fA-F]{6}$/.test(s)) return parseInt(s.slice(1), 16) >>> 0;
-      if (/^[0-9a-fA-F]{6}$/.test(s)) return parseInt(s, 16) >>> 0;
+      return parseThreeColor(c).hex >>> 0;
     }
   } catch (_) {}
-  return fallback >>> 0;
+  try {
+    if (typeof fallback === "string") return parseThreeColor(fallback).hex >>> 0;
+    if (typeof fallback === "number") return fallback >>> 0;
+  } catch (_) {}
+  return 0xff6b35;
 }
 
 // Standalone ring factory (used by UI modules and effects)

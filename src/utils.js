@@ -79,3 +79,41 @@ export function createSeededRNG(seed = 0) {
 export function seededRange(rng, min, max) {
   return min + (max - min) * rng();
 }
+
+// Color utilities: parse various color formats to 0xRRGGBB + alpha [0,1]
+// Supports: #RRGGBB, #RRGGBBAA, 0xRRGGBB, "RRGGBB", number, rgb()/rgba()
+export function parseThreeColor(input) {
+  let hex = 0xff6b35;
+  let alpha = 1;
+  try {
+    if (typeof input === "number" && Number.isFinite(input)) {
+      hex = input >>> 0;
+      alpha = 1;
+    } else if (typeof input === "string") {
+      const s = input.trim();
+      if (/^#[0-9a-fA-F]{8}$/.test(s)) {
+        hex = parseInt(s.slice(1, 7), 16) >>> 0;
+        alpha = Math.max(0, Math.min(1, parseInt(s.slice(7, 9), 16) / 255));
+      } else if (/^#[0-9a-fA-F]{6}$/.test(s)) {
+        hex = parseInt(s.slice(1), 16) >>> 0;
+        alpha = 1;
+      } else if (/^0x[0-9a-fA-F]{6}$/.test(s)) {
+        hex = parseInt(s.slice(2), 16) >>> 0;
+        alpha = 1;
+      } else if (/^[0-9a-fA-F]{6}$/.test(s)) {
+        hex = parseInt(s, 16) >>> 0;
+        alpha = 1;
+      } else {
+        const m = s.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(\d*\.?\d+))?\s*\)$/i);
+        if (m) {
+          const r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+          const g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+          const b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+          hex = ((r << 16) | (g << 8) | b) >>> 0;
+          alpha = Math.max(0, Math.min(1, m[4] ? parseFloat(m[4]) : 1));
+        }
+      }
+    }
+  } catch (_) {}
+  return { hex, alpha };
+}

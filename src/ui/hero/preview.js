@@ -1,7 +1,7 @@
 import { CSS_VAR } from "../../constants.js";
 import { getSkill, setSkill } from "../../skill_api.js";
 import { saveLoadout, loadOrDefault } from "../../loadout.js";
-import { SKILL_POOL, DEFAULT_LOADOUT } from "../../skills_pool.js";
+import { SKILLS_POOL, DEFAULT_LOADOUT } from "../../skills_pool.js";
 import { now } from "../../utils.js";
 import { getSkillUpgradeManager } from "../../skill_upgrades.js";
 
@@ -281,7 +281,7 @@ async function showCastingOverlayAndCast(skills, def, key) {
 function persistAssignment(key, def) {
   try {
     const idx = { Q: 0, W: 1, E: 2, R: 3 }[key] ?? 0;
-    const ids = loadOrDefault(SKILL_POOL, DEFAULT_LOADOUT).slice();
+    const ids = loadOrDefault(SKILLS_POOL, DEFAULT_LOADOUT).slice();
     if (def && def.id) {
       ids[idx] = def.id;
       saveLoadout(ids);

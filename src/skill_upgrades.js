@@ -10,7 +10,7 @@
  * - Players earn skill points on level-up to spend on upgrades
  */
 
-import { SKILL_POOL } from "./skills_pool.js";
+import { SKILLS_POOL } from "./skills_pool.js";
 import { STORAGE_KEYS } from "./constants.js";
 
 const STORAGE_KEY = STORAGE_KEYS.skillLevels;
@@ -68,7 +68,7 @@ function computeSkillUnlockLevels(skillPool, maxLevel) {
  * Skill unlock requirements (player level needed to unlock each skill).
  */
 export const SKILL_UNLOCK_LEVELS = computeSkillUnlockLevels(
-  SKILL_POOL,
+  SKILLS_POOL,
   MAX_SKILL_UNLOCK_LEVEL
 );
 

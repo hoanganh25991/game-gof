@@ -9,7 +9,7 @@
  *  - hand: hand flash tint (hex)
  *  - shake: camera shake magnitude (0..1)
  */
-export const SKILL_POOL = [
+export const SKILLS_POOL = [
   {
     "id": "flame_chain",
     "name": "Flame Chain",
@@ -392,5 +392,5 @@ export const SKILL_POOL = [
  * Default starting loadout (4 skill IDs)
  */
 export const DEFAULT_LOADOUT = Object.freeze(
-  SKILL_POOL.slice(0, 4).map((skill) => skill.id)
+  SKILLS_POOL.slice(0, 4).map((skill) => skill.id)
 );
