@@ -76,17 +76,17 @@ export class SkillsSystem {
     const buffMult = this.damageBuffUntil && now() < this.damageBuffUntil ? this.damageBuffMult || 1 : 1;
     return Math.max(1, Math.floor((base || 0) * levelMult * buffMult));
   }
-  
+
   // VFX helpers driven by SKILL_FX configuration (moved out of skills_pool)
   _fx(def) {
     const id = def && def.id;
     const e = (id && SKILL_FX[id]) || {};
     return {
-      beam: e.beamColor ?? e.beam ?? COLOR.fire,      // Orange-red fire beam
-      impact: e.impactColor ?? e.impact ?? COLOR.midFire,  // Tomato red impact
-      ring: e.ringColor ?? e.ring ?? COLOR.ember,     // Ember orange ring
-      arc: e.arcColor ?? e.arc ?? 0xffa500,           // Bright orange arc
-      hand: e.handColor ?? e.hand ?? COLOR.ember,     // Ember orange hand
+      beam: e.beam ?? COLOR.fire,      // Orange-red fire beam
+      impact: e.impact ?? COLOR.midFire,  // Tomato red impact
+      ring: e.ring ?? COLOR.ember,     // Ember orange ring
+      arc: e.arc ?? COLOR.arc,           // Bright orange arc
+      hand: e.hand ?? COLOR.ember,     // Ember orange hand
       shake: e.shake ?? 0
     };
   }
@@ -102,7 +102,7 @@ export class SkillsSystem {
       this.effects.spawnHandLink(this.player, 0.06);
       this.effects.spawnHandCrackle(this.player, false, 1.0);
       this.effects.spawnHandCrackle(this.player, true, 1.0);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   _requestShake(v) {
@@ -120,7 +120,7 @@ export class SkillsSystem {
         const to = __vA.copy(center).add(__vC.set(Math.cos(ang) * r, 0.4 + Math.random() * 0.8, Math.sin(ang) * r)).clone();
         this.effects.spawnArcNoisePath(base, to, fx.arc, 0.08, 2);
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   // Prefer enemies in front of player within a small aim cone
@@ -188,8 +188,8 @@ export class SkillsSystem {
             pct > 0.5
               ? "rgba(70,100,150,0.55)"
               : pct > 0.2
-              ? "rgba(90,150,220,0.55)"
-              : "rgba(150,220,255,0.65)";
+                ? "rgba(90,150,220,0.55)"
+                : "rgba(150,220,255,0.65)";
           el.style.background = `conic-gradient(${wedge} ${deg}deg, rgba(0,0,0,0) 0deg)`;
           el.textContent = remain < 3 ? remain.toFixed(1) : `${Math.ceil(remain)}`;
         }
@@ -205,7 +205,7 @@ export class SkillsSystem {
             d.textContent = el.textContent;
           });
         }
-      } catch (_) {}
+      } catch (_) { }
 
       // flash on ready transition
       const prev = this.cdState[key] || 0;
@@ -221,7 +221,7 @@ export class SkillsSystem {
               d.dataset.flashUntil = el.dataset.flashUntil;
             });
           }
-        } catch (_) {}
+        } catch (_) { }
       }
       if (el.dataset.flashUntil && t > parseFloat(el.dataset.flashUntil)) {
         el.classList.remove("flash");
@@ -235,7 +235,7 @@ export class SkillsSystem {
               delete d.dataset.flashUntil;
             });
           }
-        } catch (_) {}
+        } catch (_) { }
       }
       this.cdState[key] = remain;
     }
@@ -252,7 +252,7 @@ export class SkillsSystem {
   tryBasicAttack(attacker, target) {
     const time = now();
     if (time < (attacker.nextBasicReady || 0)) return false;
-    
+
     // Allow casting without a target
     const hasValidTarget = target && target.alive;
 
@@ -300,7 +300,7 @@ export class SkillsSystem {
       attacker === this.player && this.player.mesh.userData.handAnchor
         ? handWorldPos(this.player)
         : __vA.copy(attacker.pos()).add(__vB.set(0, 1.6, 0)).clone();
-    
+
     // Calculate target position: use actual target if available, otherwise fire in facing direction
     let to;
     if (hasValidTarget) {
@@ -313,12 +313,12 @@ export class SkillsSystem {
         .add(__vB.set(Math.sin(yaw) * range, 1.2, Math.cos(yaw) * range))
         .clone();
     }
-    
+
     // FIRE PROJECTILE: Spawn fireball that travels to target
     const baseDmg = this.getBasicDamage(attacker);
     const up = getBasicUplift ? getBasicUplift() : { aoeRadius: 0, chainJumps: 0, dmgMul: 1 };
     const dmg = Math.max(1, Math.floor(baseDmg * (up.dmgMul || 1)));
-    
+
     this.effects.spawnFireball(from, to, {
       color: COLOR.fire,
       size: 0.35,
@@ -331,7 +331,7 @@ export class SkillsSystem {
         }
       }
     });
-    
+
     audio.sfx("basic");
     // FP hand VFX for basic attack - fire casting effects
     try {
@@ -341,13 +341,13 @@ export class SkillsSystem {
       this.effects.spawnHandFlash(this.player, true);
       this.effects.spawnHandCrackle(this.player, false, 1.2);
       this.effects.spawnHandCrackle(this.player, true, 1.2);
-    } catch (e) {}
+    } catch (e) { }
     if (attacker === this.player) this.player.braceUntil = now() + 0.18;
-    
+
     // Only deal damage if there's a valid target
     if (hasValidTarget) {
       target.takeDamage(dmg);
-      try { this.effects.spawnDamagePopup(target.pos(), dmg, 0xffe0e0); } catch (e) {}
+      try { this.effects.spawnDamagePopup(target.pos(), dmg); } catch (e) { }
 
       // Uplift: AOE explosion around the hit target
       try {
@@ -359,7 +359,7 @@ export class SkillsSystem {
             if (distance2D(en.pos(), target.pos()) <= r) en.takeDamage(Math.max(1, Math.floor(dmg * 0.8)));
           });
         }
-      } catch (_) {}
+      } catch (_) { }
 
       // Uplift: Chain to nearby enemies
       try {
@@ -369,19 +369,19 @@ export class SkillsSystem {
         while (jumps-- > 0) {
           const candidates = this.enemies
             .filter(e => e.alive && !hitSet.has(e) && distance2D(current.pos(), e.pos()) <= 22)
-            .sort((a,b) => distance2D(current.pos(), a.pos()) - distance2D(current.pos(), b.pos()));
+            .sort((a, b) => distance2D(current.pos(), a.pos()) - distance2D(current.pos(), b.pos()));
           const nxt = candidates[0];
           if (!nxt) break;
           hitSet.add(nxt);
-          const from = __vA.copy(current.pos()).add(__vB.set(0,1.2,0)).clone();
-          const to = __vC.copy(nxt.pos()).add(__vB.set(0,1.2,0)).clone();
-          try { this.effects.spawnFireStreamAuto(from, to, COLOR.ember, 0.08); } catch(_) {}
+          const from = __vA.copy(current.pos()).add(__vB.set(0, 1.2, 0)).clone();
+          const to = __vC.copy(nxt.pos()).add(__vB.set(0, 1.2, 0)).clone();
+          try { this.effects.spawnFireStreamAuto(from, to, COLOR.ember, 0.08); } catch (_) { }
           nxt.takeDamage(Math.max(1, Math.floor(dmg * 0.85)));
           current = nxt;
         }
-      } catch (_) {}
+      } catch (_) { }
     }
-    
+
     return true;
   }
 
@@ -399,7 +399,7 @@ export class SkillsSystem {
       return;
     }
     this._vfxCastFlash(SK);
-    try { if (FX && FX.sfxOnCast) audio.sfx("cast"); } catch (_) {}
+    try { if (FX && FX.sfxOnCast) audio.sfx("cast"); } catch (_) { }
 
     switch (SK.type) {
       case "chain":
@@ -454,7 +454,7 @@ export class SkillsSystem {
       this.effects.spawnHandLink(this.player, 0.06);
       this.effects.spawnHandCrackle(this.player, false, 1.0);
       this.effects.spawnHandCrackle(this.player, true, 1.0);
-    } catch (e) {}
+    } catch (e) { }
 
     const effRange = Math.max(SK.range || 0, WORLD.attackRange * (WORLD.attackRangeMult || 1));
     let candidates = this.enemies.filter(
@@ -467,14 +467,14 @@ export class SkillsSystem {
         this.player === this.player && this.player.mesh.userData.handAnchor
           ? handWorldPos(this.player)
           : __vA.copy(this.player.pos()).add(__vB.set(0, 1.6, 0)).clone();
-      const dir = __vB.set(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
+      const dir = __vB.set(0, 0, 1).applyQuaternion(this.player.mesh.quaternion).normalize();
       const to = __vC.copy(from).add(dir.multiplyScalar(effRange));
       try {
         this.effects.spawnFireStreamAuto(from, to, fx.beam, 0.1);
         this.effects.spawnStrike(__vA.copy(to).setY(0), 1.0, fx.impact);
         this._requestShake(fx.shake || 0);
         audio.sfx("beam");
-      } catch (_) {}
+      } catch (_) { }
       this.player.spend(SK.mana);
       this.startCooldown(key, SK.cd);
       return;
@@ -493,18 +493,18 @@ export class SkillsSystem {
     let first = true;
     while (current && jumps-- > 0) {
       const hitPoint = __vA.copy(current.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    this.effects.spawnFireStreamAuto(lastPoint, hitPoint, this._fx(SK).beam, 0.12);
-    this.effects.spawnArcNoisePath(lastPoint, hitPoint, this._fx(SK).arc, 0.08);
-    if (first) { this._requestShake(this._fx(SK).shake || 0); first = false; }
-    const dmgHit = this.scaleSkillDamage(SK.dmg || 0);
-    current.takeDamage(dmgHit);
-    if (SK.slowFactor) { current.slowUntil = now() + (SK.slowDuration || 1.2); current.slowFactor = SK.slowFactor; }
-    audio.sfx("chain_hit");
-    // popup for chain hit
-    try { this.effects.spawnDamagePopup(current.pos(), dmgHit, this._fx(SK).impact); } catch (e) {}
-    this.effects.spawnStrike(current.pos(), 1.2, this._fx(SK).impact);
-    this.effects.spawnHitDecal(current.pos(), this._fx(SK).ring);
-    try { this.effects.spawnRingPulse(current.pos(), 1.2, this._fx(SK).ring, 0.3, 0.5, 0.45); } catch (_) {}
+      this.effects.spawnFireStreamAuto(lastPoint, hitPoint, this._fx(SK).beam, 0.12);
+      this.effects.spawnArcNoisePath(lastPoint, hitPoint, this._fx(SK).arc, 0.08);
+      if (first) { this._requestShake(this._fx(SK).shake || 0); first = false; }
+      const dmgHit = this.scaleSkillDamage(SK.dmg || 0);
+      current.takeDamage(dmgHit);
+      if (SK.slowFactor) { current.slowUntil = now() + (SK.slowDuration || 1.2); current.slowFactor = SK.slowFactor; }
+      audio.sfx("chain_hit");
+      // popup for chain hit
+      try { this.effects.spawnDamagePopup(current.pos(), dmgHit, this._fx(SK).impact); } catch (e) { }
+      this.effects.spawnStrike(current.pos(), 1.2, this._fx(SK).impact);
+      this.effects.spawnHitDecal(current.pos(), this._fx(SK).ring);
+      try { this.effects.spawnRingPulse(current.pos(), 1.2, this._fx(SK).ring, 0.3, 0.5, 0.45); } catch (_) { }
       lastPoint = hitPoint;
       candidates = this.enemies
         .filter(
@@ -531,7 +531,7 @@ export class SkillsSystem {
       );
       if (candidates.length === 0) {
         // No nearby enemies; do not cast
-        try { this.effects.showNoTargetHint?.(this.player, effRange); } catch (_) {}
+        try { this.effects.showNoTargetHint?.(this.player, effRange); } catch (_) { }
         return;
       }
       candidates.sort(
@@ -550,7 +550,7 @@ export class SkillsSystem {
       this.effects.spawnHandLink(this.player, 0.06);
       this.effects.spawnHandCrackle(this.player, false, 1.0);
       this.effects.spawnHandCrackle(this.player, true, 1.0);
-    } catch (e) {}
+    } catch (e) { }
 
     // Visual: central strike + radial + pulse
     const fx = this._fx(SK);
@@ -561,7 +561,7 @@ export class SkillsSystem {
       if (SK.id === "static_prison") {
         this.effects.spawnCage(point, Math.max(4, (SK.radius || 0) * 0.9), fx.ring, 0.6, 14, 2.6);
       }
-    } catch (_) {}
+    } catch (_) { }
     audio.sfx("boom");
 
     // Damage enemies in radius and apply slow if present
@@ -570,17 +570,17 @@ export class SkillsSystem {
       if (distance2D(en.pos(), point) <= (SK.radius + 2.5)) {
         const dmg = this.scaleSkillDamage(SK.dmg || 0);
         en.takeDamage(dmg);
-        try { this.effects.spawnDamagePopup(en.pos(), dmg, this._fx(SK).impact); } catch (e) {}
+        try { this.effects.spawnDamagePopup(en.pos(), dmg, this._fx(SK).impact); } catch (e) { }
         try {
           this.effects.spawnStrike(en.pos(), 1.0, this._fx(SK).impact);
           this.effects.spawnHitDecal(en.pos(), this._fx(SK).ring);
-        } catch (_) {}
+        } catch (_) { }
         // Visual arcs from the center to each enemy hit
         try {
           const cfrom = __vA.copy(point).add(__vB.set(0, 0.8, 0)).clone();
           const cto = __vC.copy(en.pos()).add(__vB.set(0, 1.0, 0)).clone();
           this.effects.spawnArcNoisePath(cfrom, cto, this._fx(SK).arc, 0.08, 2);
-        } catch (_) {}
+        } catch (_) { }
         if (SK.slowFactor) {
           en.slowUntil = now() + (SK.slowDuration || 1.5);
           en.slowFactor = SK.slowFactor;
@@ -618,7 +618,7 @@ export class SkillsSystem {
           }
           this.player.staticField.vfxRing = null;
         }
-      } catch (_) {}
+      } catch (_) { }
       this.startCooldown(key, 4); // small lockout to prevent spam-toggle
       audio.sfx("aura_off");
       return;
@@ -639,7 +639,7 @@ export class SkillsSystem {
       this.effects.indicators.add(ring);
       this.effects.queue.push({ obj: ring, until: now() + (SK.duration || 10), mat: ring.material, follow: this.player, followYOffset: 0.02, pulseAmp: 0.03, pulseRate: 2.6, baseScale: 1 });
       this.player.staticField.vfxRing = ring;
-    } catch (_) {}
+    } catch (_) { }
   }
 
   _castBeam(key) {
@@ -655,7 +655,7 @@ export class SkillsSystem {
       this.effects.spawnHandLink(this.player, 0.06);
       this.effects.spawnHandCrackle(this.player, false, 1.0);
       this.effects.spawnHandCrackle(this.player, true, 1.0);
-    } catch (e) {}
+    } catch (e) { }
 
     const effRange = Math.max(SK.range || 0, WORLD.attackRange * (WORLD.attackRangeMult || 1));
     let candidates = this.enemies.filter(
@@ -667,14 +667,14 @@ export class SkillsSystem {
         this.player === this.player && this.player.mesh.userData.handAnchor
           ? handWorldPos(this.player)
           : this.player.pos().clone().add(new THREE.Vector3(0, 1.6, 0));
-      const dir = __vB.set(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
+      const dir = __vB.set(0, 0, 1).applyQuaternion(this.player.mesh.quaternion).normalize();
       const to = from.clone().add(dir.multiplyScalar(effRange));
       try {
         this.effects.spawnFireStreamAuto(from, to, fx.beam, 0.1);
         this.effects.spawnStrike(to.clone().setY(0), 1.0, fx.impact);
         this._requestShake(fx.shake || 0);
         audio.sfx("beam");
-      } catch (_) {}
+      } catch (_) { }
       this.player.spend(SK.mana);
       this.startCooldown(key, SK.cd);
       return;
@@ -688,12 +688,12 @@ export class SkillsSystem {
         distance2D(this.player.pos(), a.pos()) - distance2D(this.player.pos(), b.pos())
     )[0];
 
-      const from =
-        this.player === this.player && this.player.mesh.userData.handAnchor
-          ? handWorldPos(this.player)
-          : __vA.copy(this.player.pos()).add(__vB.set(0, 1.6, 0)).clone();
+    const from =
+      this.player === this.player && this.player.mesh.userData.handAnchor
+        ? handWorldPos(this.player)
+        : __vA.copy(this.player.pos()).add(__vB.set(0, 1.6, 0)).clone();
     const to = __vC.copy(target.pos()).add(__vB.set(0, 1.2, 0)).clone();
-    
+
     // Spawn fireball projectile for beam skill
     this.effects.spawnFireball(from, to, {
       color: this._fx(SK).beam,
@@ -708,9 +708,9 @@ export class SkillsSystem {
     audio.sfx("beam");
     const dmg = this.scaleSkillDamage(SK.dmg || 0);
     target.takeDamage(dmg);
-    try { this.effects.spawnDamagePopup(target.pos(), dmg, this._fx(SK).impact); } catch(e) {}
+    try { this.effects.spawnDamagePopup(target.pos(), dmg, this._fx(SK).impact); } catch (e) { }
     this.effects.spawnStrike(target.pos(), 1.0, this._fx(SK).impact);
-    try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).ring); } catch(e) {}
+    try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).ring); } catch (e) { }
   }
 
   _castNova(key) {
@@ -727,7 +727,7 @@ export class SkillsSystem {
       this.effects.spawnHandLink(this.player, 0.06);
       this.effects.spawnHandCrackle(this.player, false, 1.0);
       this.effects.spawnHandCrackle(this.player, true, 1.0);
-    } catch (e) {}
+    } catch (e) { }
 
     // Radial damage around player
     const fx = this._fx(SK);
@@ -739,23 +739,23 @@ export class SkillsSystem {
         // Secondary heavier pulse for ultimate
         this.effects.spawnRingPulse(this.player.pos(), Math.max(6, (SK.radius || 0) * 0.6), fx.impact, 0.6, 1.4, 0.6);
       }
-    } catch (_) {}
+    } catch (_) { }
     audio.sfx("boom");
     this.enemies.forEach((en) => {
       if (en.alive && distance2D(en.pos(), this.player.pos()) <= (SK.radius + 2.5)) {
         const dmg = this.scaleSkillDamage(SK.dmg || 0);
         en.takeDamage(dmg);
-        try { this.effects.spawnDamagePopup(en.pos(), dmg, this._fx(SK).impact); } catch(e) {}
+        try { this.effects.spawnDamagePopup(en.pos(), dmg, this._fx(SK).impact); } catch (e) { }
         try {
           this.effects.spawnStrike(en.pos(), 1.0, this._fx(SK).impact);
           this.effects.spawnHitDecal(en.pos(), this._fx(SK).ring);
-        } catch (e2) {}
+        } catch (e2) { }
         // Visual arcs from caster to each enemy hit
         try {
           const cfrom = __vA.copy(this.player.pos()).add(__vB.set(0, 0.8, 0)).clone();
           const cto = __vC.copy(en.pos()).add(__vB.set(0, 1.0, 0)).clone();
           this.effects.spawnArcNoisePath(cfrom, cto, this._fx(SK).arc, 0.08, 2);
-        } catch (_) {}
+        } catch (_) { }
       }
     });
   }
@@ -781,9 +781,9 @@ export class SkillsSystem {
       ring.position.set(center.x, 0.02, center.z);
       this.effects.indicators.add(ring);
       this.effects.queue.push({ obj: ring, until: now() + 0.6 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 0.4 });
-    } catch (_) {}
-    try { this.effects.spawnStormCloud(center, SK.radius || 12, fx.ring, SK.duration || 7, 3.6); } catch (_) {}
-    try { this.effects.spawnRingPulse(center, Math.max(6, (SK.radius || 12) * 0.85), fx.ring, 0.6, 1.4, 0.5); } catch (_) {}
+    } catch (_) { }
+    try { this.effects.spawnStormCloud(center, SK.radius || 12, fx.ring, SK.duration || 7, 3.6); } catch (_) { }
+    try { this.effects.spawnRingPulse(center, Math.max(6, (SK.radius || 12) * 0.85), fx.ring, 0.6, 1.4, 0.5); } catch (_) { }
 
     const rate = Math.max(0, (SK.strikes || 8) / Math.max(0.1, (SK.duration || 7)));
     const strikeRadius = SK.strikeRadius || ((SK.id === "fire_dome" || SK.id === "meteor_storm") ? 3.0 : 2.5);
@@ -812,14 +812,14 @@ export class SkillsSystem {
     this.startCooldown(key, SK.cd);
     const amt = Math.max(1, SK.heal || SK.amount || 30);
     this.player.hp = Math.min(this.player.maxHP, this.player.hp + amt);
-    try { this.effects.spawnHandFlash(this.player); audio.sfx("aura_on"); } catch (e) {}
+    try { this.effects.spawnHandFlash(this.player); audio.sfx("aura_on"); } catch (e) { }
     try {
       const fx = this._fx(SK);
       this.effects.spawnStrike(this.player.pos(), 5, fx.impact);
       this.effects.spawnRingPulse(this.player.pos(), 3, fx.ring, 0.5, 1.0, 0.55);
       const opts = SK.id === "divine_mend" ? { count: 6, radius: 1.4, duration: 1.2, size: 0.2, rate: 5.0 } : { count: 4, radius: 1.2, duration: 0.9, size: 0.16, rate: 4.2 };
       this.effects.spawnOrbitingOrbs(this.player, fx.ring, opts);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   _castMana(key) {
@@ -834,7 +834,7 @@ export class SkillsSystem {
     this.startCooldown(key, SK.cd);
     const amt = Math.max(1, SK.restore || SK.manaRestore || 25);
     this.player.mp = Math.min(this.player.maxMP, this.player.mp + amt);
-    try { this.effects.spawnHandFlash(this.player, true); audio.sfx("cast_chain"); } catch (e) {}
+    try { this.effects.spawnHandFlash(this.player, true); audio.sfx("cast_chain"); } catch (e) { }
     try {
       const fx = this._fx(SK);
       this.effects.spawnStrike(this.player.pos(), 4, fx.impact);
@@ -844,7 +844,7 @@ export class SkillsSystem {
       if (heavy) {
         this.effects.spawnRingPulse(this.player.pos(), 4, fx.ring, 0.55, 1.2, 0.45);
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   _castBuff(key) {
@@ -876,10 +876,10 @@ export class SkillsSystem {
     try {
       this.effects.spawnHandFlash(this.player);
       this.effects.spawnStrike(this.player.pos(), 6, this._fx(SK).impact);
-      try { this.effects.spawnShieldBubble(this.player, this._fx(SK).ring, dur, 1.8); } catch (_) {}
-      try { this.effects.spawnRingPulse(this.player.pos(), 3, this._fx(SK).ring, 0.5, 0.9, 0.5); } catch (_) {}
+      try { this.effects.spawnShieldBubble(this.player, this._fx(SK).ring, dur, 1.8); } catch (_) { }
+      try { this.effects.spawnRingPulse(this.player.pos(), 3, this._fx(SK).ring, 0.5, 0.9, 0.5); } catch (_) { }
       audio.sfx("cast_nova");
-    } catch (e) {}
+    } catch (e) { }
   }
 
   _castShield(key) {
@@ -898,10 +898,10 @@ export class SkillsSystem {
     try {
       this.effects.spawnHandFlash(this.player);
       this.effects.spawnStrike(this.player.pos(), 5, this._fx(SK).impact);
-      try { this.effects.spawnShieldBubble(this.player, this._fx(SK).ring, dur, 1.8); } catch (_) {}
-      try { this.effects.spawnRingPulse(this.player.pos(), 3, this._fx(SK).ring, 0.5, 0.9, 0.5); } catch (_) {}
+      try { this.effects.spawnShieldBubble(this.player, this._fx(SK).ring, dur, 1.8); } catch (_) { }
+      try { this.effects.spawnRingPulse(this.player.pos(), 3, this._fx(SK).ring, 0.5, 0.9, 0.5); } catch (_) { }
       audio.sfx("aura_on");
-    } catch (e) {}
+    } catch (e) { }
   }
 
   _castTotem(key) {
@@ -916,7 +916,7 @@ export class SkillsSystem {
     const radius = Math.max(6, SK.radius || 18);
     const dmg = this.scaleSkillDamage(SK.dmg || 12);
     this.totems.push({ pos, until: now() + duration, next: 0, tick, radius, dmg, fx: this._fx(SK) });
-    try { this.effects.spawnStrike(pos, 2.5, this._fx(SK).impact); } catch (_) {}
+    try { this.effects.spawnStrike(pos, 2.5, this._fx(SK).impact); } catch (_) { }
   }
 
   _castMark(key) {
@@ -924,16 +924,16 @@ export class SkillsSystem {
     if (this.isOnCooldown(key) || (SK.mana && !this.player.canSpend(SK.mana))) return;
     const effRange = Math.max(40, SK.range || 40);
     const near = this.enemies.filter(e => e.alive && distance2D(this.player.pos(), e.pos()) <= effRange);
-    if (!near.length) { try { this.effects.showNoTargetHint(this.player, effRange); } catch(_) {} return; }
-    const target = near.sort((a,b)=>distance2D(this.player.pos(),a.pos())-distance2D(this.player.pos(),b.pos()))[0];
+    if (!near.length) { try { this.effects.showNoTargetHint(this.player, effRange); } catch (_) { } return; }
+    const target = near.sort((a, b) => distance2D(this.player.pos(), a.pos()) - distance2D(this.player.pos(), b.pos()))[0];
     if (SK.mana) this.player.spend(SK.mana);
     this.startCooldown(key, SK.cd);
     target.vulnMult = Math.max(1.1, SK.vulnMult || 1.35);
     target.vulnUntil = now() + Math.max(2, SK.duration || 6);
     try {
-      const to = target.pos().clone().add(new THREE.Vector3(0,1.2,0));
-      const from = this.player.pos().clone().add(new THREE.Vector3(0,1.6,0));
-      
+      const to = target.pos().clone().add(new THREE.Vector3(0, 1.2, 0));
+      const from = this.player.pos().clone().add(new THREE.Vector3(0, 1.6, 0));
+
       // Spawn fireball projectile for mark skill
       this.effects.spawnFireball(from, to, {
         color: this._fx(SK).beam,
@@ -941,11 +941,11 @@ export class SkillsSystem {
         speed: 35,
         onComplete: () => {
           this.effects.spawnStrike(target.pos(), 1.2, this._fx(SK).impact);
-          try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).ring); } catch (_) {}
+          try { this.effects.spawnHitDecal(target.pos(), this._fx(SK).ring); } catch (_) { }
         }
       });
       audio.sfx("cast_beam");
-    } catch (_) {}
+    } catch (_) { }
   }
 
   _castBlink(key, point = null) {
@@ -954,10 +954,10 @@ export class SkillsSystem {
     const fx = this._fx(SK);
     const dist = Math.max(4, SK.range || SK.distance || 20);
     // Determine direction
-    let dir = new THREE.Vector3(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
+    let dir = new THREE.Vector3(0, 0, 1).applyQuaternion(this.player.mesh.quaternion).normalize();
     if (point && point.x !== undefined) {
       dir = point.clone().sub(this.player.pos()).setY(0).normalize();
-      if (!isFinite(dir.lengthSq()) || dir.lengthSq() === 0) dir.set(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
+      if (!isFinite(dir.lengthSq()) || dir.lengthSq() === 0) dir.set(0, 0, 1).applyQuaternion(this.player.mesh.quaternion).normalize();
     }
     const to = this.player.pos().clone().add(dir.multiplyScalar(dist));
     const fromPos = this.player.pos().clone();
@@ -968,7 +968,7 @@ export class SkillsSystem {
       this.effects.spawnStrike(this.player.pos(), 3, fx.ring);
       this.effects.spawnRingPulse(this.player.pos(), 2.5, fx.ring, 0.4, 0.7, 0.4);
       audio.sfx("storm_start");
-    } catch (e) {}
+    } catch (e) { }
     this.player.mesh.position.set(to.x, this.player.mesh.position.y, to.z);
     try {
       this.effects.spawnStrike(this.player.pos(), 3, fx.impact);
@@ -980,7 +980,7 @@ export class SkillsSystem {
       const a = fromPos.clone().add(new THREE.Vector3(0, 0.8, 0));
       const b = this.player.pos().clone().add(new THREE.Vector3(0, 0.8, 0));
       this.effects.spawnArcNoisePath(a, b, fx.arc, 0.12, 3);
-    } catch (e) {}
+    } catch (e) { }
     if (SK.explosionRadius) {
       const r = Math.max(4, SK.explosionRadius);
       this.effects.spawnStrike(this.player.pos(), r, this._fx(SK).ring);
@@ -998,13 +998,13 @@ export class SkillsSystem {
     const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     const dist = Math.max(4, SK.distance || 14);
-    let dir = new THREE.Vector3(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
+    let dir = new THREE.Vector3(0, 0, 1).applyQuaternion(this.player.mesh.quaternion).normalize();
     const to = this.player.pos().clone().add(dir.multiplyScalar(dist));
     const fromPos = this.player.pos().clone();
     this.player.spend(SK.mana);
     this.startCooldown(key, SK.cd);
-    try { this.effects.spawnRingPulse(fromPos, 2.2, this._fx(SK).ring, 0.35, 0.7, 0.4); } catch (_) {}
-    try { this.effects.spawnHandLink(this.player, 0.06); audio.sfx("cast_beam"); } catch (e) {}
+    try { this.effects.spawnRingPulse(fromPos, 2.2, this._fx(SK).ring, 0.35, 0.7, 0.4); } catch (_) { }
+    try { this.effects.spawnHandLink(this.player, 0.06); audio.sfx("cast_beam"); } catch (e) { }
     this.player.mesh.position.set(to.x, this.player.mesh.position.y, to.z);
     // Trail arcs and damage along path
     try {
@@ -1014,9 +1014,9 @@ export class SkillsSystem {
         const t = i / steps;
         const p = fromPos.clone().lerp(to, t);
         const from = p.clone().add(new THREE.Vector3(0, 0.6, 0));
-        const off = new THREE.Vector3((Math.random()-0.5)*2, 0.3 + Math.random()*0.6, (Math.random()-0.5)*2);
+        const off = new THREE.Vector3((Math.random() - 0.5) * 2, 0.3 + Math.random() * 0.6, (Math.random() - 0.5) * 2);
         this.effects.spawnArcNoisePath(from, from.clone().add(off), fx.arc, 0.08, 2);
-        try { this.effects.spawnRingPulse(p, 1.6, fx.ring, 0.25, 0.5, 0.35); } catch (_) {}
+        try { this.effects.spawnRingPulse(p, 1.6, fx.ring, 0.25, 0.5, 0.35); } catch (_) { }
         const rad = SK.trailRadius || 4;
         const tickDmg = this.scaleSkillDamage(SK.trailDmg || 6);
         this.enemies.forEach(en => {
@@ -1024,8 +1024,8 @@ export class SkillsSystem {
           if (distance2D(en.pos(), p) <= rad) en.takeDamage(tickDmg);
         });
       }
-    } catch (_) {}
-    try { this.effects.spawnRingPulse(this.player.pos(), 2.2, this._fx(SK).ring, 0.35, 0.7, 0.4); } catch (_) {}
+    } catch (_) { }
+    try { this.effects.spawnRingPulse(this.player.pos(), 2.2, this._fx(SK).ring, 0.35, 0.7, 0.4); } catch (_) { }
     this.player.moveTarget = null; this.player.target = null;
   }
 
@@ -1041,7 +1041,7 @@ export class SkillsSystem {
     const anchor = this.player.pos().clone();
     // schedule a fire image that periodically burns nearby enemies
     this.clones.push({ until: now() + duration, next: 0, rate, radius, dmg, pos: anchor, shook: false });
-    try { this.effects.spawnHandFlash(this.player); audio.sfx("aura_on"); } catch(e) {}
+    try { this.effects.spawnHandFlash(this.player); audio.sfx("aura_on"); } catch (e) { }
     try {
       const fx = this._fx(SK);
       this.effects.spawnStrike(anchor, 5, fx.impact);
@@ -1049,7 +1049,7 @@ export class SkillsSystem {
       ring.position.set(anchor.x, 0.02, anchor.z);
       this.effects.indicators.add(ring);
       this.effects.queue.push({ obj: ring, until: now() + duration, mat: ring.material, pulseAmp: 0.05, pulseRate: 2.8, baseScale: 1 });
-    } catch(e) {}
+    } catch (e) { }
   }
 
   // Backwards-compatible wrappers (preserve existing API)
@@ -1083,7 +1083,7 @@ export class SkillsSystem {
           }
           this.player.staticField.vfxRing = null;
         }
-      } catch (_) {}
+      } catch (_) { }
       return;
     }
     if (t >= this.player.staticField.nextTick) {
@@ -1098,7 +1098,7 @@ export class SkillsSystem {
             }
             this.player.staticField.vfxRing = null;
           }
-        } catch (_) {}
+        } catch (_) { }
         return;
       }
       this.player.spend(SK_E.manaPerTick);
@@ -1125,17 +1125,17 @@ export class SkillsSystem {
           const to = this.player.pos().clone().add(new THREE.Vector3(Math.cos(ang) * rr, 0.6 + Math.random() * 0.6, Math.sin(ang) * rr));
           this.effects.spawnArcNoisePath(base, to, fx.ring, 0.08, 2);
         }
-      } catch (_) {}
+      } catch (_) { }
 
       const dmg = this.scaleSkillDamage((SK_E && SK_E.dmg) || 0);
       this.enemies.forEach((en) => {
         if (en.alive && distance2D(en.pos(), this.player.pos()) <= ((SK_E && SK_E.radius) + 2.5)) {
           en.takeDamage(dmg);
-          try { this.effects.spawnDamagePopup(en.pos(), dmg, fx.impact); } catch(e) {}
+          try { this.effects.spawnDamagePopup(en.pos(), dmg, fx.impact); } catch (e) { }
           try {
             this.effects.spawnStrike(en.pos(), 0.9, fx.impact);
             this.effects.spawnHitDecal(en.pos(), fx.impact);
-          } catch (_) {}
+          } catch (_) { }
         }
       });
     }
@@ -1167,16 +1167,16 @@ export class SkillsSystem {
         try {
           this.effects.spawnStrike(impact, 3, s.fx?.impact || COLOR.midFire);
           audio.sfx("strike");
-        } catch (_) {}
+        } catch (_) { }
 
         // Damage around impact
         const hitR = Math.max(0.5, s.strikeRadius || 2.5);
-        try { this.effects.spawnRingPulse(impact, Math.max(1.4, hitR), (s.fx?.ring || s.fx?.impact || COLOR.ember), 0.3, 0.6, 0.4); } catch (_) {}
+        try { this.effects.spawnRingPulse(impact, Math.max(1.4, hitR), (s.fx?.ring || s.fx?.impact || COLOR.ember), 0.3, 0.6, 0.4); } catch (_) { }
         this.enemies.forEach((en) => {
           if (!en.alive) return;
           if (distance2D(en.pos(), impact) <= hitR) {
             en.takeDamage(s.dmg || 0);
-            try { this.effects.spawnDamagePopup(en.pos(), s.dmg || 0, s.fx?.impact || COLOR.ember); } catch(e) {}
+            try { this.effects.spawnDamagePopup(en.pos(), s.dmg || 0, s.fx?.impact || COLOR.ember); } catch (e) { }
           }
         });
 
@@ -1224,7 +1224,7 @@ export class SkillsSystem {
               }
             });
             audio.sfx("chain_hit");
-          } catch (e) {}
+          } catch (e) { }
           target.takeDamage(c.dmg);
           if (!c.shook) { this._requestShake(0.2); c.shook = true; }
         }
@@ -1248,7 +1248,7 @@ export class SkillsSystem {
           const col = (tot.fx && (tot.fx.impact || tot.fx.ring)) || COLOR.midFire;
           this.effects.spawnStrike(pt, 2.4, col);
           this.effects.spawnRingPulse(pt, 1.8, col, 0.25, 0.45, 0.4);
-        } catch (_) {}
+        } catch (_) { }
         const dmg = tot.dmg || 10;
         this.enemies.forEach(en => {
           if (!en.alive) return;
@@ -1272,7 +1272,7 @@ export class SkillsSystem {
           ring.position.set(center.x, 0.02, center.z);
           this.effects.indicators.add(ring);
           this.effects.queue.push({ obj: ring, until: now() + 0.4 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 0.4 });
-        } catch (_) {}
+        } catch (_) { }
       };
       switch (def.type) {
         case "aoe": {
@@ -1335,10 +1335,10 @@ export class SkillsSystem {
       try {
         this.effects.spawnHandCrackle(this.player, false, 0.8);
         this.effects.spawnHandCrackle(this.player, true, 0.8);
-      } catch (_) {}
-    } catch (_) {}
+      } catch (_) { }
+    } catch (_) { }
   }
-  
+
   // ----- Per-frame update -----
   update(t, dt, cameraShake) {
     // Static Field tick

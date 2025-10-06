@@ -3,7 +3,7 @@ import { COLOR, FX } from "./constants.js";
 import { now, parseThreeColor } from "./utils.js";
 import { handWorldPos, leftHandWorldPos } from "./entities.js";
 
-// Normalize color inputs from various formats ("0x66ffc2", "#66ffc2", 0x66ffc2, 6750146)
+// Normalize color inputs from various formats ("#66ffc2", "#66ffc2", 0x66ffc2, 6750146)
 function normalizeColor(c, fallback = COLOR.fire) {
   try {
     if (typeof c === "number" && Number.isFinite(c)) return c >>> 0;
