@@ -1,4 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
+import { SKILL_COLOR_TOKENS } from "./skills_pool.js";
 
 export const LOCAL_STORAGE_PREFIX = "gof";
 
@@ -89,12 +90,14 @@ export const COLOR = {
   // Not currently defined in css variables - keep literals for now
   enemy: 0x4a0e0e,
   enemyDark: 0x2b0505,
-  portal: 0xff1493,
-  village: 0xffb347,
-  lava: 0xff4500,
-  ember: 0xffa500,
-  ash: 0x696969,
-  volcano: 0x8b4513,
+
+  // Source of truth from skills_pool.js
+  get portal() { return SKILL_COLOR_TOKENS.portal; },
+  get village() { return SKILL_COLOR_TOKENS.village; },
+  get lava() { return SKILL_COLOR_TOKENS.lava; },
+  get ember() { return SKILL_COLOR_TOKENS.ember; },
+  get ash() { return SKILL_COLOR_TOKENS.ash; },
+  get volcano() { return SKILL_COLOR_TOKENS.volcano; },
 };
  
 // CSS variable references for DOM styling (preferred for live theming)
