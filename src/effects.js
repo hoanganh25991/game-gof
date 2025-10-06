@@ -515,7 +515,7 @@ export class EffectsManager {
    * Spawn a small floating damage text at world position.
    * amount may be a number or string. Color is a hex number.
    */
-  spawnDamagePopup(worldPos, amount, color = 0xffe1e1) {
+  spawnDamagePopup(worldPos, amount, color = "#ffe1e1") {
     // Throttle popups on lower qualities to reduce CanvasTexture churn
     const q = this.quality || "high";
     if (q === "low" && Math.random() > 0.3) return;
@@ -534,11 +534,10 @@ export class EffectsManager {
     ctx.font = "bold 36px Arial, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const hex = (color >>> 0).toString(16).padStart(6, "0");
     ctx.lineWidth = 8;
     ctx.strokeStyle = "rgba(0,0,0,0.6)";
     ctx.strokeText(text, w / 2, h / 2);
-    ctx.fillStyle = `#${hex}`;
+    ctx.fillStyle = `${color}`;
     ctx.fillText(text, w / 2, h / 2);
 
     const tex = new THREE.CanvasTexture(c);
