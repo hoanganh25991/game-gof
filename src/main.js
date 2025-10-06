@@ -23,7 +23,7 @@ import { SKILLS_POOL, DEFAULT_LOADOUT } from "./skills_pool.js";
 import { loadOrDefault, saveLoadout, resolveLoadout } from "./loadout.js";
 import { audio } from "./audio.js";
 import { createVillagesSystem } from "./villages.js";
-import { createMapManager } from "./maps.js";
+import { createMapManager, applyMapEnemyCss } from "./maps.js";
 import { initHeroPreview } from "./ui/hero/preview.js";
 import { startInstructionGuide as startInstructionGuideOverlay } from "./ui/guide.js";
 import { setupSettingsScreen } from "./ui/settings/index.js";
@@ -92,6 +92,8 @@ const indicators = createIndicators({
   handWorldPos
 });
 const mapManager = createMapManager();
+// Apply initial enemy theme based on current map modifiers (so COLOR.enemy/enemyDark reflect map)
+try { applyMapEnemyCss(mapManager.getModifiers()); } catch (_) {}
 let chunkMgr = null;
 const WORLD_SEED = getOrInitWorldSeed();
 

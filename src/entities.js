@@ -1,7 +1,7 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { COLOR, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "./constants.js";
 import { createGoTMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
-import { distance2D, now } from "./utils.js";
+import { distance2D, now, parseThreeColor } from "./utils.js";
 import { getSkillUpgradeManager } from "./skill_upgrades.js";
 
 export class Entity {
@@ -90,7 +90,7 @@ export class Player extends Entity {
     this.defenseUntil = 0;
 
     // Fire light glow on the character (updated for fire theme)
-    const light = new THREE.PointLight(0xffb366, 1.2, 45, 2);
+    const light = new THREE.PointLight("#ffb366", 1.2, 45, 2);
     light.position.set(0, 3.5, 0);
     mesh.add(light);
     // Load persisted level (if any) and apply stats
@@ -377,7 +377,9 @@ export class Enemy extends Entity {
       boss: 0xfff0b3,
     };
     if (this.hpBar && this.hpBar.fill && this.hpBar.fill.material) {
-      this.hpBar.fill.material.color.setHex(BAR_COLOR[tier]);
+      const col = BAR_COLOR[tier];
+      const hex = (typeof col === "string") ? parseThreeColor(col).hex : (col >>> 0);
+      this.hpBar.fill.material.color.setHex(hex);
     }
   }
 

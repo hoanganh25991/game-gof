@@ -102,9 +102,9 @@ export const COLOR = {
   get textWarm() { return readCssVar("--text-warm"); },
   get textWarmLight() { return readCssVar("--text-warm-light"); },
 
-  // Not currently defined in css variables - keep literals for now
-  enemy: 0x4a0e0e,
-  enemyDark: 0x2b0505,
+  // Enemy color tokens resolved from css/base.css (string values like "#RRGGBB")
+  get enemy() { return readCssVar("--enemy"); },
+  get enemyDark() { return readCssVar("--enemy-dark"); },
 
   // Extra color tokens resolved from CSS_COLOR (string values suitable for Canvas/CSS)
   get portal() { return CSS_COLOR.portal; },

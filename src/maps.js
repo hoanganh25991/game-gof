@@ -6,6 +6,34 @@
  */
 import { STORAGE_KEYS } from "./constants.js";
 
+export function applyMapEnemyCss(modsOrTint) {
+  try {
+    const doc = typeof document !== "undefined" ? document : null;
+    if (!doc || !doc.documentElement || !doc.documentElement.style) return;
+    const root = doc.documentElement.style;
+    const tint = typeof modsOrTint === "number"
+      ? (modsOrTint >>> 0)
+      : (modsOrTint && typeof modsOrTint.enemyTint === "number" ? (modsOrTint.enemyTint >>> 0) : 0x4a0e0e);
+
+    const toCss = (n) => {
+      const v = (n >>> 0) & 0xffffff;
+      return "#" + v.toString(16).padStart(6, "0");
+    };
+    const darken = (n, f = 0.55) => {
+      const r = Math.max(0, Math.min(255, Math.floor(((n >> 16) & 0xff) * f)));
+      const g = Math.max(0, Math.min(255, Math.floor(((n >> 8) & 0xff) * f)));
+      const b = Math.max(0, Math.min(255, Math.floor((n & 0xff) * f)));
+      return ((r << 16) | (g << 8) | b) >>> 0;
+    };
+
+    const cssEnemy = toCss(tint);
+    const cssEnemyDark = toCss(darken(tint, 0.55));
+
+    root.setProperty("--enemy", cssEnemy);
+    root.setProperty("--enemy-dark", cssEnemyDark);
+  } catch (_) {}
+}
+
 export function createMapManager() {
   const LS_CUR = STORAGE_KEYS.mapCurrentIndex;
   const LS_MAX = STORAGE_KEYS.mapUnlockedMax;
@@ -195,6 +223,8 @@ export function createMapManager() {
     if (!canSelect(idx)) return false;
     currentIndex = idx;
     saveInt(LS_CUR, currentIndex);
+    // Apply per-map enemy CSS theme so COLOR.enemy/enemyDark update live
+    try { applyMapEnemyCss(getModifiers()); } catch (_) {}
     return true;
   }
 
