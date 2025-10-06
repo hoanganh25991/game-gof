@@ -233,7 +233,7 @@ export function wireUIBindings(params) {
         const enabled = !!musicToggle.checked;
         try { audioCtl.setMusicEnabled(enabled); } catch (_) {}
         if (enabled) {
-          try { audio.ensureBackgroundMusic('audio/background-music-soft-calm-333111.mp3', { volume: 0.35, loop: true }); }
+          try { audio.ensureBackgroundMusic('audio/earth-space-music-313081.mp3', { volume: 0.35, loop: true }); }
           catch (e) { try { audio.setMusicVolume(0.35); audio.startMusic(); } catch (_) {} }
         } else {
           try { audio.stopStreamMusic(); } catch (_) {}

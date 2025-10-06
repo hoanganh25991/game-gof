@@ -532,6 +532,9 @@ export function initVillages(scene, portals, opts = {}) {
     }
   }
 
+  // Track last known player-in-village state so we can emit enter/leave events once per transition.
+  let __lastPlayerInVillage = false;
+
   function updateRest(player, dt) {
     if (!player) return;
     const p = player.pos();
@@ -542,7 +545,22 @@ export function initVillages(scene, portals, opts = {}) {
         if (d <= v.radius) { inVillage = true; break; }
       }
     }
+
+    // Emit enter / leave events on transitions so callers can react (buffs, messages, VFX).
+    try {
+      if (inVillage && !__lastPlayerInVillage) {
+        const info = getContainingVillageInfo(p) || { key: "origin", center: VILLAGE_POS.clone(), radius: REST_RADIUS };
+        window.dispatchEvent(new CustomEvent("village-enter", { detail: info }));
+      } else if (!inVillage && __lastPlayerInVillage) {
+        const info = { key: null };
+        window.dispatchEvent(new CustomEvent("village-leave", { detail: info }));
+      }
+    } catch (_) {}
+
+    __lastPlayerInVillage = inVillage;
+
     if (inVillage) {
+      // Small passive regen applied by village; additional buffs can be applied by listeners.
       player.hp = Math.min(player.maxHP, player.hp + 8 * dt);
       player.mp = Math.min(player.maxMP, player.mp + 10 * dt);
     }

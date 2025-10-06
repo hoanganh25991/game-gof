@@ -142,7 +142,7 @@ game-gof/
 │   └── bottom-middle.css   # Bottom-center UI styles
 │
 ├── audio/                  # Audio assets
-│   └── background-music-soft-calm-333111.mp3    # Background music
+│   └── earth-space-music-313081.mp3    # Background music
 │
 ├── vendor/                 # Third-party dependencies
 │   └── three/              # Three.js (bundled locally)

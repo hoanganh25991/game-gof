@@ -138,6 +138,18 @@ export function placeStructures(params = {}) {
         v.rotation.y = seededRange(rng, 0, Math.PI * 2);
         v.scale.setScalar(seededRange(rng, 0.9, 1.2));
         archGroup.add(v);
+
+        // Tag villa for runtime lookup (center + radius). Compute bounding box to derive conservative radius.
+        try {
+          const box = new THREE.Box3().setFromObject(v);
+          const center = box.getCenter(new THREE.Vector3());
+          const size = box.getSize(new THREE.Vector3());
+          const approxRadius = Math.max(size.x, size.z) * 0.6 || Math.max(6, Math.max(size.x, size.z) * 0.5);
+          v.userData = v.userData || {};
+          v.userData.structure = "villa";
+          v.userData.center = center;
+          v.userData.radius = approxRadius;
+        } catch (_) {}
       }
     },
     {

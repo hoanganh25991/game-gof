@@ -234,7 +234,7 @@ const __startMusicOnce = (ev) => {
   if (!musicEnabled) return;
   try {
     // FreePD CC0: "Ice and Snow" — soft, atmospheric, focus-friendly
-    audio.ensureBackgroundMusic("audio/background-music-soft-calm-333111.mp3", { volume: 0.35, loop: true });
+    audio.ensureBackgroundMusic("audio/earth-space-music-313081.mp3", { volume: 0.35, loop: true });
   } catch (e) {
     // Fallback to generative if streaming fails
     try { audio.setMusicVolume(0.35); audio.startMusic(); } catch (_) {}
@@ -266,8 +266,15 @@ const btnPortal = document.getElementById("btnPortal");
 const btnMark = document.getElementById("btnMark");
 const langVi = document.getElementById("langVi");
 const langEn = document.getElementById("langEn");
-// Portals/Recall - moved earlier to avoid TDZ when passed to wireTopBar
-const portals = initPortals(scene);
+ // Portals/Recall - declared early to avoid TDZ when referenced in other modules
+let portals = null;
+try {
+  // initialize portals; guard against failures so module evaluation doesn't hard-fail
+  portals = initPortals(scene);
+} catch (e) {
+  console.warn("[PORTALS] init failed:", e);
+  portals = null;
+}
 let firstPerson = false;
 // preserve original camera defaults
 const _defaultCameraNear = camera.near || 0.1;
@@ -411,7 +418,7 @@ setupSettingsScreen({
     applyMapModifiersToEnemy,
     adjustEnemyCountForMap: adjustEnemyCountForCurrentMap,
   };
-  try { audio.ensureBackgroundMusic("audio/background-music-soft-calm-333111.mp3", { volume: 0.35, loop: true }); } catch (_) {}
+  try { audio.ensureBackgroundMusic("audio/earth-space-music-313081.mp3", { volume: 0.35, loop: true }); } catch (_) {}
   try { renderHeroScreenUI(initialTab, ctx); } catch (_) {}
 }
 /* Top bar wiring consolidated */
@@ -578,6 +585,36 @@ player.onDeath = () => {
 
 const respawnSystem = createRespawnSystem({ THREE, now, VILLAGE_POS, setCenterMsg: (t) => ui.setCenterMsg(t), clearCenterMsg: () => ui.clearCenterMsg(), player });
 
+// Village regen buff: apply a small passive HP/MP regen boost while player is inside any village.
+// - Shows a brief center message on enter
+// - Restores previous regen when leaving
+const VILLAGE_REGEN_MULT = 1.8;
+let __villageRegenActive = false;
+function applyVillageRegenBuff() {
+  if (__villageRegenActive) return;
+  __villageRegenActive = true;
+  try { player._villageBaseHpRegen = player.hpRegen || 0; } catch (_) {}
+  try { player.hpRegen = (player.hpRegen || 0) * VILLAGE_REGEN_MULT; } catch (_) {}
+  try { player._villageBaseMpRegen = player.mpRegen || 0; } catch (_) {}
+  try { player.mpRegen = (player.mpRegen || 0) * VILLAGE_REGEN_MULT; } catch (_) {}
+  try { setCenterMsg && setCenterMsg('HP regeneration increased'); } catch (_) {}
+  setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 1400);
+}
+function removeVillageRegenBuff() {
+  if (!__villageRegenActive) return;
+  __villageRegenActive = false;
+  try { if (typeof player._villageBaseHpRegen === 'number') player.hpRegen = player._villageBaseHpRegen; } catch (_) {}
+  try { if (typeof player._villageBaseMpRegen === 'number') player.mpRegen = player._villageBaseMpRegen; } catch (_) {}
+  try { delete player._villageBaseHpRegen; } catch (_) {}
+  try { delete player._villageBaseMpRegen; } catch (_) {}
+}
+
+// Listen to village enter/leave events dispatched by villages.updateRest()
+try {
+  window.addEventListener('village-enter', (ev) => { try { applyVillageRegenBuff(); } catch (_) {} });
+  window.addEventListener('village-leave', (ev) => { try { removeVillageRegenBuff(); } catch (_) {} });
+} catch (_) {}
+
 /* Map modifiers helper */
 function applyMapModifiersToEnemy(en) {
   try {
@@ -641,26 +678,63 @@ scene.add(fenceGroup);
 // Init Mark cooldown UI after portals are created
 const disposeMarkCooldownUI = wireMarkCooldownUI({ btnMark, portals, intervalMs: 500 });
 try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
-// Villages system (dynamic villages, roads, rest)
-const villages = createVillagesSystem(scene, portals);
+ // Villages system (dynamic villages, roads, rest)
+ const villages = createVillagesSystem(scene, portals);
 
-/* Dynamic enemy spawner: initialize after villages so it can avoid village radii */
-spawner = createDynamicSpawner({
-  scene,
-  player,
-  enemies,
-  mapManager,
-  villages,
-  WORLD,
-  EnemyClass: Enemy,
-  now,
-  distance2D,
-  VILLAGE_POS,
-  REST_RADIUS,
-  renderQuality,
-  applyMapModifiersToEnemy
-});
-spawner.initialSpawn();
+ // Gather placed "villa" structures for proximity checks (structures tag themselves in src/structures.js)
+ const villaStructures = [];
+ try {
+   scene.traverse((o) => {
+     try {
+       if (o && o.userData && o.userData.structure === "villa") {
+         const center = (o.userData && o.userData.center) ? o.userData.center.clone() : (o.position ? o.position.clone() : null);
+         const radius = (o.userData && o.userData.radius) ? o.userData.radius : 6;
+         if (center) villaStructures.push({ obj: o, center, radius });
+       }
+     } catch (_) {}
+   });
+ } catch (_) {}
+
+ /* Dynamic enemy spawner: initialize after villages so it can avoid village radii */
+ spawner = createDynamicSpawner({
+   scene,
+   player,
+   enemies,
+   mapManager,
+   villages,
+   WORLD,
+   EnemyClass: Enemy,
+   now,
+   distance2D,
+   VILLAGE_POS,
+   REST_RADIUS,
+   renderQuality,
+   applyMapModifiersToEnemy
+ });
+ spawner.initialSpawn();
+ 
+ // Villa proximity regen buff (separate from village buff)
+ const VILLA_REGEN_MULT = 1.6;
+ let __nearVilla = false;
+ let __villaRegenActive = false;
+ function applyVillaRegenBuff() {
+   if (__villaRegenActive) return;
+   __villaRegenActive = true;
+   try { player._villaBaseHpRegen = player.hpRegen || 0; } catch (_) {}
+   try { player.hpRegen = (player.hpRegen || 0) * VILLA_REGEN_MULT; } catch (_) {}
+   try { player._villaBaseMpRegen = player.mpRegen || 0; } catch (_) {}
+   try { player.mpRegen = (player.mpRegen || 0) * VILLA_REGEN_MULT; } catch (_) {}
+   try { setCenterMsg && setCenterMsg('HP regeneration increased (villa)'); } catch (_) {}
+   setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 1400);
+ }
+ function removeVillaRegenBuff() {
+   if (!__villaRegenActive) return;
+   __villaRegenActive = false;
+   try { if (typeof player._villaBaseHpRegen === 'number') player.hpRegen = player._villaBaseHpRegen; } catch (_) {}
+   try { if (typeof player._villaBaseMpRegen === 'number') player.mpRegen = player._villaBaseMpRegen; } catch (_) {}
+   try { delete player._villaBaseHpRegen; } catch (_) {}
+   try { delete player._villaBaseMpRegen; } catch (_) {}
+ }
 
 // Enemies System (AI, movement, attacks, respawn, billboarding, mobile culling)
 const enemiesSystem = createEnemiesSystem({
@@ -922,6 +996,24 @@ function animate() {
     indicators.update(dt, { now, player, enemies, selectedUnit });
     portals.update(dt);
     villages.updateRest(player, dt);
+
+    // Villa proximity check (apply/remove villa regen buff on transition)
+    try {
+      const pp = player.pos();
+      let near = false;
+      for (const v of villaStructures) {
+        const d = Math.hypot(pp.x - v.center.x, pp.z - v.center.z);
+        if (d <= (v.radius + 2)) { near = true; break; }
+      }
+      if (near && !__nearVilla) {
+        __nearVilla = true;
+        try { applyVillaRegenBuff(); } catch (_) {}
+      } else if (!near && __nearVilla) {
+        __nearVilla = false;
+        try { removeVillaRegenBuff(); } catch (_) {}
+      }
+    } catch (_) {}
+
     respawnSystem.update();
   }
 
