@@ -6,7 +6,7 @@
  *
  * Integration contract (from main.js):
  *   import { initTouchControls } from "./touch.js";
- *   const touch = initTouchControls({ player, skills, effects, aimPreview, attackPreview, enemies, getNearestEnemy, WORLD, SKILLS });
+ *   const touch = initTouchControls({ player, skills, effects, aimPreview, attackPreview, enemies, getNearestEnemy, WORLD, skillApi });
  *   // In animate():
  *   const joy = touch.getMoveDir();
  *   if (!player.frozen && !player.aimMode && joy.active) {
@@ -26,7 +26,7 @@
 
 import * as THREE from "../vendor/three/build/three.module.js";
 
-export function initTouchControls({ player, skills, effects, aimPreview, attackPreview, enemies, getNearestEnemy, WORLD, SKILLS }) {
+export function initTouchControls({ player, skills, effects, aimPreview, attackPreview, enemies, getNearestEnemy, WORLD, skillApi }) {
   const els = {
     joystick: document.getElementById("joystick"),
     joyBase: document.getElementById("joyBase"),
@@ -182,7 +182,7 @@ export function initTouchControls({ player, skills, effects, aimPreview, attackP
   }
 
   function isAOE(key) {
-    const def = SKILLS?.[key];
+    const def = skillApi && typeof skillApi.getSkill === "function" ? skillApi.getSkill(key) : null;
     return !!def && def.type === "aoe";
   }
 

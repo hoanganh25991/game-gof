@@ -1,4 +1,5 @@
-import { SKILLS, CSS_VAR } from "../../constants.js";
+import { CSS_VAR } from "../../constants.js";
+import { getSkill, setSkill } from "../../skill_api.js";
 import { saveLoadout, loadOrDefault } from "../../loadout.js";
 import { SKILL_POOL, DEFAULT_LOADOUT } from "../../skills_pool.js";
 import { now } from "../../utils.js";
@@ -98,7 +99,7 @@ function showKeySelectOverlay(def) {
       const btn = document.createElement("button");
       btn.setAttribute("type", "button");
       btn.textContent = k;
-      btn.title = (SKILLS[k]?.name || k);
+      btn.title = (getSkill(k)?.name || k);
       Object.assign(btn.style, {
         padding: "12px 6px",
         borderRadius: "8px",
@@ -122,7 +123,7 @@ function showKeySelectOverlay(def) {
 
       wrap.appendChild(btn);
       const info = document.createElement("div");
-      info.textContent = SKILLS[k]?.name ? `(${SKILLS[k].name})` : "(empty)";
+      info.textContent = getSkill(k)?.name ? `(${getSkill(k).name})` : "(empty)";
       Object.assign(info.style, { fontSize: "11px", opacity: "0.8" });
       wrap.appendChild(info);
 
@@ -256,7 +257,7 @@ async function showCastingOverlayAndCast(skills, def, key) {
       const baseSkill = Object.assign({}, def);
       // Apply upgrade bonuses based on skill level
       const upgradedSkill = upgradeManager.applyUpgradeBonuses(def.id, baseSkill);
-      SKILLS[key] = upgradedSkill;
+      setSkill(key, upgradedSkill);
       // Persist selection to storage and refresh labels if available
       persistAssignment(key, def);
     }

@@ -1,4 +1,4 @@
-import { SKILLS } from "../constants.js";
+import { getSkill } from "../skill_api.js";
 import { t } from "../i18n.js";
 
 /**
@@ -13,7 +13,7 @@ export function updateSkillBarLabels() {
     for (const k of Object.keys(map)) {
       const el = document.querySelector(map[k]);
       if (!el) continue;
-      const def = SKILLS[k] || {};
+      const def = getSkill(k) || {};
       // icon from skill definition (skills_pool.js)
       const iconEl = el.querySelector(".icon");
       if (iconEl) iconEl.textContent = def.icon || "—";

@@ -3,7 +3,8 @@
 // Behavior is preserved; tuning values unchanged.
 
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, WORLD, SKILLS, VILLAGE_POS, REST_RADIUS, SCALING, storageKey } from "./constants.js";
+import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey } from "./constants.js";
+import { setLoadoutAndApply, getSkill, setSkill } from "./skill_api.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "./world.js";
 import { UIManager } from "./ui/hud/index.js";
 import { Player, Enemy, getNearestEnemy, handWorldPos } from "./entities.js";
@@ -465,25 +466,20 @@ try { window.__disposeTopBar = disposeTopBar; } catch (_) {}
 let currentLoadout = loadOrDefault(SKILL_POOL, DEFAULT_LOADOUT);
 
 /**
- * Apply an array of 4 skill ids to the SKILLS mapping (mutates exported SKILLS).
- * Also applies skill upgrade bonuses from the upgrade system.
+ * Apply an array of 4 skill ids to the runtime mapping using the skill_api.
+ * Upgrade logic is kept external and provided via upgradeMapper so skill_api remains decoupled.
  */
 function applyLoadoutToSKILLS(loadoutIds) {
-  const idMap = new Map(SKILL_POOL.map((s) => [s.id, s]));
-  const keys = ["Q", "W", "E", "R"];
-  const upgradeManager = getSkillUpgradeManager();
-  
-  for (let i = 0; i < 4; i++) {
-    const id = loadoutIds[i];
-    const def = idMap.get(id);
-    if (def) {
-      // shallow copy to avoid accidental shared references
-      const baseSkill = Object.assign({}, def);
-      // Apply upgrade bonuses based on skill level
-      const upgradedSkill = upgradeManager.applyUpgradeBonuses(id, baseSkill);
-      SKILLS[keys[i]] = upgradedSkill;
+  setLoadoutAndApply(loadoutIds, {
+    upgradeMapper: (id, base) => {
+      try {
+        const mgr = getSkillUpgradeManager();
+        return mgr ? mgr.applyUpgradeBonuses(id, base) : base;
+      } catch (_) {
+        return base;
+      }
     }
-  }
+  });
 }
 
 /**
@@ -492,7 +488,14 @@ function applyLoadoutToSKILLS(loadoutIds) {
 function setLoadoutAndSave(ids) {
   const resolved = resolveLoadout(SKILL_POOL, ids, DEFAULT_LOADOUT);
   currentLoadout = resolved;
-  applyLoadoutToSKILLS(currentLoadout);
+  setLoadoutAndApply(currentLoadout, {
+    upgradeMapper: (id, base) => {
+      try {
+        const mgr = getSkillUpgradeManager();
+        return mgr ? mgr.applyUpgradeBonuses(id, base) : base;
+      } catch (_) { return base; }
+    }
+  });
   saveLoadout(currentLoadout);
   updateSkillBarLabels();
   try {
@@ -505,8 +508,15 @@ function setLoadoutAndSave(ids) {
   } catch (e) {}
 }
 
-// Apply initial loadout so SKILLS are correct for subsequent UI/effects
-applyLoadoutToSKILLS(currentLoadout);
+ // Apply initial loadout so runtime mapping is correct for UI/effects
+setLoadoutAndApply(currentLoadout, {
+  upgradeMapper: (id, base) => {
+    try {
+      const mgr = getSkillUpgradeManager();
+      return mgr ? mgr.applyUpgradeBonuses(id, base) : base;
+    } catch (_) { return base; }
+  }
+});
 updateSkillBarLabels();
 try { window.updateSkillBarLabels = updateSkillBarLabels; } catch (e) {}
 window.addEventListener("loadout-changed", () => {
@@ -766,8 +776,8 @@ const skills = new SkillsSystem(player, enemies, effects, ui.getCooldownElements
 try { window.__skillsRef = skills; player.skills = skills; } catch (_) {}
 try { initHeroPreview(skills, { heroScreen }); } catch (_) {}
 
-// Touch controls (joystick + skill wheel)
-const touch = initTouchControls({ player, skills, effects, aimPreview, attackPreview, enemies, getNearestEnemy, WORLD, SKILLS });
+ // Touch controls (joystick + skill wheel)
+const touch = initTouchControls({ player, skills, effects, aimPreview, attackPreview, enemies, getNearestEnemy, WORLD, skillApi: { getSkill, setSkill } });
 
 // ------------------------------------------------------------
 // Raycasting

@@ -1,5 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { WORLD, SKILLS, COLOR, VILLAGE_POS, REST_RADIUS, SCALING, FX } from "./constants.js";
+import { WORLD, COLOR, VILLAGE_POS, REST_RADIUS, SCALING, FX } from "./constants.js";
+import { getSkill, setSkill } from "./skill_api.js";
 import { distance2D, now } from "./utils.js";
 import { handWorldPos } from "./entities.js";
 import { createGroundRing } from "./effects.js";
@@ -178,7 +179,7 @@ export class SkillsSystem {
           el.style.background = "none";
           el.textContent = "";
         } else {
-          const total = key === "Basic" ? WORLD.basicAttackCooldown : (SKILLS[key]?.cd || 0);
+          const total = key === "Basic" ? WORLD.basicAttackCooldown : (getSkill(key)?.cd || 0);
           const pct = clamp01(remain / total);
           const deg = Math.floor(pct * 360);
           const wedge =
@@ -390,7 +391,7 @@ export class SkillsSystem {
   castSkill(key, point = null) {
     if (!key) return;
     if (this.isOnCooldown(key)) return;
-    const SK = SKILLS[key];
+    const SK = getSkill(key);
     if (!SK) {
       console.warn("castSkill: unknown SKILLS key", key);
       return;
@@ -440,7 +441,7 @@ export class SkillsSystem {
 
   // ---- Typed implementations ----
   _castChain(key) {
-    const SK = SKILLS[key];
+    const SK = getSkill(key);
     if (!SK) return;
     if (this.isOnCooldown(key)) return;
     this._vfxCastFlash(SK);
@@ -516,7 +517,7 @@ export class SkillsSystem {
   }
 
   _castAOE(key, point) {
-    const SK = SKILLS[key];
+    const SK = getSkill(key);
     if (!SK) return;
     if (this.isOnCooldown(key)) return;
 
@@ -598,7 +599,7 @@ export class SkillsSystem {
   }
 
   _castAura(key) {
-    const SK = SKILLS[key];
+    const SK = getSkill(key);
     if (!SK) return;
     if (this.isOnCooldown(key)) return;
     // Toggle off if active
@@ -640,7 +641,7 @@ export class SkillsSystem {
   }
 
   _castBeam(key) {
-    const SK = SKILLS[key];
+    const SK = getSkill(key);
     if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     this._vfxCastFlash(SK);
@@ -711,7 +712,7 @@ export class SkillsSystem {
   }
 
   _castNova(key) {
-    const SK = SKILLS[key];
+    const SK = getSkill(key);
     if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     this._vfxCastFlash(SK);
@@ -758,7 +759,7 @@ export class SkillsSystem {
   }
 
   _castStorm(key) {
-    const SK = SKILLS[key];
+    const SK = getSkill(key);
     if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     this._vfxCastFlash(SK);
@@ -802,7 +803,7 @@ export class SkillsSystem {
 
   // ----- Utility new skill types -----
   _castHeal(key) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     this._vfxCastFlash(SK);
     this.player.spend(SK.mana);
@@ -820,7 +821,7 @@ export class SkillsSystem {
   }
 
   _castMana(key) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key)) return; // mana restore often no cost
     this._vfxCastFlash(SK);
     // Spend if defined (some designs use 0)
@@ -845,7 +846,7 @@ export class SkillsSystem {
   }
 
   _castBuff(key) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     this._vfxCastFlash(SK);
     this.player.spend(SK.mana);
@@ -880,7 +881,7 @@ export class SkillsSystem {
   }
 
   _castShield(key) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     this.player.spend(SK.mana);
     this.startCooldown(key, SK.cd);
@@ -902,7 +903,7 @@ export class SkillsSystem {
   }
 
   _castTotem(key) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     this._vfxCastFlash(SK);
     this.player.spend(SK.mana);
@@ -917,7 +918,7 @@ export class SkillsSystem {
   }
 
   _castMark(key) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || (SK.mana && !this.player.canSpend(SK.mana))) return;
     const effRange = Math.max(40, SK.range || 40);
     const near = this.enemies.filter(e => e.alive && distance2D(this.player.pos(), e.pos()) <= effRange);
@@ -946,7 +947,7 @@ export class SkillsSystem {
   }
 
   _castBlink(key, point = null) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     const fx = this._fx(SK);
     const dist = Math.max(4, SK.range || SK.distance || 20);
@@ -992,7 +993,7 @@ export class SkillsSystem {
   }
 
   _castDash(key) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     const dist = Math.max(4, SK.distance || 14);
     let dir = new THREE.Vector3(0,0,1).applyQuaternion(this.player.mesh.quaternion).normalize();
@@ -1027,7 +1028,7 @@ export class SkillsSystem {
   }
 
   _castClone(key) {
-    const SK = SKILLS[key]; if (!SK) return;
+    const SK = getSkill(key); if (!SK) return;
     if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
     this.player.spend(SK.mana);
     this.startCooldown(key, SK.cd);
@@ -1067,6 +1068,7 @@ export class SkillsSystem {
   }
 
   runStaticField(dt, t) {
+    const SK_E = getSkill("E");
     if (!this.player.staticField.active) return;
     if (t > this.player.staticField.until) {
       this.player.staticField.active = false;
@@ -1083,7 +1085,7 @@ export class SkillsSystem {
       return;
     }
     if (t >= this.player.staticField.nextTick) {
-      if (!this.player.canSpend(SKILLS.E.manaPerTick)) {
+      if (!SK_E || !this.player.canSpend(SK_E.manaPerTick)) {
         this.player.staticField.active = false;
         try {
           const ring = this.player.staticField.vfxRing;
@@ -1097,15 +1099,15 @@ export class SkillsSystem {
         } catch (_) {}
         return;
       }
-      this.player.spend(SKILLS.E.manaPerTick);
-      this.player.staticField.nextTick = t + SKILLS.E.tick;
+      this.player.spend(SK_E.manaPerTick);
+      this.player.staticField.nextTick = t + (SK_E.tick || 0);
 
       // Visual ring and fire burst
-      const fx = this._fx(SKILLS.E);
-      this.effects.spawnStrike(this.player.pos(), SKILLS.E.radius, fx.ring);
+      const fx = this._fx(SK_E);
+      this.effects.spawnStrike(this.player.pos(), SK_E.radius, fx.ring);
       audio.sfx("aura_tick");
       // Pulse ring for aura tick
-      const pulse = createGroundRing(SKILLS.E.radius - 0.25, SKILLS.E.radius + 0.25, fx.ring, 0.32);
+      const pulse = createGroundRing((SK_E.radius || 12) - 0.25, (SK_E.radius || 12) + 0.25, fx.ring, 0.32);
       const pl = this.player.pos();
       pulse.position.set(pl.x, 0.02, pl.z);
       this.effects.indicators.add(pulse);
@@ -1117,15 +1119,15 @@ export class SkillsSystem {
         const base = this.player.pos().clone().add(new THREE.Vector3(0, 0.6, 0));
         for (let i = 0; i < 2; i++) {
           const ang = Math.random() * Math.PI * 2;
-          const rr = (SKILLS.E.radius || 12) * (0.6 + Math.random() * 0.4);
+          const rr = ((SK_E.radius || 12) * (0.6 + Math.random() * 0.4));
           const to = this.player.pos().clone().add(new THREE.Vector3(Math.cos(ang) * rr, 0.6 + Math.random() * 0.6, Math.sin(ang) * rr));
           this.effects.spawnArcNoisePath(base, to, fx.ring, 0.08, 2);
         }
       } catch (_) {}
 
-      const dmg = this.scaleSkillDamage(SKILLS.E.dmg || 0);
+      const dmg = this.scaleSkillDamage((SK_E && SK_E.dmg) || 0);
       this.enemies.forEach((en) => {
-        if (en.alive && distance2D(en.pos(), this.player.pos()) <= (SKILLS.E.radius + 2.5)) {
+        if (en.alive && distance2D(en.pos(), this.player.pos()) <= ((SK_E && SK_E.radius) + 2.5)) {
           en.takeDamage(dmg);
           try { this.effects.spawnDamagePopup(en.pos(), dmg, fx.impact); } catch(e) {}
           try {

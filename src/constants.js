@@ -160,13 +160,6 @@ export const STATS_BASE = {
   xpToLevel: 200,
 };
 
-export const SKILLS = {
-  // Fire-themed skills for mass-clear gameplay.
-  Q: { name: "Flame Chain", cd: 4, mana: 20, range: 60, jumps: 8, jumpRange: 30, dmg: 120 },
-  W: { name: "Inferno Blast (AOE)", cd: 6, mana: 40, radius: 18, dmg: 220 },
-  E: { name: "Burning Aura", cd: 12, mana: 0, radius: 18, tick: 0.6, dmg: 18, duration: 12, manaPerTick: 3 },
-  R: { name: "Meteor Storm", cd: 18, mana: 70, radius: 36, strikes: 40, dmg: 90, duration: 8 },
-};
  
 // Progression and balancing knobs (tweak for desired pacing)
 export const SCALING = {
