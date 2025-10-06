@@ -3,6 +3,46 @@ import { GLTFLoader } from "../vendor/three/examples/jsm/loaders/GLTFLoader.js";
 import { COLOR } from "./constants.js";
 import { HERO_MODEL_URL } from "./constants.js";
 
+/**
+ * Accept CSS/hex colors (supports #RRGGBB, #RRGGBBAA, 0xRRGGBB, number, rgb()/rgba())
+ * and return a { hex, alpha } where hex is 0xRRGGBB and alpha in [0,1].
+ */
+function parseThreeColor(input) {
+  let hex = 0xff6b35;
+  let alpha = 1;
+  try {
+    if (typeof input === "number" && Number.isFinite(input)) {
+      hex = input >>> 0;
+      alpha = 1;
+    } else if (typeof input === "string") {
+      const s = input.trim();
+      if (/^#[0-9a-fA-F]{8}$/.test(s)) {
+        hex = parseInt(s.slice(1, 7), 16) >>> 0;
+        alpha = Math.max(0, Math.min(1, parseInt(s.slice(7, 9), 16) / 255));
+      } else if (/^#[0-9a-fA-F]{6}$/.test(s)) {
+        hex = parseInt(s.slice(1), 16) >>> 0;
+        alpha = 1;
+      } else if (/^0x[0-9a-fA-F]{6}$/.test(s)) {
+        hex = parseInt(s.slice(2), 16) >>> 0;
+        alpha = 1;
+      } else if (/^[0-9a-fA-F]{6}$/.test(s)) {
+        hex = parseInt(s, 16) >>> 0;
+        alpha = 1;
+      } else {
+        const m = s.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(\d*\.?\d+))?\s*\)$/i);
+        if (m) {
+          const r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+          const g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+          const b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+          hex = ((r << 16) | (g << 8) | b) >>> 0;
+          alpha = Math.max(0, Math.min(1, m[4] ? parseFloat(m[4]) : 1));
+        }
+      }
+    }
+  } catch (_) {}
+  return { hex, alpha };
+}
+
 // Creates the GoF character mesh (placeholder geometry with optional GLTF replacement if ?model=URL).
 // Note: This function does NOT add the mesh to the scene; caller should add it.
 export function createGoTMesh() {
@@ -265,15 +305,18 @@ export function createBillboardHPBar() {
 
 // Portal geometry; returns group and ring so caller can animate ring rotation
 export function createPortalMesh(color = COLOR.portal) {
+  const { hex: __hex, alpha: __alpha } = parseThreeColor(color);
   // Outer ring (vertical gate)
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(1.2, 0.15, 16, 40),
     new THREE.MeshStandardMaterial({
-      color,
-      emissive: color,
+      color: __hex,
+      emissive: __hex,
       emissiveIntensity: 1.1,
       metalness: 0.35,
-      roughness: 0.25
+      roughness: 0.25,
+      transparent: __alpha < 1,
+      opacity: __alpha
     })
   );
 
@@ -281,9 +324,9 @@ export function createPortalMesh(color = COLOR.portal) {
   const swirl = new THREE.Mesh(
     new THREE.CircleGeometry(1.0, 48),
     new THREE.MeshBasicMaterial({
-      color,
+      color: __hex,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.35 * __alpha,
       side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
       depthWrite: false
@@ -295,9 +338,9 @@ export function createPortalMesh(color = COLOR.portal) {
   const glow = new THREE.Mesh(
     new THREE.CircleGeometry(1.25, 48),
     new THREE.MeshBasicMaterial({
-      color,
+      color: __hex,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.18 * __alpha,
       side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
       depthWrite: false
@@ -320,7 +363,7 @@ export function createPortalMesh(color = COLOR.portal) {
   group.add(base);
 
   // Decorative point light for aura
-  const light = new THREE.PointLight(color, 0.9, 12, 2);
+  const light = new THREE.PointLight(__hex, 0.9, 12, 2);
   light.position.set(0, 0.4, 0);
   group.add(light);
 
