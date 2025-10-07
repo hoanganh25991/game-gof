@@ -10,6 +10,31 @@ import {
 } from "./meshes.js";
 
 /**
+ * Get protection radius for a structure type
+ */
+export function getStructureProtectionRadius(structureType) {
+  switch (structureType) {
+    case "temple": return 30;
+    case "villa": return 20;
+    case "obelisk": return 10;
+    case "column": return 6;
+    case "statue": return 6;
+    default: return 8;
+  }
+}
+
+/**
+ * Get protection circle color for a structure type
+ */
+export function getStructureProtectionColor(structureType) {
+  switch (structureType) {
+    case "temple": return 0xffd700; // Gold
+    case "villa": return 0xffa500;  // Orange
+    default: return 0xffdd88;       // Light yellow
+  }
+}
+
+/**
  * Export structure creation function with text label for chunk_manager
  */
 export function createStructureWithLabel(structureType, params = {}, position = { x: 0, z: 0 }, index = 0) {
