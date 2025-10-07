@@ -35,6 +35,7 @@ import * as payments from './payments.js';
 import { initPaymentsBootstrap } from "./payments_boot.js";
 import { getSkillUpgradeManager } from "./skill_upgrades.js";
 import { ChunkManager, getOrInitWorldSeed } from "./chunk_manager.js";
+import { getStructureProtectionRadius } from "./structures.js";
 import { isMobile, MOBILE_OPTIMIZATIONS, applyMobileRendererHints } from "./config/mobile.js";
 import { createDynamicSpawner } from "./spawn.js";
 import { createVillageFence } from "./village_fence.js";
@@ -1239,8 +1240,8 @@ function animate() {
             for (const s of structures) {
               if (s.type === 'villa') {
                 const d = Math.hypot(pp.x - s.position.x, pp.z - s.position.z);
-                // Use protectionRadius from structure tracking (already set to 12 for villas)
-                const checkRadius = 12;
+                // Use actual protection radius from centralized config
+                const checkRadius = s.protectionRadius || getStructureProtectionRadius('villa');
                 if (d <= checkRadius) { near = true; break; }
               }
             }
@@ -1269,8 +1270,8 @@ function animate() {
           for (const s of structures) {
             if (s.type === 'temple') {
               const d = Math.hypot(pp.x - s.position.x, pp.z - s.position.z);
-              // Use protectionRadius from structure tracking (already set to 15 for temples)
-              const checkRadius = 15;
+              // Use actual protection radius from centralized config
+              const checkRadius = s.protectionRadius || getStructureProtectionRadius('temple');
               if (d <= checkRadius) { nearTemple = true; break; }
             }
           }
