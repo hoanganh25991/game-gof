@@ -177,6 +177,33 @@ export function createEnemiesSystem({
         continue;
       }
 
+      // ALWAYS enforce structure protection zones, regardless of AI state
+      // This prevents melee enemies from camping inside protected areas
+      if (chunkMgr) {
+        try {
+          const structuresAPI = chunkMgr.getStructuresAPI();
+          if (structuresAPI) {
+            const structures = structuresAPI.listStructures();
+            for (const s of structures) {
+              const protectionRadius = s.protectionRadius || 8;
+              const currentDist = Math.hypot(en.mesh.position.x - s.position.x, en.mesh.position.z - s.position.z);
+              
+              // If enemy is inside protection zone, push them out immediately
+              if (currentDist < protectionRadius) {
+                const dirFromStructure = dir2D(s.position, en.pos());
+                en.mesh.position.x = s.position.x + dirFromStructure.x * protectionRadius;
+                en.mesh.position.z = s.position.z + dirFromStructure.z * protectionRadius;
+                // Also clear their attack cooldown so they don't attack from the boundary
+                if (en.nextAttackReady) {
+                  en.nextAttackReady = now() + (en.attackCooldown || WORLD.aiAttackCooldown);
+                }
+                break;
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
       if (toPlayer < WORLD.aiAggroRadius) {
         // Chase player
         const d = toPlayer;
