@@ -1,8 +1,42 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
 import { WORLD, storageKey, COLOR } from "./constants.js";
-import { createHouse, createGreekTemple, createVilla, createGreekColumn, createCypressTree, createOliveTree, createGreekStatue, createObelisk } from "./meshes.js";
-import { placeStructures } from "./structures.js";
+import { createHouse, createCypressTree, createOliveTree } from "./meshes.js";
+
+/**
+ * Export environment object creation functions for chunk_manager
+ */
+export function createEnvironmentTree(type = "cypress") {
+  if (type === "olive") {
+    return createOliveTree();
+  }
+  return createCypressTree();
+}
+
+export function createEnvironmentRock() {
+  const geo = new THREE.DodecahedronGeometry(1, 0);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x3a2520, roughness: 0.9 });
+  const rock = new THREE.Mesh(geo, mat);
+  rock.castShadow = true;
+  return rock;
+}
+
+export function createEnvironmentFlower() {
+  const g = new THREE.Group();
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.02, 0.02, 0.24),
+    new THREE.MeshStandardMaterial({ color: 0x4a2a1a })
+  );
+  stem.position.y = 0.12;
+  g.add(stem);
+  const petal = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 6, 6),
+    new THREE.MeshStandardMaterial({ color: 0xff6347, emissive: 0xff4500 })
+  );
+  petal.position.y = 0.28;
+  g.add(petal);
+  return g;
+}
 
 /**
  * initEnvironment(scene, options)
@@ -17,7 +51,7 @@ import { placeStructures } from "./structures.js";
  * - Uses simple low-poly primitives (fast, no external assets).
  * - Uses WORLD.groundSize as placement bounds by default.
  */
-export function initEnvironment(scene, options = {}) {
+export async function initEnvironment(scene, options = {}) {
   const cfg = Object.assign(
     {
       // denser defaults for a richer environment (Phase A tuned)
@@ -386,7 +420,7 @@ export function initEnvironment(scene, options = {}) {
 
   if (!WORLD?.chunking?.enabled) {
     try {
-      placeStructures({
+      const structuresAPI = await placeStructures({
         rng,
         seededRange,
         root,
@@ -411,6 +445,11 @@ export function initEnvironment(scene, options = {}) {
           return seededRandomPosInBounds();
         }
       });
+      
+      // Make structures available globally for minimap
+      if (structuresAPI && typeof window !== 'undefined') {
+        window.__structuresAPI = structuresAPI;
+      }
     } catch (e) {
       console.warn("Extra structures generation failed", e);
     }

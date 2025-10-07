@@ -1,15 +1,8 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { hashStringToInt, createSeededRNG, seededRange } from "./utils.js";
 import { STORAGE_KEYS } from "./constants.js";
-import {
-  createCypressTree,
-  createOliveTree,
-  createGreekTemple,
-  createVilla,
-  createGreekColumn,
-  createGreekStatue,
-  createObelisk,
-} from "./meshes.js";
+import { createEnvironmentTree, createEnvironmentRock, createEnvironmentFlower } from "./environment.js";
+import { createStructureWithLabel } from "./structures.js";
 
 /**
  * Persist or retrieve a stable world seed so generation is consistent across sessions.
@@ -203,11 +196,11 @@ export class ChunkManager {
       z: seededRange(rng, 0, size),
     });
 
-    // Trees (mix of cypress/olive)
+    // Trees
     const treeCount = Math.max(0, Math.floor(densities.trees || 0));
     for (let i = 0; i < treeCount; i++) {
-      const pick = (rng() < 0.5) ? createCypressTree : createOliveTree;
-      const t = pick();
+      const treeType = (rng() < 0.5) ? "cypress" : "olive";
+      const t = createEnvironmentTree(treeType);
       const p = randInChunk();
       t.position.set(p.x, 0, p.z);
       t.rotation.y = seededRange(rng, 0, Math.PI * 2);
@@ -216,38 +209,26 @@ export class ChunkManager {
       group.add(t);
     }
 
-    // Rocks (simple low-poly dodecahedrons)
+    // Rocks
     const rockCount = Math.max(0, Math.floor(densities.rocks || 0));
     for (let i = 0; i < rockCount; i++) {
-      const geo = new THREE.DodecahedronGeometry(seededRange(rng, 0.4, 1.3), 0);
-      const mat = new THREE.MeshStandardMaterial({ color: 0x3a2520, roughness: 0.9 });
-      const r = new THREE.Mesh(geo, mat);
+      const r = createEnvironmentRock();
       const p = randInChunk();
       r.position.set(p.x, 0.02, p.z);
       r.rotation.set(seededRange(rng, 0, Math.PI), seededRange(rng, 0, Math.PI), seededRange(rng, 0, Math.PI));
+      const s = seededRange(rng, 0.7, 1.3);
+      r.scale.setScalar(s);
       group.add(r);
     }
 
-    // Flowers (small glowing spheres + stem)
+    // Flowers
     const flowerCount = Math.max(0, Math.floor(densities.flowers || 0));
     for (let i = 0; i < flowerCount; i++) {
-      const g = new THREE.Group();
-      const stem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.02, 0.02, 0.24),
-        new THREE.MeshStandardMaterial({ color: 0x4a2a1a })
-      );
-      stem.position.y = 0.12;
-      g.add(stem);
-      const petal = new THREE.Mesh(
-        new THREE.SphereGeometry(0.08, 6, 6),
-        new THREE.MeshStandardMaterial({ color: 0xff6347, emissive: 0xff4500 })
-      );
-      petal.position.y = 0.28;
-      g.add(petal);
+      const f = createEnvironmentFlower();
       const p = randInChunk();
-      g.position.set(p.x, 0, p.z);
-      g.scale.setScalar(seededRange(rng, 0.8, 1.2));
-      group.add(g);
+      f.position.set(p.x, 0, p.z);
+      f.scale.setScalar(seededRange(rng, 0.8, 1.2));
+      group.add(f);
     }
 
     // Structures: 1 guaranteed, up to +2 with probability
@@ -261,46 +242,51 @@ export class ChunkManager {
         const r = seededRange(rng, 0, Math.PI * 2);
 
         const which = rng();
+        let structureType, params;
+        
         if (which < 0.2) {
-          const t = createGreekTemple({
+          structureType = "temple";
+          params = {
             cols: Math.max(5, Math.floor(seededRange(rng, 6, 9))),
             rows: Math.max(7, Math.floor(seededRange(rng, 9, 12))),
             columnHeight: seededRange(rng, 5.2, 6.2),
             colSpacingX: seededRange(rng, 2.2, 2.8),
             colSpacingZ: seededRange(rng, 2.3, 3.0),
-          });
-          t.position.set(p.x, 0, p.z);
-          t.rotation.y = r;
-          group.add(t);
+          };
         } else if (which < 0.45) {
-          const v = createVilla({
+          structureType = "villa";
+          params = {
             width: seededRange(rng, 10, 16),
             depth: seededRange(rng, 8, 12),
             height: seededRange(rng, 3.5, 5.2),
-          });
-          v.position.set(p.x, 0, p.z);
-          v.rotation.y = r;
-          v.scale.setScalar(seededRange(rng, 0.9, 1.2));
-          group.add(v);
+          };
         } else if (which < 0.7) {
-          const c = createGreekColumn({
+          structureType = "column";
+          params = {
             height: seededRange(rng, 4.2, 6.2),
             radius: seededRange(rng, 0.24, 0.34),
             order: ["doric", "ionic", "corinthian"][Math.floor(seededRange(rng, 0, 3)) | 0],
-          });
-          c.position.set(p.x, 0, p.z);
-          c.rotation.y = r;
-          group.add(c);
+          };
         } else if (which < 0.85) {
-          const s = createGreekStatue();
-          s.position.set(p.x, 0, p.z);
-          s.rotation.y = r;
-          group.add(s);
+          structureType = "statue";
+          params = {};
         } else {
-          const o = createObelisk({ height: seededRange(rng, 5.5, 7.5) });
-          o.position.set(p.x, 0, p.z);
-          o.rotation.y = r;
-          group.add(o);
+          structureType = "obelisk";
+          params = { height: seededRange(rng, 5.5, 7.5) };
+        }
+
+        const result = createStructureWithLabel(structureType, params, { x: p.x, z: p.z }, i);
+        if (result) {
+          const { structure, label } = result;
+          structure.position.set(p.x, 0, p.z);
+          structure.rotation.y = r;
+          if (structureType === "villa") {
+            structure.scale.setScalar(seededRange(rng, 0.9, 1.2));
+          }
+          group.add(structure);
+          if (label) {
+            group.add(label);
+          }
         }
       }
     }

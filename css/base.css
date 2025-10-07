@@ -72,6 +72,13 @@
   --yellow-glow-strong: #FFD75AF2;
   --player-dot: #7ECCFFFF;
 
+  /* Structure minimap colors */
+  --temple-dot: #FFD700F2;      /* Gold for temples */
+  --villa-dot: #FFA500F2;       /* Orange for villas */
+  --column-dot: #F0E68CF2;      /* Khaki for columns */
+  --statue-dot: #DAA520F2;      /* Goldenrod for statues */
+  --obelisk-dot: #CD853FF2;     /* Peru for obelisks */
+
   /* Skill/environment shared tokens (used by JS via CSS_COLOR) */
   --ember: #ffa500;
   --lava: #ff4500;

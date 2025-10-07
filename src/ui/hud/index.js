@@ -41,8 +41,8 @@ export class UIManager {
     this.bars?.update?.(player);
   }
 
-  updateMinimap(player, enemies, portals, villages) {
-    this.minimapUI?.update?.(player, enemies, portals, villages);
+  updateMinimap(player, enemies, portals, villages, structures) {
+    this.minimapUI?.update?.(player, enemies, portals, villages, structures);
   }
 
   // Backward-compat entry for external level-up events

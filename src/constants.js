@@ -171,6 +171,13 @@ export const CSS_COLOR = {
   get yellowGlowStrong() { return readCssVar("--yellow-glow-strong"); },
   get playerDot() { return readCssVar("--player-dot"); },
 
+  // Structure minimap colors
+  get templeDot() { return readCssVar("--temple-dot"); },
+  get villaDot() { return readCssVar("--villa-dot"); },
+  get columnDot() { return readCssVar("--column-dot"); },
+  get statueDot() { return readCssVar("--statue-dot"); },
+  get obeliskDot() { return readCssVar("--obelisk-dot"); },
+
   // Skill/environment tokens (string colors; override via CSS vars if desired)
   get ember() { return readCssVar("--ember"); },
   get lava() { return readCssVar("--lava"); },

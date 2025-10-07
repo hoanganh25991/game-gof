@@ -206,7 +206,7 @@ if (WORLD && WORLD.chunking && WORLD.chunking.enabled) {
     chunkMgr = null;
   }
 }
-env = initEnvironment(scene, Object.assign({}, envPreset, { enableRain: envRainState, quality: renderQuality, seed: WORLD_SEED }));
+env = await initEnvironment(scene, Object.assign({}, envPreset, { enableRain: envRainState, quality: renderQuality, seed: WORLD_SEED }));
 try {
   if (envRainState && env && typeof env.setRainLevel === "function") {
     env.setRainLevel(Math.min(Math.max(0, envRainLevel), 2));
@@ -743,10 +743,80 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
  function removeVillaRegenBuff() {
    if (!__villaRegenActive) return;
    __villaRegenActive = false;
-   try { if (typeof player._villaBaseHpRegen === 'number') player.hpRegen = player._villaBaseHpRegen; } catch (_) {}
-   try { if (typeof player._villaBaseMpRegen === 'number') player.mpRegen = player._villaBaseMpRegen; } catch (_) {}
-   try { delete player._villaBaseHpRegen; } catch (_) {}
-   try { delete player._villaBaseMpRegen; } catch (_) {}
+   try { if (typeof player._villageBaseHpRegen === 'number') player.hpRegen = player._villageBaseHpRegen; } catch (_) {}
+   try { if (typeof player._villaBaseMpRegen === 'number') player.mpRegen = player._villageBaseMpRegen; } catch (_) {}
+   try { delete player._villageBaseHpRegen; } catch (_) {}
+   try { delete player._villageBaseMpRegen; } catch (_) {}
+ }
+
+ // Structure proximity messages
+ let __nearStructure = null;
+ let __lastStructureMessage = 0;
+ const STRUCTURE_MESSAGE_COOLDOWN = 3000; // 3 seconds between messages
+
+ function getStructureProximityMessage(structureType, structureName) {
+   const messages = {
+     temple: [
+       `Ancient power emanates from ${structureName}`,
+       `You feel a divine presence at ${structureName}`,
+       `Sacred energy surrounds ${structureName}`
+     ],
+     villa: [
+       `${structureName} stands as a testament to ancient architecture`,
+       `You admire the craftsmanship of ${structureName}`,
+       `${structureName} exudes an aura of sophistication`
+     ],
+     column: [
+       `${structureName} reaches toward the heavens`,
+       `Ancient strength flows through ${structureName}`,
+       `${structureName} stands as a pillar of history`
+     ],
+     statue: [
+       `${structureName} captures a moment of eternal glory`,
+       `You gaze upon the majestic ${structureName}`,
+       `${structureName} tells stories of ancient heroes`
+     ],
+     obelisk: [
+       `${structureName} pierces the sky with mystical energy`,
+       `Ancient knowledge is encoded in ${structureName}`,
+       `${structureName} channels power from the cosmos`
+     ]
+   };
+   
+   const typeMessages = messages[structureType] || [`You discover ${structureName}`];
+   return typeMessages[Math.floor(Math.random() * typeMessages.length)];
+ }
+
+ function checkStructureProximity() {
+   if (!player || !window.__structuresAPI) return;
+   
+   const playerPos = player.pos();
+   const structures = window.__structuresAPI.listStructures();
+   let closestStructure = null;
+   let closestDistance = Infinity;
+   
+   // Find closest structure within 15 units
+   for (const structure of structures) {
+     const distance = Math.hypot(playerPos.x - structure.position.x, playerPos.z - structure.position.z);
+     if (distance < 15 && distance < closestDistance) {
+       closestDistance = distance;
+       closestStructure = structure;
+     }
+   }
+   
+   // Check if we entered or left a structure's proximity
+   const now = Date.now();
+   if (closestStructure && closestStructure !== __nearStructure) {
+     __nearStructure = closestStructure;
+     if (now - __lastStructureMessage > STRUCTURE_MESSAGE_COOLDOWN) {
+       const message = getStructureProximityMessage(closestStructure.type, closestStructure.name);
+       try { setCenterMsg && setCenterMsg(message); } catch (_) {}
+       setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 3000);
+       __lastStructureMessage = now;
+     }
+   } else if (!closestStructure && __nearStructure) {
+     __nearStructure = null;
+   }
  }
 
 // Enemies System (AI, movement, attacks, respawn, billboarding, mobile culling)
@@ -981,13 +1051,19 @@ function animate() {
       if (!window.__lastMinimapT) window.__lastMinimapT = 0;
       if ((nowMs - window.__lastMinimapT) >= (window.__MINIMAP_UPDATE_MS || MINIMAP_UPDATE_MS)) {
         window.__lastMinimapT = nowMs;
-        try { ui.updateMinimap(player, enemies, portals, villages); } catch (_) {}
+        try { 
+          const structures = (typeof window !== 'undefined' && window.__structuresAPI) ? window.__structuresAPI : null;
+          ui.updateMinimap(player, enemies, portals, villages, structures); 
+        } catch (_) {}
       }
     } catch (_) {}
   } catch (_) {
     // Fallback: if anything goes wrong, keep original per-frame updates to preserve behavior.
     try { ui.updateHUD(player); } catch (_) {}
-    try { ui.updateMinimap(player, enemies, portals, villages); } catch (_) {}
+    try { 
+      const structures = (typeof window !== 'undefined' && window.__structuresAPI) ? window.__structuresAPI : null;
+      ui.updateMinimap(player, enemies, portals, villages, structures); 
+    } catch (_) {}
   }
 
   skills.update(t, dt, cameraShake);
@@ -1026,6 +1102,9 @@ function animate() {
         try { removeVillaRegenBuff(); } catch (_) {}
       }
     } catch (_) {}
+
+    // Structure proximity messages
+    try { checkStructureProximity(); } catch (_) {}
 
     respawnSystem.update();
   }

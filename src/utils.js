@@ -80,6 +80,16 @@ export function seededRange(rng, min, max) {
   return min + (max - min) * rng();
 }
 
+// Helper: seeded random [0,1) based on string (FNV-1a hash)
+export function seededRand01(str) {
+  let h = 0x811c9dc5; // FNV-1a 32-bit
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return ((h >>> 0) / 4294967296);
+}
+
 // Color utilities: parse various color formats to 0xRRGGBB + alpha [0,1]
 // Supports: #RRGGBB, #RRGGBBAA, 0xRRGGBB, "RRGGBB", number, rgb()/rgba()
 export function parseThreeColor(input) {

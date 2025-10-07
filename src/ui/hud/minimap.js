@@ -61,7 +61,7 @@ export class MinimapUI {
     this._sizeDirty = false;
   }
 
-  update(player, enemies, portals, villages) {
+  update(player, enemies, portals, villages, structures) {
     const ctx = this.ctx;
     if (!ctx || !this.canvas || !player) return;
 
@@ -205,6 +205,50 @@ export class MinimapUI {
         ctx.fillStyle = CSS_COLOR.enemyDot;
         ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
       });
+    }
+
+    // Structures
+    try {
+      const structureList = structures?.listStructures?.() || [];
+      
+      // Debug: log structure count
+      try { console.log("[Minimap] Drawing", structureList.length, "structures"); } catch (_) {}
+      
+      for (const structure of structureList) {
+        const p = w2p(structure.position.x, structure.position.z);
+        
+        // Set color based on structure type
+        let structureColor;
+        switch (structure.type) {
+          case "temple":
+            structureColor = CSS_COLOR.templeDot;
+            break;
+          case "villa":
+            structureColor = CSS_COLOR.villaDot;
+            break;
+          case "column":
+            structureColor = CSS_COLOR.columnDot;
+            break;
+          case "statue":
+            structureColor = CSS_COLOR.statueDot;
+            break;
+          case "obelisk":
+            structureColor = CSS_COLOR.obeliskDot;
+            break;
+          default:
+            structureColor = CSS_COLOR.templeDot; // fallback
+        }
+        
+        // Debug: log structure drawing
+        try { console.log("[Minimap] Drawing structure:", structure.type, structure.name, "at:", structure.position.x, structure.position.z, "color:", structureColor); } catch (_) {}
+        
+        ctx.fillStyle = structureColor;
+        
+        // Draw structure marker (larger than enemies, different shape)
+        ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+      }
+    } catch (e) {
+      try { console.error("[Minimap] Error drawing structures:", e); } catch (_) {}
     }
 
     // Player
