@@ -611,6 +611,7 @@ function applyVillageRegenBuff() {
   try { player._villageBaseMpRegen = player.mpRegen || 0; } catch (_) {}
   try { player.mpRegen = (player.mpRegen || 0) * VILLAGE_REGEN_MULT; } catch (_) {}
   try { setCenterMsg && setCenterMsg('HP regeneration increased'); } catch (_) {}
+  try { showBuffIndicator('village', '💚'); } catch (_) {} // Green heart for village regen
   setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 1400);
 }
 function removeVillageRegenBuff() {
@@ -620,6 +621,7 @@ function removeVillageRegenBuff() {
   try { if (typeof player._villageBaseMpRegen === 'number') player.mpRegen = player._villageBaseMpRegen; } catch (_) {}
   try { delete player._villageBaseHpRegen; } catch (_) {}
   try { delete player._villageBaseMpRegen; } catch (_) {}
+  try { hideBuffIndicator('village'); } catch (_) {} // Remove village buff indicator
 }
 
 // Listen to village enter/leave events dispatched by villages.updateRest()
@@ -739,6 +741,7 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
    try { player._villaBaseMpRegen = player.mpRegen || 0; } catch (_) {}
    try { player.mpRegen = (player.mpRegen || 0) * VILLA_REGEN_MULT; } catch (_) {}
    try { setCenterMsg && setCenterMsg('HP regeneration increased (villa)'); } catch (_) {}
+   try { showBuffIndicator('villa', '❤️'); } catch (_) {} // Red heart for villa regen
    setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 1400);
  }
  function removeVillaRegenBuff() {
@@ -748,6 +751,7 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
    try { if (typeof player._villaBaseMpRegen === 'number') player.mpRegen = player._villaBaseMpRegen; } catch (_) {}
    try { delete player._villaBaseHpRegen; } catch (_) {}
    try { delete player._villaBaseMpRegen; } catch (_) {}
+   try { hideBuffIndicator('villa'); } catch (_) {} // Remove villa buff indicator
  }
 
  // Temple proximity buff (randomly grants damage, attack speed, or defense)
@@ -758,6 +762,69 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
  let __nearTemple = false;
  let __templeBuffActive = false;
  let __currentTempleBuff = null;
+ 
+ // Buff emoji indicators
+ let __buffIndicators = {
+   temple: null,    // Temple buff (⚔️/⚡/🛡️)
+   villa: null,     // Villa HP regen (❤️)
+   village: null    // Village HP regen (💚)
+ };
+ 
+ function createEmojiSprite(emoji, size = 64) {
+   const canvas = document.createElement('canvas');
+   canvas.width = size;
+   canvas.height = size;
+   const ctx = canvas.getContext('2d');
+   ctx.font = `${size * 0.8}px Arial`;
+   ctx.textAlign = 'center';
+   ctx.textBaseline = 'middle';
+   ctx.fillText(emoji, size / 2, size / 2);
+   
+   const texture = new THREE.CanvasTexture(canvas);
+   const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+   const sprite = new THREE.Sprite(material);
+   sprite.scale.set(1.5, 1.5, 1);
+   return sprite;
+ }
+ 
+ function showBuffIndicator(type, emoji) {
+   try {
+     // Remove existing indicator of this type
+     if (__buffIndicators[type]) {
+       player.mesh.remove(__buffIndicators[type]);
+       __buffIndicators[type] = null;
+     }
+     
+     // Create new indicator
+     const sprite = createEmojiSprite(emoji);
+     
+     // Position based on how many buffs are active
+     const activeCount = Object.values(__buffIndicators).filter(b => b !== null).length;
+     sprite.position.set(activeCount * 1.8 - 1.8, 4.5, 0); // Spread horizontally above hero
+     
+     __buffIndicators[type] = sprite;
+     player.mesh.add(sprite);
+   } catch (_) {}
+ }
+ 
+ function hideBuffIndicator(type) {
+   try {
+     if (__buffIndicators[type]) {
+       player.mesh.remove(__buffIndicators[type]);
+       __buffIndicators[type] = null;
+       
+       // Reposition remaining indicators
+       let index = 0;
+       for (const [key, indicator] of Object.entries(__buffIndicators)) {
+         if (indicator) {
+           const activeCount = Object.values(__buffIndicators).filter(b => b !== null).length;
+           indicator.position.x = index * 1.8 - (activeCount - 1) * 0.9;
+           index++;
+         }
+       }
+     }
+   } catch (_) {}
+ }
  
  function applyTempleBuff() {
    if (__templeBuffActive) return;
@@ -771,14 +838,17 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
      try { player._templeBaseDamage = player.attackDamage || 0; } catch (_) {}
      try { player.attackDamage = Math.floor((player.attackDamage || 0) * TEMPLE_DAMAGE_MULT); } catch (_) {}
      try { setCenterMsg && setCenterMsg('Divine power increases your damage!'); } catch (_) {}
+     try { showBuffIndicator('temple', '⚔️'); } catch (_) {} // Sword emoji for damage
    } else if (buffType === 'attackSpeed') {
      try { player._templeBaseAttackSpeed = player.attackSpeed || 1; } catch (_) {}
      try { player.attackSpeed = (player.attackSpeed || 1) * TEMPLE_ATTACK_SPEED_MULT; } catch (_) {}
      try { setCenterMsg && setCenterMsg('Divine blessing increases your attack speed!'); } catch (_) {}
+     try { showBuffIndicator('temple', '⚡'); } catch (_) {} // Lightning emoji for attack speed
    } else if (buffType === 'defense') {
      try { player._templeBaseDefense = player.defense || 0; } catch (_) {}
      try { player.defense = Math.floor((player.defense || 0) + 10); } catch (_) {}
      try { setCenterMsg && setCenterMsg('Divine protection increases your defense!'); } catch (_) {}
+     try { showBuffIndicator('temple', '🛡️'); } catch (_) {} // Shield emoji for defense
    }
    
    setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 1400);
@@ -800,6 +870,7 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
    }
    
    __currentTempleBuff = null;
+   try { hideBuffIndicator('temple'); } catch (_) {} // Remove temple buff indicator
  }
 
  // Structure proximity messages
