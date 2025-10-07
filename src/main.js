@@ -831,9 +831,6 @@ const gameLoop = new GameLoop({
 // Start the game loop
 gameLoop.start();
 
-// Window resize
-worldManager.handleResize();
-
 // Align player start facing village center
 (function initFace() {
   const v = dir2D(player.pos(), VILLAGE_POS);
