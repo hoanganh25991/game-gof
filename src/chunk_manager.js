@@ -161,7 +161,8 @@ export class ChunkManager {
       listStructures: () => this.structures.map(s => ({
         type: s.type,
         position: s.position.clone(),
-        name: s.name
+        name: s.name,
+        protectionRadius: s.protectionRadius
       }))
     };
   }
