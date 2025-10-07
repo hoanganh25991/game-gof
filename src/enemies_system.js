@@ -5,8 +5,9 @@
  * - VFX gating: defers heavy effects based on performance tracker policy provided by main.
  *
  * Public API:
- *   const enemiesSystem = createEnemiesSystem(deps)
- *   enemiesSystem.update(dt, { aiStride, bbStride, bbOffset })
+ *   import { EnemiesSystem } from './enemies_system.js';
+ *   const enemiesSystem = new EnemiesSystem(deps);
+ *   enemiesSystem.update(dt, { aiStride, bbStride, bbOffset });
  *
  * Module boundaries:
  * - No direct DOM access
@@ -16,61 +17,117 @@
 
 import { COLOR } from "./constants.js";
 
-export function createEnemiesSystem({
-  THREE,
-  WORLD,
-  VILLAGE_POS,
-  REST_RADIUS,
-  dir2D,
-  distance2D,
-  now,
-  audio,
-  effects,
-  scene,
-  player,
-  enemies,
-  villages,
-  mapManager,
-  isMobile,
-  MOBILE_OPTIMIZATIONS,
-  camera,
-  shouldSpawnVfx, // (kind, pos) => boolean
-  applyMapModifiersToEnemy, // (enemy) => void
-  chunkMgr, // chunk manager for structure protection zones
-}) {
-  // Reusable temps (avoid allocations in hot path)
-  const tA = new THREE.Vector3();
-  const tB = new THREE.Vector3();
-  const tC = new THREE.Vector3();
+export class EnemiesSystem {
+  // Private fields for dependencies
+  #THREE;
+  #WORLD;
+  #VILLAGE_POS;
+  #REST_RADIUS;
+  #dir2D;
+  #distance2D;
+  #now;
+  #audio;
+  #effects;
+  #scene;
+  #player;
+  #enemies;
+  #villages;
+  #mapManager;
+  #isMobile;
+  #MOBILE_OPTIMIZATIONS;
+  #camera;
+  #shouldSpawnVfx;
+  #applyMapModifiersToEnemy;
+  #chunkMgr;
 
-  // Mobile culling
-  const CULL_CHECK_INTERVAL = 0.5; // seconds
-  let lastCullCheckT = 0;
-  const frozenEnemies = new Set();
+  // Private fields for reusable temp vectors
+  #tempA;
+  #tempB;
+  #tempC;
 
-  // AI stride offset (throttling)
-  let aiOffset = 0;
+  // Private fields for mobile culling
+  #CULL_CHECK_INTERVAL = 0.5; // seconds
+  #lastCullCheckT = 0;
+  #frozenEnemies = new Set();
 
-  function randomEnemySpawnPos() {
+  // Private field for AI stride offset
+  #aiOffset = 0;
+
+  constructor({
+    THREE,
+    WORLD,
+    VILLAGE_POS,
+    REST_RADIUS,
+    dir2D,
+    distance2D,
+    now,
+    audio,
+    effects,
+    scene,
+    player,
+    enemies,
+    villages,
+    mapManager,
+    isMobile,
+    MOBILE_OPTIMIZATIONS,
+    camera,
+    shouldSpawnVfx,
+    applyMapModifiersToEnemy,
+    chunkMgr,
+  }) {
+    // Store all dependencies as private fields
+    this.#THREE = THREE;
+    this.#WORLD = WORLD;
+    this.#VILLAGE_POS = VILLAGE_POS;
+    this.#REST_RADIUS = REST_RADIUS;
+    this.#dir2D = dir2D;
+    this.#distance2D = distance2D;
+    this.#now = now;
+    this.#audio = audio;
+    this.#effects = effects;
+    this.#scene = scene;
+    this.#player = player;
+    this.#enemies = enemies;
+    this.#villages = villages;
+    this.#mapManager = mapManager;
+    this.#isMobile = isMobile;
+    this.#MOBILE_OPTIMIZATIONS = MOBILE_OPTIMIZATIONS;
+    this.#camera = camera;
+    this.#shouldSpawnVfx = shouldSpawnVfx;
+    this.#applyMapModifiersToEnemy = applyMapModifiersToEnemy;
+    this.#chunkMgr = chunkMgr;
+
+    // Initialize reusable temps (avoid allocations in hot path)
+    this.#tempA = new THREE.Vector3();
+    this.#tempB = new THREE.Vector3();
+    this.#tempC = new THREE.Vector3();
+  }
+
+  /**
+   * Generate random enemy spawn position around player, avoiding villages
+   * @private
+   * @returns {THREE.Vector3} Spawn position
+   */
+  #randomEnemySpawnPos() {
     // Spawn around player, avoid village rest radii (origin and discovered)
     const angle = Math.random() * Math.PI * 2;
-    const minR = WORLD.enemySpawnMinRadius || 30;
-    const maxR = WORLD.enemySpawnRadius || 220;
+    const minR = this.#WORLD.enemySpawnMinRadius || 30;
+    const maxR = this.#WORLD.enemySpawnRadius || 220;
     const r = minR + Math.random() * (maxR - minR);
 
-    const center = player.pos();
-    const cand = new THREE.Vector3(
+    const center = this.#player.pos();
+    const cand = new this.#THREE.Vector3(
       center.x + Math.cos(angle) * r,
       0,
       center.z + Math.sin(angle) * r
     );
 
     // Keep out of origin village rest radius
-    const dvx = cand.x - VILLAGE_POS.x;
-    const dvz = cand.z - VILLAGE_POS.z;
+    const dvx = cand.x - this.#VILLAGE_POS.x;
+    const dvz = cand.z - this.#VILLAGE_POS.z;
     const dVillage = Math.hypot(dvx, dvz);
-    if (dVillage < REST_RADIUS + 2) {
-      const push = (REST_RADIUS + 2) - dVillage + 0.5;
+    if (dVillage < this.#REST_RADIUS + 2) {
+      const push = (this.#REST_RADIUS + 2) - dVillage + 0.5;
       const nx = dvx / (dVillage || 1);
       const nz = dvz / (dVillage || 1);
       cand.x += nx * push;
@@ -79,7 +136,7 @@ export function createEnemiesSystem({
 
     // Keep out of any discovered dynamic village rest radius
     try {
-      const list = villages?.listVillages?.() || [];
+      const list = this.#villages?.listVillages?.() || [];
       for (const v of list) {
         const dvx2 = cand.x - v.center.x;
         const dvz2 = cand.z - v.center.z;
@@ -98,243 +155,320 @@ export function createEnemiesSystem({
     return cand;
   }
 
-  function update(dt, { aiStride = 1, bbStride = 2, bbOffset = 0 } = {}) {
+  /**
+   * Update mobile culling state
+   * @private
+   */
+  #updateMobileCulling() {
+    if (!this.#isMobile || !this.#MOBILE_OPTIMIZATIONS.cullDistance) return;
+
+    const t = this.#now();
+    if (t - this.#lastCullCheckT <= this.#CULL_CHECK_INTERVAL) return;
+
+    this.#lastCullCheckT = t;
+    this.#frozenEnemies.clear();
+    const cullDist = this.#MOBILE_OPTIMIZATIONS.cullDistance;
+    const playerPos = this.#player.pos();
+    
+    for (const en of this.#enemies) {
+      if (!en.alive) continue;
+      const dist = this.#distance2D(en.pos(), playerPos);
+      if (dist > cullDist) {
+        this.#frozenEnemies.add(en);
+        // Stop their movement target to save cycles
+        en.moveTarget = null;
+      }
+    }
+  }
+
+  /**
+   * Enforce structure protection zones
+   * @private
+   */
+  #enforceStructureProtection(en) {
+    if (!this.#chunkMgr) return;
+
+    try {
+      const structuresAPI = this.#chunkMgr.getStructuresAPI();
+      if (!structuresAPI) return;
+
+      const structures = structuresAPI.listStructures();
+      for (const s of structures) {
+        const protectionRadius = s.protectionRadius || 8;
+        const currentDist = Math.hypot(en.mesh.position.x - s.position.x, en.mesh.position.z - s.position.z);
+        
+        // If enemy is inside protection zone, push them out immediately
+        if (currentDist < protectionRadius) {
+          const dirFromStructure = this.#dir2D(s.position, en.pos());
+          en.mesh.position.x = s.position.x + dirFromStructure.x * protectionRadius;
+          en.mesh.position.z = s.position.z + dirFromStructure.z * protectionRadius;
+          // Also clear their attack cooldown so they don't attack from the boundary
+          if (en.nextAttackReady) {
+            en.nextAttackReady = this.#now() + (en.attackCooldown || this.#WORLD.aiAttackCooldown);
+          }
+          break;
+        }
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * Process enemy chase and attack behavior
+   * @private
+   */
+  #processChaseAndAttack(en, toPlayer, dt) {
+    const d = toPlayer;
+    const ar = en.attackRange || this.#WORLD.aiAttackRange;
+    
+    if (d > ar) {
+      // Chase player
+      this.#processChaseMovement(en, dt);
+    } else {
+      // Attack player
+      this.#processAttack(en);
+    }
+  }
+
+  /**
+   * Process chase movement with collision avoidance
+   * @private
+   */
+  #processChaseMovement(en, dt) {
+    const v = this.#dir2D(en.pos(), this.#player.pos());
+    const spMul = en.slowUntil && this.#now() < en.slowUntil ? en.slowFactor || 0.5 : 1;
+
+    // Next tentative position
+    let nx = en.mesh.position.x + v.x * en.speed * spMul * dt;
+    let nz = en.mesh.position.z + v.z * en.speed * spMul * dt;
+
+    // Clamp to fences (origin village)
+    const nextDistToVillage = Math.hypot(nx - this.#VILLAGE_POS.x, nz - this.#VILLAGE_POS.z);
+    if (nextDistToVillage <= this.#REST_RADIUS - 0.25) {
+      const dirFromVillage = this.#dir2D(this.#VILLAGE_POS, en.pos());
+      en.mesh.position.x = this.#VILLAGE_POS.x + dirFromVillage.x * (this.#REST_RADIUS - 0.25);
+      en.mesh.position.z = this.#VILLAGE_POS.z + dirFromVillage.z * (this.#REST_RADIUS - 0.25);
+    } else {
+      // Check dynamic villages and structures
+      const clamped = this.#checkCollisions(en, nx, nz);
+      if (!clamped) {
+        en.mesh.position.x = nx;
+        en.mesh.position.z = nz;
+      }
+    }
+    
+    // Face direction
+    const yaw = Math.atan2(v.x, v.z);
+    const q = new this.#THREE.Quaternion().setFromEuler(new this.#THREE.Euler(0, yaw, 0));
+    en.mesh.quaternion.slerp(q, 0.2);
+  }
+
+  /**
+   * Check and handle collisions with villages and structures
+   * @private
+   * @returns {boolean} True if position was clamped
+   */
+  #checkCollisions(en, nx, nz) {
+    const nextPos = this.#tempA.set(nx, 0, nz);
+    let clamped = false;
+    
+    // Check dynamic villages
+    try {
+      const inside = this.#villages?.isInsideAnyVillage?.(nextPos);
+      if (inside && inside.inside && inside.key !== "origin") {
+        const dirFrom = this.#dir2D(inside.center, en.pos());
+        const rad = Math.max(0.25, (inside.radius || this.#REST_RADIUS) - 0.25);
+        en.mesh.position.x = inside.center.x + dirFrom.x * rad;
+        en.mesh.position.z = inside.center.z + dirFrom.z * rad;
+        clamped = true;
+      }
+    } catch (_) {}
+    
+    // Check structure protection zones
+    if (!clamped && this.#chunkMgr) {
+      try {
+        const structuresAPI = this.#chunkMgr.getStructuresAPI();
+        if (structuresAPI) {
+          const structures = structuresAPI.listStructures();
+          for (const s of structures) {
+            const protectionRadius = s.protectionRadius || 8;
+            const currentDist = Math.hypot(en.mesh.position.x - s.position.x, en.mesh.position.z - s.position.z);
+            const nextDist = Math.hypot(nx - s.position.x, nz - s.position.z);
+            
+            // If enemy is currently inside or would enter, push them to the boundary
+            if (currentDist < protectionRadius || nextDist < protectionRadius) {
+              const dirFromStructure = this.#dir2D(s.position, en.pos());
+              en.mesh.position.x = s.position.x + dirFromStructure.x * protectionRadius;
+              en.mesh.position.z = s.position.z + dirFromStructure.z * protectionRadius;
+              clamped = true;
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    
+    return clamped;
+  }
+
+  /**
+   * Process enemy attack
+   * @private
+   */
+  #processAttack(en) {
+    const t = this.#now();
+    if (t < (en.nextAttackReady || 0)) return;
+
+    const cd = en.attackCooldown || this.#WORLD.aiAttackCooldown;
+    en.nextAttackReady = t + cd;
+
+    // Effect origin/target
+    const from = this.#tempA.copy(en.pos()).add(this.#tempB.set(0, 1.4, 0));
+    const to = this.#tempC.copy(this.#player.pos()).add(this.#tempB.set(0, 1.2, 0));
+
+    try {
+      if (en.attackEffect === "melee") {
+        // lightweight strike
+        try { this.#effects.spawnStrike(this.#player.pos(), 0.9, COLOR.accent); } catch (_) {}
+      } else if (en.attackEffect === "fire") {
+        if (this.#shouldSpawnVfx && this.#shouldSpawnVfx("fire", from)) {
+          this.#effects.spawnFireball(from.clone(), to.clone(), {
+            color: en.beamColor || COLOR.midFire,
+            size: 0.3,
+            speed: 20,
+            onComplete: (hitPos) => {
+              this.#effects.spawnHitDecal(hitPos, 0.8, COLOR.fire);
+            }
+          });
+        }
+      } else {
+        // default ranged
+        if (this.#shouldSpawnVfx && this.#shouldSpawnVfx("largeBeam", from)) {
+          this.#effects.spawnFireball(from.clone(), to.clone(), {
+            color: en.beamColor || COLOR.midFire,
+            size: 0.25,
+            speed: 22,
+            onComplete: (hitPos) => {
+              this.#effects.spawnHitDecal(hitPos, COLOR.fire);
+            }
+          });
+        }
+      }
+    } catch (_) {}
+    
+    // Apply damage
+    this.#player.takeDamage(en.attackDamage);
+    try { this.#audio.sfx("player_hit"); } catch (_) {}
+    try { this.#effects.spawnDamagePopup(this.#player.pos(), en.attackDamage, COLOR.textWarm); } catch (_) {}
+  }
+
+  /**
+   * Process enemy wander behavior
+   * @private
+   */
+  #processWander(en, dt) {
+    if (!en.moveTarget || Math.random() < 0.005) {
+      const ang = Math.random() * Math.PI * 2;
+      const r = Math.random() * this.#WORLD.aiWanderRadius;
+      this.#tempA.copy(en.pos()).add(this.#tempB.set(Math.cos(ang) * r, 0, Math.sin(ang) * r));
+      en.moveTarget = this.#tempA.clone();
+    }
+    
+    const d = this.#distance2D(en.pos(), en.moveTarget);
+    if (d > 0.8) {
+      const v = this.#dir2D(en.pos(), en.moveTarget);
+      const spMul = en.slowUntil && this.#now() < en.slowUntil ? en.slowFactor || 0.5 : 1;
+      en.mesh.position.x += v.x * en.speed * spMul * 0.6 * dt;
+      en.mesh.position.z += v.z * en.speed * spMul * 0.6 * dt;
+    }
+  }
+
+  /**
+   * Handle enemy death and respawn
+   * @private
+   */
+  #handleDeathAndRespawn(en) {
+    if (!en._xpGranted) {
+      try { this.#audio.sfx("enemy_die"); } catch (_) {}
+      en._xpGranted = true;
+      this.#player.gainXP(en.xpOnDeath);
+      en._respawnAt = this.#now() + (this.#WORLD.enemyRespawnDelay || 8);
+    }
+    
+    // Handle respawn to maintain enemy density
+    if (en._respawnAt && this.#now() >= en._respawnAt) {
+      const pos = this.#randomEnemySpawnPos();
+      en.respawn(pos, this.#player.level);
+      try { 
+        this.#applyMapModifiersToEnemy && this.#applyMapModifiersToEnemy(en); 
+      } catch (_) {}
+    }
+  }
+
+  /**
+   * Main update loop for all enemies
+   * @param {number} dt - Delta time in seconds
+   * @param {Object} options - Update options
+   * @param {number} options.aiStride - AI update stride (default: 1)
+   * @param {number} options.bbStride - Billboard update stride (default: 2)
+   * @param {number} options.bbOffset - Billboard offset (default: 0)
+   */
+  update(dt, { aiStride = 1, bbStride = 2, bbOffset = 0 } = {}) {
     aiStride = Math.max(1, aiStride);
     bbStride = Math.max(1, bbStride);
 
-    aiOffset = (aiOffset + 1) % aiStride;
+    this.#aiOffset = (this.#aiOffset + 1) % aiStride;
 
     // Mobile: periodic culling update
-    if (isMobile && MOBILE_OPTIMIZATIONS.cullDistance) {
-      const t = now();
-      if (t - lastCullCheckT > CULL_CHECK_INTERVAL) {
-        lastCullCheckT = t;
-        frozenEnemies.clear();
-        const cullDist = MOBILE_OPTIMIZATIONS.cullDistance;
-        const playerPos = player.pos();
-        for (const en of enemies) {
-          if (!en.alive) continue;
-          const dist = distance2D(en.pos(), playerPos);
-          if (dist > cullDist) {
-            frozenEnemies.add(en);
-            // Stop their movement target to save cycles
-            en.moveTarget = null;
-          }
-        }
-      }
-    }
+    this.#updateMobileCulling();
 
     // Main enemy loop
-    for (let i = 0; i < enemies.length; i++) {
-      const en = enemies[i];
+    for (let i = 0; i < this.#enemies.length; i++) {
+      const en = this.#enemies[i];
 
-      // Skip billboarding and AI if enemy removed
+      // Skip if enemy removed
       if (!en) continue;
 
       // Skip AI for frozen enemies; still billboard occasionally
-      if (isMobile && frozenEnemies.has(en)) {
+      if (this.#isMobile && this.#frozenEnemies.has(en)) {
         if ((i % bbStride) === bbOffset && en.hpBar?.container) {
-          en.hpBar.container.lookAt(camera.position);
+          en.hpBar.container.lookAt(this.#camera.position);
         }
         continue;
       }
 
       // AI stride throttling
-      if ((i % aiStride) !== aiOffset) {
+      if ((i % aiStride) !== this.#aiOffset) {
         // Still billboard throttled to keep bars legible
         if ((i % bbStride) === bbOffset && en?.alive && en.hpBar?.container) {
-          en.hpBar.container.lookAt(camera.position);
+          en.hpBar.container.lookAt(this.#camera.position);
         }
         continue;
       }
 
+      // Handle dead enemies
       if (!en.alive) {
-        // Death cleanup, SFX, and XP grant + schedule respawn
-        if (!en._xpGranted) {
-          try { audio.sfx("enemy_die"); } catch (_) {}
-          en._xpGranted = true;
-          player.gainXP(en.xpOnDeath);
-          en._respawnAt = now() + (WORLD.enemyRespawnDelay || 8);
-        }
-        // Handle respawn to maintain enemy density; scale with hero level
-        if (en._respawnAt && now() >= en._respawnAt) {
-          const pos = randomEnemySpawnPos();
-          en.respawn(pos, player.level);
-          try { applyMapModifiersToEnemy && applyMapModifiersToEnemy(en); } catch (_) {}
-        }
+        this.#handleDeathAndRespawn(en);
         continue;
       }
 
-      const toPlayer = player.alive ? distance2D(en.pos(), player.pos()) : Infinity;
+      const toPlayer = this.#player.alive ? this.#distance2D(en.pos(), this.#player.pos()) : Infinity;
 
-      // Despawn very far enemies; rely on spawner to refill density closer to the player
-      const DESPAWN_DIST =
-        (WORLD?.dynamicSpawn?.despawnRadius) ||
-        ((WORLD.enemySpawnRadius || 220) * 1.6);
+      // Despawn very far enemies
+      const DESPAWN_DIST = (this.#WORLD?.dynamicSpawn?.despawnRadius) || ((this.#WORLD.enemySpawnRadius || 220) * 1.6);
       if (toPlayer > DESPAWN_DIST) {
-        try { scene.remove(en.mesh); } catch (_) {}
+        try { this.#scene.remove(en.mesh); } catch (_) {}
         en._despawned = true;
         continue;
       }
 
-      // ALWAYS enforce structure protection zones, regardless of AI state
-      // This prevents melee enemies from camping inside protected areas
-      if (chunkMgr) {
-        try {
-          const structuresAPI = chunkMgr.getStructuresAPI();
-          if (structuresAPI) {
-            const structures = structuresAPI.listStructures();
-            for (const s of structures) {
-              const protectionRadius = s.protectionRadius || 8;
-              const currentDist = Math.hypot(en.mesh.position.x - s.position.x, en.mesh.position.z - s.position.z);
-              
-              // If enemy is inside protection zone, push them out immediately
-              if (currentDist < protectionRadius) {
-                const dirFromStructure = dir2D(s.position, en.pos());
-                en.mesh.position.x = s.position.x + dirFromStructure.x * protectionRadius;
-                en.mesh.position.z = s.position.z + dirFromStructure.z * protectionRadius;
-                // Also clear their attack cooldown so they don't attack from the boundary
-                if (en.nextAttackReady) {
-                  en.nextAttackReady = now() + (en.attackCooldown || WORLD.aiAttackCooldown);
-                }
-                break;
-              }
-            }
-          }
-        } catch (_) {}
-      }
+      // ALWAYS enforce structure protection zones
+      this.#enforceStructureProtection(en);
 
-      if (toPlayer < WORLD.aiAggroRadius) {
-        // Chase player
-        const d = toPlayer;
-        const ar = en.attackRange || WORLD.aiAttackRange;
-        if (d > ar) {
-          const v = dir2D(en.pos(), player.pos());
-          const spMul = en.slowUntil && now() < en.slowUntil ? en.slowFactor || 0.5 : 1;
-
-          // Next tentative
-          let nx = en.mesh.position.x + v.x * en.speed * spMul * dt;
-          let nz = en.mesh.position.z + v.z * en.speed * spMul * dt;
-
-          // Clamp to fences (origin village)
-          const nextDistToVillage = Math.hypot(nx - VILLAGE_POS.x, nz - VILLAGE_POS.z);
-          if (nextDistToVillage <= REST_RADIUS - 0.25) {
-            const dirFromVillage = dir2D(VILLAGE_POS, en.pos());
-            en.mesh.position.x = VILLAGE_POS.x + dirFromVillage.x * (REST_RADIUS - 0.25);
-            en.mesh.position.z = VILLAGE_POS.z + dirFromVillage.z * (REST_RADIUS - 0.25);
-          } else {
-            // Check dynamic villages
-            const nextPos = tA.set(nx, 0, nz);
-            let clamped = false;
-            try {
-              const inside = villages?.isInsideAnyVillage?.(nextPos);
-              if (inside && inside.inside && inside.key !== "origin") {
-                const dirFrom = dir2D(inside.center, en.pos());
-                const rad = Math.max(0.25, (inside.radius || REST_RADIUS) - 0.25);
-                en.mesh.position.x = inside.center.x + dirFrom.x * rad;
-                en.mesh.position.z = inside.center.z + dirFrom.z * rad;
-                clamped = true;
-              }
-            } catch (_) {}
-            
-            // Check structure protection zones and push enemies out
-            if (!clamped && chunkMgr) {
-              try {
-                const structuresAPI = chunkMgr.getStructuresAPI();
-                if (structuresAPI) {
-                  const structures = structuresAPI.listStructures();
-                  for (const s of structures) {
-                    // Use full protection radius so enemies stop at the exact boundary
-                    const protectionRadius = s.protectionRadius || 8;
-                    
-                    // Check both current and next positions
-                    const currentDist = Math.hypot(en.mesh.position.x - s.position.x, en.mesh.position.z - s.position.z);
-                    const nextDist = Math.hypot(nx - s.position.x, nz - s.position.z);
-                    
-                    // If enemy is currently inside or would enter, push them to the boundary
-                    if (currentDist < protectionRadius || nextDist < protectionRadius) {
-                      const dirFromStructure = dir2D(s.position, en.pos());
-                      // Place exactly at the boundary
-                      en.mesh.position.x = s.position.x + dirFromStructure.x * protectionRadius;
-                      en.mesh.position.z = s.position.z + dirFromStructure.z * protectionRadius;
-                      clamped = true;
-                      break;
-                    }
-                  }
-                }
-              } catch (_) {}
-            }
-            
-            if (!clamped) {
-              en.mesh.position.x = nx;
-              en.mesh.position.z = nz;
-            }
-          }
-          // Face direction
-          const yaw = Math.atan2(v.x, v.z);
-          const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));
-          en.mesh.quaternion.slerp(q, 0.2);
-        } else {
-          // Attack player
-          const t = now();
-          if (t >= (en.nextAttackReady || 0)) {
-            const cd = en.attackCooldown || WORLD.aiAttackCooldown;
-            en.nextAttackReady = t + cd;
-
-            // Effect origin/target (reuse temps)
-            tA.copy(en.pos()).add(tB.set(0, 1.4, 0)); // from
-            tC.copy(player.pos()).add(tB.set(0, 1.2, 0)); // to
-
-            try {
-              if (en.attackEffect === "melee") {
-                // lightweight strike
-                try { effects.spawnStrike(player.pos(), 0.9, COLOR.accent); } catch (_) {}
-              } else if (en.attackEffect === "fire") {
-                if (shouldSpawnVfx && shouldSpawnVfx("fire", tA)) {
-                  effects.spawnFireball(tA.clone(), tC.clone(), {
-                    color: en.beamColor || COLOR.midFire,
-                    size: 0.3,
-                    speed: 20,
-                    onComplete: (hitPos) => {
-                      effects.spawnHitDecal(hitPos, 0.8, COLOR.fire);
-                    }
-                  });
-                }
-              } else {
-                // default ranged
-                if (shouldSpawnVfx && shouldSpawnVfx("largeBeam", tA)) {
-                  effects.spawnFireball(tA.clone(), tC.clone(), {
-                    color: en.beamColor || COLOR.midFire,
-                    size: 0.25,
-                    speed: 22,
-                    onComplete: (hitPos) => {
-                      effects.spawnHitDecal(hitPos, COLOR.fire);
-                    }
-                  });
-                }
-              }
-            } catch (_) {}
-            // Apply damage
-            player.takeDamage(en.attackDamage);
-            try { audio.sfx("player_hit"); } catch (_) {}
-            try { effects.spawnDamagePopup(player.pos(), en.attackDamage, COLOR.textWarm); } catch (_) {}
-          }
-        }
+      // Process AI behavior
+      if (toPlayer < this.#WORLD.aiAggroRadius) {
+        this.#processChaseAndAttack(en, toPlayer, dt);
       } else {
-        // Wander around their spawn origin
-        if (!en.moveTarget || Math.random() < 0.005) {
-          const ang = Math.random() * Math.PI * 2;
-          const r = Math.random() * WORLD.aiWanderRadius;
-          tA.copy(en.pos()).add(tB.set(Math.cos(ang) * r, 0, Math.sin(ang) * r));
-          en.moveTarget = tA.clone();
-        }
-        const d = distance2D(en.pos(), en.moveTarget);
-        if (d > 0.8) {
-          const v = dir2D(en.pos(), en.moveTarget);
-          const spMul = en.slowUntil && now() < en.slowUntil ? en.slowFactor || 0.5 : 1;
-          en.mesh.position.x += v.x * en.speed * spMul * 0.6 * dt;
-          en.mesh.position.z += v.z * en.speed * spMul * 0.6 * dt;
-        }
+        this.#processWander(en, dt);
       }
 
       // keep y at fixed height
@@ -345,30 +479,37 @@ export function createEnemiesSystem({
 
       // Death handling (duplicate-guard)
       if (!en.alive && !en._xpGranted) {
-        try { audio.sfx("enemy_die"); } catch (_) {}
+        try { this.#audio.sfx("enemy_die"); } catch (_) {}
         en._xpGranted = true;
-        player.gainXP(en.xpOnDeath);
-        en._respawnAt = now() + (WORLD.enemyRespawnDelay || 8);
+        this.#player.gainXP(en.xpOnDeath);
+        en._respawnAt = this.#now() + (this.#WORLD.enemyRespawnDelay || 8);
       }
 
       // Throttled billboarding
       if ((i % bbStride) === bbOffset && en.hpBar?.container) {
-        en.hpBar.container.lookAt(camera.position);
+        en.hpBar.container.lookAt(this.#camera.position);
       }
     }
 
     // Cleanup: remove despawned enemies
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      const e = enemies[i];
+    for (let i = this.#enemies.length - 1; i >= 0; i--) {
+      const e = this.#enemies[i];
       if (e && e._despawned) {
-        enemies.splice(i, 1);
+        this.#enemies.splice(i, 1);
       }
     }
   }
 
-  return {
-    update,
-    // Expose for debugging/profiling if needed
-    _frozen: frozenEnemies,
-  };
+  /**
+   * Get frozen enemies set (for debugging/profiling)
+   * @returns {Set} Set of frozen enemy references
+   */
+  getFrozenEnemies() {
+    return this.#frozenEnemies;
+  }
+}
+
+// Backward compatibility: export factory function
+export function createEnemiesSystem(deps) {
+  return new EnemiesSystem(deps);
 }
