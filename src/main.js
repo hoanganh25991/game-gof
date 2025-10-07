@@ -635,9 +635,12 @@ try {
 function applyMapModifiersToEnemy(en) {
   try {
     const mods = mapManager.getModifiers?.() || {};
+    // Calculate current HP ratio before modifying maxHP
+    const hpRatio = en.maxHP > 0 ? (en.hp / en.maxHP) : 1;
     // Apply multipliers
     en.maxHP = Math.max(1, Math.floor(en.maxHP * (mods.enemyHpMul || 1)));
-    en.hp = Math.max(1, Math.min(en.maxHP, en.hp));
+    // Scale current HP proportionally to maintain the same percentage
+    en.hp = Math.max(1, Math.floor(en.maxHP * hpRatio));
     en.attackDamage = Math.max(1, Math.floor(en.attackDamage * (mods.enemyDmgMul || 1)));
     en.speed = Math.max(0.1, en.speed * (mods.enemySpeedMul || 1));
     if (mods.enemyTint) {
