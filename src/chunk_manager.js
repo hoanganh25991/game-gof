@@ -39,6 +39,7 @@ export class ChunkManager {
     this.active = new Map(); // key -> { group, ix, iz }
     this.generators = []; // list of (ctx) => void
     this.densities = Object.assign({ trees: 40, rocks: 16, flowers: 60 }, opts.densities || {});
+    this.structures = []; // Track all structures for minimap
     // Register default generator that manages both environment and structures
     this.addGenerator(this._defaultEnvAndStructuresGenerator.bind(this));
   }
@@ -138,6 +139,8 @@ export class ChunkManager {
     try {
       this.scene.remove(rec.group);
     } catch (_) {}
+    // Remove structures from tracking
+    this.structures = this.structures.filter(s => s.chunkKey !== key);
     // Dispose geometries/materials to free memory
     this._disposeGroup(rec.group);
     this.active.delete(key);
@@ -147,6 +150,20 @@ export class ChunkManager {
     for (const key of Array.from(this.active.keys())) {
       this._unloadChunk(key);
     }
+    this.structures = [];
+  }
+
+  /**
+   * Get structures API for minimap (compatible with structures.js API)
+   */
+  getStructuresAPI() {
+    return {
+      listStructures: () => this.structures.map(s => ({
+        type: s.type,
+        position: s.position.clone(),
+        name: s.name
+      }))
+    };
   }
 
   _disposeGroup(group) {
@@ -287,6 +304,20 @@ export class ChunkManager {
           if (label) {
             group.add(label);
           }
+          
+          // Track structure for minimap (use world position)
+          const worldPos = new THREE.Vector3(
+            ctx.origin.x + p.x,
+            0,
+            ctx.origin.z + p.z
+          );
+          this.structures.push({
+            type: structureType,
+            position: worldPos,
+            name: structure.userData.name,
+            mesh: structure,
+            chunkKey: ctx.key
+          });
         }
       }
     }

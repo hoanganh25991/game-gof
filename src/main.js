@@ -788,10 +788,12 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
  }
 
  function checkStructureProximity() {
-   if (!player || !window.__structuresAPI) return;
+   if (!player || !chunkMgr) return;
    
    const playerPos = player.pos();
-   const structures = window.__structuresAPI.listStructures();
+   const structuresAPI = chunkMgr.getStructuresAPI();
+   if (!structuresAPI) return;
+   const structures = structuresAPI.listStructures();
    let closestStructure = null;
    let closestDistance = Infinity;
    
@@ -1052,7 +1054,7 @@ function animate() {
       if ((nowMs - window.__lastMinimapT) >= (window.__MINIMAP_UPDATE_MS || MINIMAP_UPDATE_MS)) {
         window.__lastMinimapT = nowMs;
         try { 
-          const structures = (typeof window !== 'undefined' && window.__structuresAPI) ? window.__structuresAPI : null;
+          const structures = chunkMgr ? chunkMgr.getStructuresAPI() : null;
           ui.updateMinimap(player, enemies, portals, villages, structures); 
         } catch (_) {}
       }
@@ -1061,7 +1063,7 @@ function animate() {
     // Fallback: if anything goes wrong, keep original per-frame updates to preserve behavior.
     try { ui.updateHUD(player); } catch (_) {}
     try { 
-      const structures = (typeof window !== 'undefined' && window.__structuresAPI) ? window.__structuresAPI : null;
+      const structures = chunkMgr ? chunkMgr.getStructuresAPI() : null;
       ui.updateMinimap(player, enemies, portals, villages, structures); 
     } catch (_) {}
   }
