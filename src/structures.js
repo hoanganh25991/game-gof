@@ -133,7 +133,7 @@ export function createStructureWithLabel(structureType, params = {}, position = 
   label.position.set(position.x, labelHeight, position.z);
   
   if (structureType === "temple") {
-    label.scale.multiplyScalar(2);
+    label.scale.multiplyScalar(1.3);
   }
 
   return { structure, label };
@@ -333,7 +333,7 @@ export async function placeStructures(params = {}) {
         const name = generateStructureName("temple", pos, structureIndex++);
         const nameLabel = createTextSprite(name, "#ffd700", "rgba(0,0,0,0.4)");
         nameLabel.position.set(pos.x, 6, pos.z); // Lowered height for better visibility
-        nameLabel.scale.multiplyScalar(2); // Increase scale for better visibility
+        nameLabel.scale.multiplyScalar(1.3); // Increase scale for better visibility
         archGroup.add(nameLabel);
         
         // Debug: log structure creation
