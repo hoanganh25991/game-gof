@@ -66,7 +66,7 @@ await CSS_READY;
 const settingsManager = new SettingsManager({ storageKey, isMobile, MOBILE_OPTIMIZATIONS });
 
 // Initialize world manager
-const worldManager = new WorldManager({ initWorld, addResizeHandler });
+const worldManager = new WorldManager({ initWorld, updateCamera, updateGridFollow, addResizeHandler });
 const { renderer, scene, camera, ground, cameraOffset, cameraShake } = worldManager.getWorld();
 
 // Apply mobile renderer optimizations
