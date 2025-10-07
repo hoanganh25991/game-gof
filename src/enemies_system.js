@@ -217,14 +217,17 @@ export function createEnemiesSystem({
                 if (structuresAPI) {
                   const structures = structuresAPI.listStructures();
                   for (const s of structures) {
-                    const protectionRadius = (s.protectionRadius || 8) - 0.5; // Slightly inside the visual circle
-                    const dsx = nx - s.position.x;
-                    const dsz = nz - s.position.z;
-                    const distToStructure = Math.hypot(dsx, dsz);
+                    // Use full protection radius so enemies stop at the exact boundary
+                    const protectionRadius = s.protectionRadius || 8;
                     
-                    if (distToStructure <= protectionRadius) {
-                      // Enemy is trying to enter protected zone - push them out
+                    // Check both current and next positions
+                    const currentDist = Math.hypot(en.mesh.position.x - s.position.x, en.mesh.position.z - s.position.z);
+                    const nextDist = Math.hypot(nx - s.position.x, nz - s.position.z);
+                    
+                    // If enemy is currently inside or would enter, push them to the boundary
+                    if (currentDist < protectionRadius || nextDist < protectionRadius) {
                       const dirFromStructure = dir2D(s.position, en.pos());
+                      // Place exactly at the boundary
                       en.mesh.position.x = s.position.x + dirFromStructure.x * protectionRadius;
                       en.mesh.position.z = s.position.z + dirFromStructure.z * protectionRadius;
                       clamped = true;
