@@ -722,11 +722,12 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
    VILLAGE_POS,
    REST_RADIUS,
    renderQuality,
-   applyMapModifiersToEnemy
+   applyMapModifiersToEnemy,
+   chunkMgr // Pass chunk manager for structure protection zones
  });
  spawner.initialSpawn();
  
- // Villa proximity regen buff (separate from village buff)
+ // Villa proximity regen buff (updated to work with both static and chunked villas)
  const VILLA_REGEN_MULT = 1.6;
  let __nearVilla = false;
  let __villaRegenActive = false;
@@ -743,10 +744,62 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
  function removeVillaRegenBuff() {
    if (!__villaRegenActive) return;
    __villaRegenActive = false;
-   try { if (typeof player._villageBaseHpRegen === 'number') player.hpRegen = player._villageBaseHpRegen; } catch (_) {}
-   try { if (typeof player._villaBaseMpRegen === 'number') player.mpRegen = player._villageBaseMpRegen; } catch (_) {}
-   try { delete player._villageBaseHpRegen; } catch (_) {}
-   try { delete player._villageBaseMpRegen; } catch (_) {}
+   try { if (typeof player._villaBaseHpRegen === 'number') player.hpRegen = player._villaBaseHpRegen; } catch (_) {}
+   try { if (typeof player._villaBaseMpRegen === 'number') player.mpRegen = player._villaBaseMpRegen; } catch (_) {}
+   try { delete player._villaBaseHpRegen; } catch (_) {}
+   try { delete player._villaBaseMpRegen; } catch (_) {}
+ }
+
+ // Temple proximity buff (randomly grants damage, attack speed, or defense)
+ const TEMPLE_BUFF_OPTIONS = ['damage', 'attackSpeed', 'defense'];
+ const TEMPLE_DAMAGE_MULT = 1.3;
+ const TEMPLE_ATTACK_SPEED_MULT = 1.25;
+ const TEMPLE_DEFENSE_MULT = 1.4;
+ let __nearTemple = false;
+ let __templeBuffActive = false;
+ let __currentTempleBuff = null;
+ 
+ function applyTempleBuff() {
+   if (__templeBuffActive) return;
+   __templeBuffActive = true;
+   
+   // Randomly select one of three buffs
+   const buffType = TEMPLE_BUFF_OPTIONS[Math.floor(Math.random() * TEMPLE_BUFF_OPTIONS.length)];
+   __currentTempleBuff = buffType;
+   
+   if (buffType === 'damage') {
+     try { player._templeBaseDamage = player.attackDamage || 0; } catch (_) {}
+     try { player.attackDamage = Math.floor((player.attackDamage || 0) * TEMPLE_DAMAGE_MULT); } catch (_) {}
+     try { setCenterMsg && setCenterMsg('Divine power increases your damage!'); } catch (_) {}
+   } else if (buffType === 'attackSpeed') {
+     try { player._templeBaseAttackSpeed = player.attackSpeed || 1; } catch (_) {}
+     try { player.attackSpeed = (player.attackSpeed || 1) * TEMPLE_ATTACK_SPEED_MULT; } catch (_) {}
+     try { setCenterMsg && setCenterMsg('Divine blessing increases your attack speed!'); } catch (_) {}
+   } else if (buffType === 'defense') {
+     try { player._templeBaseDefense = player.defense || 0; } catch (_) {}
+     try { player.defense = Math.floor((player.defense || 0) + 10); } catch (_) {}
+     try { setCenterMsg && setCenterMsg('Divine protection increases your defense!'); } catch (_) {}
+   }
+   
+   setTimeout(() => { try { clearCenterMsg && clearCenterMsg(); } catch (_) {} }, 1400);
+ }
+ 
+ function removeTempleBuff() {
+   if (!__templeBuffActive) return;
+   __templeBuffActive = false;
+   
+   if (__currentTempleBuff === 'damage') {
+     try { if (typeof player._templeBaseDamage === 'number') player.attackDamage = player._templeBaseDamage; } catch (_) {}
+     try { delete player._templeBaseDamage; } catch (_) {}
+   } else if (__currentTempleBuff === 'attackSpeed') {
+     try { if (typeof player._templeBaseAttackSpeed === 'number') player.attackSpeed = player._templeBaseAttackSpeed; } catch (_) {}
+     try { delete player._templeBaseAttackSpeed; } catch (_) {}
+   } else if (__currentTempleBuff === 'defense') {
+     try { if (typeof player._templeBaseDefense === 'number') player.defense = player._templeBaseDefense; } catch (_) {}
+     try { delete player._templeBaseDefense; } catch (_) {}
+   }
+   
+   __currentTempleBuff = null;
  }
 
  // Structure proximity messages
@@ -841,7 +894,8 @@ const enemiesSystem = createEnemiesSystem({
   MOBILE_OPTIMIZATIONS,
   camera,
   shouldSpawnVfx,
-  applyMapModifiersToEnemy
+  applyMapModifiersToEnemy,
+  chunkMgr // Pass chunk manager for structure protection zones
 });
 
 // ------------------------------------------------------------
@@ -1089,19 +1143,70 @@ function animate() {
     villages.updateRest(player, dt);
 
     // Villa proximity check (apply/remove villa regen buff on transition)
+    // Works with both static villas and chunked villas from chunkMgr
     try {
       const pp = player.pos();
       let near = false;
+      
+      // Check static villas
       for (const v of villaStructures) {
         const d = Math.hypot(pp.x - v.center.x, pp.z - v.center.z);
         if (d <= (v.radius + 2)) { near = true; break; }
       }
+      
+      // Check chunked villas if not already near a static villa
+      if (!near && chunkMgr) {
+        try {
+          const structuresAPI = chunkMgr.getStructuresAPI();
+          if (structuresAPI) {
+            const structures = structuresAPI.listStructures();
+            for (const s of structures) {
+              if (s.type === 'villa') {
+                const d = Math.hypot(pp.x - s.position.x, pp.z - s.position.z);
+                // Use protectionRadius from structure tracking (already set to 12 for villas)
+                const checkRadius = 12;
+                if (d <= checkRadius) { near = true; break; }
+              }
+            }
+          }
+        } catch (_) {}
+      }
+      
       if (near && !__nearVilla) {
         __nearVilla = true;
         try { applyVillaRegenBuff(); } catch (_) {}
       } else if (!near && __nearVilla) {
         __nearVilla = false;
         try { removeVillaRegenBuff(); } catch (_) {}
+      }
+    } catch (_) {}
+
+    // Temple proximity check (apply/remove temple buff on transition)
+    try {
+      const pp = player.pos();
+      let nearTemple = false;
+      
+      if (chunkMgr) {
+        const structuresAPI = chunkMgr.getStructuresAPI();
+        if (structuresAPI) {
+          const structures = structuresAPI.listStructures();
+          for (const s of structures) {
+            if (s.type === 'temple') {
+              const d = Math.hypot(pp.x - s.position.x, pp.z - s.position.z);
+              // Use protectionRadius from structure tracking (already set to 15 for temples)
+              const checkRadius = 15;
+              if (d <= checkRadius) { nearTemple = true; break; }
+            }
+          }
+        }
+      }
+      
+      if (nearTemple && !__nearTemple) {
+        __nearTemple = true;
+        try { applyTempleBuff(); } catch (_) {}
+      } else if (!nearTemple && __nearTemple) {
+        __nearTemple = false;
+        try { removeTempleBuff(); } catch (_) {}
       }
     } catch (_) {}
 

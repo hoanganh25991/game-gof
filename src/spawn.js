@@ -38,7 +38,8 @@ export function createDynamicSpawner(deps) {
     VILLAGE_POS,
     REST_RADIUS,
     renderQuality,
-    applyMapModifiersToEnemy
+    applyMapModifiersToEnemy,
+    chunkMgr // chunk manager for structure protection zones
   } = deps;
 
   const dynamicSpawnConfig = (WORLD && WORLD.dynamicSpawn) || {};
@@ -130,6 +131,32 @@ export function createDynamicSpawner(deps) {
           const push2 = r2 - d2 + 0.5;
           cand.x += nx2 * push2;
           cand.z += nz2 * push2;
+        }
+      }
+    } catch (_) {}
+
+    // Keep out of structure protection zones
+    try {
+      if (chunkMgr) {
+        const structuresAPI = chunkMgr.getStructuresAPI();
+        if (structuresAPI) {
+          const structures = structuresAPI.listStructures();
+          for (const s of structures) {
+            // Each structure has protectionRadius (temple: 15, villa: 12, obelisk: 10, etc.)
+            const protectionRadius = s.protectionRadius || 8;
+            const dsx = cand.x - s.position.x;
+            const dsz = cand.z - s.position.z;
+            const ds = Math.hypot(dsx, dsz);
+            const safeRadius = protectionRadius + 2; // Add extra buffer
+            
+            if (ds < safeRadius) {
+              const nsx = dsx / (ds || 1);
+              const nsz = dsz / (ds || 1);
+              const pushS = safeRadius - ds + 0.5;
+              cand.x += nsx * pushS;
+              cand.z += nsz * pushS;
+            }
+          }
         }
       }
     } catch (_) {}

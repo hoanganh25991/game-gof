@@ -311,12 +311,35 @@ export class ChunkManager {
             0,
             ctx.origin.z + p.z
           );
+          
+          // Determine protection radius based on structure type
+          let protectionRadius = 8;
+          if (structureType === "temple") protectionRadius = 15;
+          else if (structureType === "villa") protectionRadius = 12;
+          else if (structureType === "obelisk") protectionRadius = 10;
+          else if (structureType === "column") protectionRadius = 6;
+          else if (structureType === "statue") protectionRadius = 6;
+          
+          // Create protective circle visualization
+          const circleGeo = new THREE.RingGeometry(protectionRadius - 0.2, protectionRadius, 32);
+          const circleMat = new THREE.MeshBasicMaterial({
+            color: structureType === "temple" ? 0xffd700 : (structureType === "villa" ? 0xffa500 : 0xffdd88),
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+          });
+          const circle = new THREE.Mesh(circleGeo, circleMat);
+          circle.rotation.x = -Math.PI / 2;
+          circle.position.set(p.x, 0.1, p.z);
+          group.add(circle);
+          
           this.structures.push({
             type: structureType,
             position: worldPos,
             name: structure.userData.name,
             mesh: structure,
-            chunkKey: ctx.key
+            chunkKey: ctx.key,
+            protectionRadius: protectionRadius
           });
         }
       }

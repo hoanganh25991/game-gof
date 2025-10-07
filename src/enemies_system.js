@@ -36,6 +36,7 @@ export function createEnemiesSystem({
   camera,
   shouldSpawnVfx, // (kind, pos) => boolean
   applyMapModifiersToEnemy, // (enemy) => void
+  chunkMgr, // chunk manager for structure protection zones
 }) {
   // Reusable temps (avoid allocations in hot path)
   const tA = new THREE.Vector3();
@@ -185,8 +186,8 @@ export function createEnemiesSystem({
           const spMul = en.slowUntil && now() < en.slowUntil ? en.slowFactor || 0.5 : 1;
 
           // Next tentative
-          const nx = en.mesh.position.x + v.x * en.speed * spMul * dt;
-          const nz = en.mesh.position.z + v.z * en.speed * spMul * dt;
+          let nx = en.mesh.position.x + v.x * en.speed * spMul * dt;
+          let nz = en.mesh.position.z + v.z * en.speed * spMul * dt;
 
           // Clamp to fences (origin village)
           const nextDistToVillage = Math.hypot(nx - VILLAGE_POS.x, nz - VILLAGE_POS.z);
@@ -208,6 +209,32 @@ export function createEnemiesSystem({
                 clamped = true;
               }
             } catch (_) {}
+            
+            // Check structure protection zones and push enemies out
+            if (!clamped && chunkMgr) {
+              try {
+                const structuresAPI = chunkMgr.getStructuresAPI();
+                if (structuresAPI) {
+                  const structures = structuresAPI.listStructures();
+                  for (const s of structures) {
+                    const protectionRadius = (s.protectionRadius || 8) - 0.5; // Slightly inside the visual circle
+                    const dsx = nx - s.position.x;
+                    const dsz = nz - s.position.z;
+                    const distToStructure = Math.hypot(dsx, dsz);
+                    
+                    if (distToStructure <= protectionRadius) {
+                      // Enemy is trying to enter protected zone - push them out
+                      const dirFromStructure = dir2D(s.position, en.pos());
+                      en.mesh.position.x = s.position.x + dirFromStructure.x * protectionRadius;
+                      en.mesh.position.z = s.position.z + dirFromStructure.z * protectionRadius;
+                      clamped = true;
+                      break;
+                    }
+                  }
+                }
+              } catch (_) {}
+            }
+            
             if (!clamped) {
               en.mesh.position.x = nx;
               en.mesh.position.z = nz;

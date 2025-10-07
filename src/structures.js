@@ -27,12 +27,12 @@ export function createStructureWithLabel(structureType, params = {}, position = 
     case "temple":
       names = templeNames;
       color = "#ffd700";
-      labelHeight = 6;
+      labelHeight = 12; // Raised higher to avoid overlap with tall temple
       break;
     case "villa":
       names = villaNames;
       color = "#ffa500";
-      labelHeight = 6;
+      labelHeight = 10; // Raised higher to avoid overlap with villa roof
       break;
     case "column":
       names = columnNames;
