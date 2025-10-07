@@ -4,7 +4,7 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey, CSS_READY } from "./constants.js";
 import { setLoadoutAndApply, getSkill, setSkill } from "./skill_api.js";
-import { initWorld, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "./world.js";
+import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "./world.js";
 import { UIManager } from "./ui/hud/index.js";
 import { Player, Enemy, getNearestEnemy, handWorldPos } from "./entities.js";
 import { EffectsManager, createGroundRing } from "./effects.js";
