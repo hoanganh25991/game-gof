@@ -314,8 +314,8 @@ export class ChunkManager {
           
           // Determine protection radius based on structure type
           let protectionRadius = 8;
-          if (structureType === "temple") protectionRadius = 15;
-          else if (structureType === "villa") protectionRadius = 12;
+          if (structureType === "temple") protectionRadius = 20;
+          else if (structureType === "villa") protectionRadius = 15;
           else if (structureType === "obelisk") protectionRadius = 10;
           else if (structureType === "column") protectionRadius = 6;
           else if (structureType === "statue") protectionRadius = 6;

@@ -798,9 +798,14 @@ try { window.__disposeMarkCooldownUI = disposeMarkCooldownUI; } catch (_) {}
      // Create new indicator
      const sprite = createEmojiSprite(emoji);
      
+     // Calculate the center of the player mesh dynamically using bounding box
+     const box = new THREE.Box3().setFromObject(player.mesh);
+     const center = box.getCenter(new THREE.Vector3());
+     const centerY = center.y;
+     
      // Position based on how many buffs are active
      const activeCount = Object.values(__buffIndicators).filter(b => b !== null).length;
-     sprite.position.set(activeCount * 1.8 - 1.8, 4.5, 0); // Spread horizontally above hero
+     sprite.position.set(activeCount * 1.8 - 1.8, centerY, 0); // Spread horizontally at calculated center of hero model
      
      __buffIndicators[type] = sprite;
      player.mesh.add(sprite);
