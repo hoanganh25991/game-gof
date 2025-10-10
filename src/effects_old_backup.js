@@ -1,0 +1,724 @@
+import * as THREE from "../vendor/three/build/three.module.js";
+import { COLOR, FX } from "./constants.js";
+import { now, parseThreeColor } from "./utils.js";
+import { handWorldPos, leftHandWorldPos } from "./entities.js";
+
+// Normalize color inputs from various formats ("#66ffc2", "#66ffc2", 0x66ffc2, 6750146)
+function normalizeColor(c, fallback = COLOR.fire) {
+  try {
+    if (typeof c === "number" && Number.isFinite(c)) return c >>> 0;
+    if (typeof c === "string") {
+      return parseThreeColor(c).hex >>> 0;
+    }
+  } catch (_) {}
+  try {
+    if (typeof fallback === "string") return parseThreeColor(fallback).hex >>> 0;
+    if (typeof fallback === "number") return fallback >>> 0;
+  } catch (_) {}
+  return 0xff6b35;
+}
+
+// Standalone ring factory (used by UI modules and effects)
+export function createGroundRing(innerR, outerR, color, opacity = 0.6) {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(innerR, outerR, 48),
+    new THREE.MeshBasicMaterial({
+      color: normalizeColor(color),
+      transparent: true,
+      opacity,
+      side: THREE.FrontSide,
+      depthWrite: false,
+    })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.02;
+  return ring;
+}
+
+// Manages transient effects (lines, flashes) and indicator meshes (rings, pings)
+export class EffectsManager {
+  constructor(scene, opts = {}) {
+    this.scene = scene;
+    this.quality =
+      (opts && opts.quality) ||
+      (typeof localStorage !== "undefined"
+        ? (JSON.parse(localStorage.getItem("gof.renderPrefs") || "{}").quality || "high")
+        : "high");
+
+    this.transient = new THREE.Group();
+    scene.add(this.transient);
+
+    this.indicators = new THREE.Group();
+    scene.add(this.indicators);
+
+    // Small pool of temporaries used by hot VFX paths to avoid per-frame allocations.
+    // These are reused within each EffectsManager instance (safe as VFX creation is synchronous).
+    this._tmpVecA = new THREE.Vector3();
+    this._tmpVecB = new THREE.Vector3();
+    this._tmpVecC = new THREE.Vector3();
+    this._tmpVecD = new THREE.Vector3();
+    this._tmpVecE = new THREE.Vector3();
+
+    // Internal timed queue for cleanup and animations
+    this.queue = []; // items: { obj, until, fade?, mat?, scaleRate? }
+  }
+
+  // ----- Indicator helpers -----
+  spawnMovePing(point, color = COLOR.fire) {
+    const ring = createGroundRing(0.6, 0.85, color, 0.8);
+    ring.position.set(point.x, 0.02, point.z);
+    this.indicators.add(ring);
+    this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.6 });
+  }
+
+  spawnTargetPing(entity, color = COLOR.ember) {
+    if (!entity || !entity.alive) return;
+    const p = entity.pos();
+    const ring = createGroundRing(0.65, 0.9, color, 0.85);
+    ring.position.set(p.x, 0.02, p.z);
+    this.indicators.add(ring);
+    this.queue.push({ obj: ring, until: now() + 0.7 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.4 });
+  }
+
+  showNoTargetHint(player, radius) {
+    const ring = createGroundRing(Math.max(0.1, radius - 0.2), radius + 0.2, COLOR.ember, 0.35);
+    const p = player.pos();
+    ring.position.set(p.x, 0.02, p.z);
+    this.indicators.add(ring);
+    this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material });
+    // subtle spark at player for feedback
+    this.spawnStrike(player.pos(), 1.2, COLOR.ember);
+  }
+
+  // ----- Projectile helpers -----
+  // Fireball projectile that travels from source to target with trail
+  spawnFireball(from, to, opts = {}) {
+    const color = opts.color || COLOR.fire;
+    const size = opts.size || 0.4;
+    const speed = opts.speed || 20;
+    const trail = opts.trail !== false;
+    
+    const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
+    const distance = dir.length();
+    const travelTime = distance / speed;
+    
+    // Create fireball sphere with glowing material
+    const fireballGeo = new THREE.SphereGeometry(size, 12, 12);
+    const fireballMat = new THREE.MeshBasicMaterial({ 
+      color: normalizeColor(color), 
+      transparent: true, 
+      opacity: 0.95 
+    });
+    const fireball = new THREE.Mesh(fireballGeo, fireballMat);
+    fireball.position.copy(from);
+    
+    // Add outer glow layer
+    const glowGeo = new THREE.SphereGeometry(size * 1.4, 12, 12);
+    const glowMat = new THREE.MeshBasicMaterial({ 
+      color: COLOR.accent, 
+      transparent: true, 
+      opacity: 0.4 
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    fireball.add(glow);
+    
+    this.transient.add(fireball);
+    
+    const startTime = now();
+    this.queue.push({
+      obj: fireball,
+      until: startTime + travelTime * FX.timeScale,
+      projectile: true,
+      from: from.clone(),
+      to: to.clone(),
+      startTime,
+      travelTime,
+      mat: fireballMat,
+      glowMat,
+      trail,
+      trailColor: color,
+      onComplete: opts.onComplete
+    });
+  }
+
+  // ----- Beam helpers -----
+  spawnBeam(from, to, color = COLOR.fire, life = 0.12) {
+    // Avoid allocating temporary vectors for simple two-point lines by reusing instance temps.
+    const p0 = this._tmpVecA.copy(from);
+    const p1 = this._tmpVecB.copy(to);
+    const geometry = new THREE.BufferGeometry().setFromPoints([p0, p1]);
+    const material = new THREE.LineBasicMaterial({ color: normalizeColor(color), linewidth: 2 });
+    const line = new THREE.Line(geometry, material);
+    this.transient.add(line);
+    const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
+    this.queue.push({ obj: line, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: material });
+  }
+
+  // Fire stream/flamethrower beam with flickering flames (for continuous fire effects)
+  spawnFireStream(from, to, color = COLOR.fire, life = 0.12, segments = 10, amplitude = 0.6) {
+    // Use temporaries to compute dir/normal/up without allocations.
+    const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
+    const normal = this._tmpVecC.set(-dir.z, 0, dir.x).normalize();
+    const up = this._tmpVecD.set(0, 1, 0);
+    const length = dir.length() || 1;
+
+    // FIRE EFFECT: Multiple thick passes with gradient colors (yellow core, orange-red edges)
+    const fireColors = [
+      COLOR.yellow,  // Bright yellow core
+      COLOR.accent,  // Orange middle
+      COLOR.fire,    // Orange-red outer
+    ];
+    
+    const passes = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
+    
+    for (let pass = 0; pass < passes; pass++) {
+      const points = [];
+      const seg = Math.max(4, Math.round(segments * (this.quality === "low" ? 0.5 : (this.quality === "medium" ? 0.75 : 1))));
+      const spreadMult = pass * 0.15; // Each pass spreads wider
+      
+      for (let i = 0; i <= seg; i++) {
+        const t = i / segments;
+        // build point into a temp vector - smoother curve for fire stream
+        const pTmp = this._tmpVecE.copy(from).lerp(this._tmpVecB.copy(to), t);
+        // Wavy fire pattern with turbulence
+        const amp = Math.sin(Math.PI * t) * amplitude * (0.3 + spreadMult);
+        const waveOffset = Math.sin(t * Math.PI * 3 + Date.now() * 0.01 + pass * 0.5) * amplitude * (0.2 + spreadMult);
+        // Add turbulence for organic fire look
+        const turbulence = (Math.random() - 0.5) * amplitude * (0.4 + spreadMult);
+        const j1 = this._tmpVecA.copy(normal).multiplyScalar(waveOffset + turbulence);
+        const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.6);
+        pTmp.add(j1).add(j2);
+        points.push(pTmp.clone());
+      }
+
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const colorIdx = Math.min(pass, fireColors.length - 1);
+      const fireColor = fireColors[colorIdx];
+      const opacity = pass === 0 ? 0.9 : (0.7 - pass * 0.15);
+      const material = new THREE.LineBasicMaterial({ 
+        color: normalizeColor(fireColor), 
+        transparent: true, 
+        opacity: opacity,
+        linewidth: 2 // Thicker lines for fire
+      });
+      const line = new THREE.Line(geometry, material);
+      this.transient.add(line);
+      const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
+      this.queue.push({ obj: line, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: material });
+    }
+
+    // Fire embers and sparks rising upward
+    const emberCount = this.quality === "low" ? 2 : (this.quality === "medium" ? 4 : 6);
+    for (let i = 0; i < emberCount; i++) {
+      const t = Math.random();
+      const emberPos = from.clone().lerp(to, t);
+      // Embers rise and drift
+      const emberEnd = emberPos.clone().add(up.clone().multiplyScalar(0.5 + Math.random() * 1.5));
+      emberEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 0.8));
+      const g2 = new THREE.BufferGeometry().setFromPoints([emberPos, emberEnd]);
+      const emberColor = Math.random() > 0.5 ? COLOR.accent : COLOR.ember;
+      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(emberColor), transparent: true, opacity: 0.7 });
+      const l2 = new THREE.Line(g2, m2);
+      this.transient.add(l2);
+      const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
+      this.queue.push({ obj: l2, until: now() + life * lifeMul * (0.8 + Math.random() * 0.4) * FX.timeScale, fade: true, mat: m2 });
+    }
+  }
+
+  // Auto-scaling multi-pass fire stream for thickness by distance (flamethrower/continuous fire)
+  spawnFireStreamAuto(from, to, color = COLOR.fire, life = 0.12) {
+    const dir = to.clone().sub(from);
+    const length = dir.length() || 1;
+    const normal = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+    const up = new THREE.Vector3(0, 1, 0);
+
+    const segments = Math.max(8, Math.min(18, Math.round(8 + length * 0.5)));
+    const seg = Math.max(6, Math.round(segments * (this.quality === "low" ? 0.5 : (this.quality === "medium" ? 0.75 : 1))));
+    const amplitude = Math.min(1.0, 0.25 + length * 0.02);
+
+    // FIRE EFFECT: Gradient from yellow core to orange-red edges
+    const fireColors = [
+      COLOR.yellow,  // Bright yellow core
+      COLOR.accent,  // Yellow-orange
+      COLOR.ember,   // Orange
+      COLOR.fire,    // Orange-red outer
+    ];
+
+    const countCap = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
+    const passes = Math.min(countCap, fireColors.length);
+
+    for (let n = 0; n < passes; n++) {
+      const pts = [];
+      const spreadMult = n * 0.2; // Each pass spreads wider for volumetric fire
+      
+      for (let i = 0; i <= seg; i++) {
+        const t = i / segments;
+        const pTmp = this._tmpVecE.copy(from).lerp(this._tmpVecB.copy(to), t);
+        // Organic wavy pattern with turbulence
+        const amp = Math.sin(Math.PI * t) * amplitude * (0.6 + spreadMult);
+        const wavePhase = t * Math.PI * 2 + n * 0.5 + Date.now() * 0.008;
+        const wave = Math.sin(wavePhase) * amplitude * (0.4 + spreadMult);
+        // Add random turbulence for fire chaos
+        const turbulence = (Math.random() - 0.5) * amplitude * (0.3 + spreadMult);
+        const j1 = this._tmpVecA.copy(normal).multiplyScalar(wave * (0.9 + n * 0.1) + turbulence);
+        const j2 = this._tmpVecC.copy(up).multiplyScalar((Math.random() * 2 - 1) * amp * 0.5);
+        pTmp.add(j1).add(j2);
+        pts.push(pTmp.clone());
+      }
+      const g = new THREE.BufferGeometry().setFromPoints(pts);
+      const fireColor = fireColors[n];
+      const opacity = n === 0 ? 0.9 : Math.max(0.4, (0.75 - n * 0.15));
+      const m = new THREE.LineBasicMaterial({ 
+        color: normalizeColor(fireColor), 
+        transparent: true, 
+        opacity,
+        linewidth: 2
+      });
+      const l = new THREE.Line(g, m);
+      this.transient.add(l);
+      const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
+      this.queue.push({ obj: l, until: now() + life * lifeMul * FX.timeScale, fade: true, mat: m });
+    }
+
+    // Fire embers and sparks along the beam
+    const emberCount = this.quality === "low" ? 3 : (this.quality === "medium" ? 5 : 8);
+    for (let i = 0; i < emberCount; i++) {
+      const t = Math.random();
+      const emberPos = from.clone().lerp(to, t);
+      // Embers rise and drift randomly
+      const emberEnd = emberPos.clone().add(up.clone().multiplyScalar(0.6 + Math.random() * 1.8));
+      emberEnd.add(normal.clone().multiplyScalar((Math.random() - 0.5) * 1.2));
+      const g2 = new THREE.BufferGeometry().setFromPoints([emberPos, emberEnd]);
+      const emberColor = Math.random() > 0.6 ? COLOR.accent : (Math.random() > 0.5 ? COLOR.ember : COLOR.fire);
+      const m2 = new THREE.LineBasicMaterial({ color: normalizeColor(emberColor), transparent: true, opacity: 0.75 });
+      const l2 = new THREE.Line(g2, m2);
+      this.transient.add(l2);
+      const lifeMul = this.quality === "low" ? 0.7 : (this.quality === "medium" ? 0.85 : 1);
+      this.queue.push({ obj: l2, until: now() + life * lifeMul * (0.7 + Math.random() * 0.5) * FX.timeScale, fade: true, mat: m2 });
+    }
+  }
+
+  spawnArcNoisePath(from, to, color = COLOR.midFire, life = 0.08, passes = 2) {
+    for (let i = 0; i < passes; i++) {
+      this.spawnFireStream(from, to, color, life, 6, 0.2);
+    }
+  }
+
+  // ----- Impact helpers -----
+  spawnHitDecal(center, color = COLOR.ember) {
+    const ring = createGroundRing(0.2, 0.55, color, 0.5);
+    ring.position.set(center.x, 0.02, center.z);
+    this.indicators.add(ring);
+    this.queue.push({ obj: ring, until: now() + 0.22 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.3 });
+  }
+
+  spawnStrike(point, radius = 2, color = COLOR.fire) {
+    // FIRE PILLAR: Multiple layered beams erupting from ground with gradient colors
+    const fireColors = [
+      COLOR.yellow,  // Bright yellow core
+      COLOR.accent,  // Yellow-orange
+      COLOR.ember,   // Orange
+      COLOR.fire,    // Orange-red outer
+    ];
+    
+    const pillarPasses = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
+    
+    // Main fire pillar with multiple passes for thickness
+    for (let i = 0; i < pillarPasses; i++) {
+      const from = point.clone().add(new THREE.Vector3(
+        (Math.random() - 0.5) * 0.3 * i, 
+        0.1, 
+        (Math.random() - 0.5) * 0.3 * i
+      ));
+      const to = point.clone().add(new THREE.Vector3(
+        (Math.random() - 0.5) * 0.5 * i, 
+        6 + Math.random() * 2, 
+        (Math.random() - 0.5) * 0.5 * i
+      ));
+      const pillarColor = fireColors[Math.min(i, fireColors.length - 1)];
+      this.spawnBeam(from, to, pillarColor, 0.15);
+    }
+
+    // Explosive radial fire bursts (outward and upward like volcanic eruption)
+    const burstCount = this.quality === "low" ? 3 : (this.quality === "medium" ? 6 : 8);
+    for (let i = 0; i < burstCount; i++) {
+      const ang = (i / burstCount) * Math.PI * 2 + Math.random() * 0.5;
+      const r = radius * (0.5 + Math.random() * 0.5);
+      const p2 = point.clone().add(new THREE.Vector3(
+        Math.cos(ang) * r, 
+        0.8 + Math.random() * 1.5, 
+        Math.sin(ang) * r
+      ));
+      const burstColor = Math.random() > 0.5 ? COLOR.accent : COLOR.ember;
+      this.spawnBeam(point.clone().add(new THREE.Vector3(0, 0.2, 0)), p2, burstColor, 0.12);
+    }
+    
+    // Fire embers shooting upward from impact point
+    const emberCount = this.quality === "low" ? 4 : (this.quality === "medium" ? 8 : 12);
+    for (let i = 0; i < emberCount; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const r = Math.random() * radius * 0.5;
+      const emberStart = point.clone().add(new THREE.Vector3(
+        Math.cos(ang) * r, 
+        0.1, 
+        Math.sin(ang) * r
+      ));
+      const emberEnd = emberStart.clone().add(new THREE.Vector3(
+        (Math.random() - 0.5) * 1.5,
+        2 + Math.random() * 3,
+        (Math.random() - 0.5) * 1.5
+      ));
+      const emberColor = Math.random() > 0.6 ? COLOR.yellow : (Math.random() > 0.5 ? COLOR.accent : COLOR.ember);
+      this.spawnBeam(emberStart, emberEnd, emberColor, 0.1 + Math.random() * 0.1);
+    }
+  }
+  
+  // Expanding ground ring pulse (scales and fades)
+  spawnRingPulse(center, radius = 6, color = COLOR.fire, duration = 0.35, width = 0.6, opacity = 0.55) {
+    try {
+      const ring = createGroundRing(Math.max(0.05, radius - width * 0.5), radius + width * 0.5, color, opacity);
+      ring.position.set(center.x, 0.02, center.z);
+      this.indicators.add(ring);
+      // Scale out over time; fade handled by update loop
+      this.queue.push({ obj: ring, until: now() + duration * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.0 });
+    } catch (_) {}
+  }
+
+  // Cage of vertical bars for "Fire Prison" and similar effects
+  spawnCage(center, radius = 12, color = COLOR.fire, duration = 0.6, bars = 12, height = 2.2) {
+    try {
+      const g = new THREE.Group();
+      const mats = [];
+      const h = Math.max(1.4, height);
+      const yMid = h * 0.5;
+      const r = Math.max(1, radius);
+      const col = normalizeColor(color);
+      for (let i = 0; i < Math.max(6, bars); i++) {
+        const ang = (i / Math.max(6, bars)) * Math.PI * 2;
+        const x = center.x + Math.cos(ang) * r;
+        const z = center.z + Math.sin(ang) * r;
+        const geo = new THREE.CylinderGeometry(0.06, 0.06, h, 6);
+        const mat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85 });
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(x, yMid, z);
+        g.add(m);
+        mats.push(mat);
+      }
+      // Ground ring tying the cage together
+      const baseRing = createGroundRing(Math.max(0.2, r - 0.25), r + 0.25, col, 0.4);
+      baseRing.position.set(center.x, 0.02, center.z);
+      g.add(baseRing);
+      mats.push(baseRing.material);
+
+      this.transient.add(g);
+      this.queue.push({ obj: g, until: now() + duration * FX.timeScale, fade: true, mats });
+    } catch (_) {}
+  }
+
+  // Shield bubble that follows an entity and gently pulses
+  spawnShieldBubble(entity, color = COLOR.fire, duration = 6, radius = 1.7) {
+    try {
+      const mat = new THREE.MeshBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.22, wireframe: true });
+      const bubble = new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 16), mat);
+      const p = entity.pos();
+      bubble.position.set(p.x, 1.1, p.z);
+      this.transient.add(bubble);
+      this.queue.push({
+        obj: bubble,
+        until: now() + duration * FX.timeScale,
+        fade: true,
+        mat,
+        follow: entity,
+        followYOffset: 1.1,
+        pulseAmp: 0.06,
+        pulseRate: 3.5,
+        baseScale: 1
+      });
+    } catch (_) {}
+  }
+
+  // Storm cloud disc hovering over an area (rotates and fades)
+  spawnStormCloud(center, radius = 12, color = COLOR.fire, duration = 6, height = 3.6) {
+    try {
+      const thick = Math.max(0.6, radius * 0.08);
+      const torus = new THREE.Mesh(
+        new THREE.TorusGeometry(Math.max(2, radius * 0.8), thick * 0.5, 12, 32),
+        new THREE.MeshBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.18 })
+      );
+      torus.position.set(center.x, height, center.z);
+      torus.rotation.x = Math.PI / 2; // lie flat like a cloud disc
+      this.transient.add(torus);
+      this.queue.push({ obj: torus, until: now() + duration * FX.timeScale, fade: true, mat: torus.material, spinRate: 0.6 });
+    } catch (_) {}
+  }
+
+  // Orbiting energy orbs around an entity for a short duration
+  spawnOrbitingOrbs(entity, color = COLOR.fire, opts = {}) {
+    try {
+      const count = Math.max(1, opts.count ?? 4);
+      const r = Math.max(0.4, opts.radius ?? 1.2);
+      const duration = Math.max(0.2, opts.duration ?? 1.0);
+      const size = Math.max(0.06, opts.size ?? 0.16);
+      const rate = Math.max(0.5, opts.rate ?? 4.0);
+
+      const group = new THREE.Group();
+      const children = [];
+      for (let i = 0; i < count; i++) {
+        const orb = new THREE.Mesh(
+          new THREE.SphereGeometry(size, 10, 10),
+          new THREE.MeshBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.9 })
+        );
+        group.add(orb);
+        children.push(orb);
+      }
+      const p = entity.pos();
+      group.position.set(p.x, 0, p.z);
+      this.transient.add(group);
+      this.queue.push({
+        obj: group,
+        until: now() + duration * FX.timeScale,
+        fade: true,
+        follow: entity,
+        followYOffset: 0,
+        orbitChildren: children,
+        orbitR: r,
+        orbitRate: rate,
+        orbitYOffset: 1.2
+      });
+    } catch (_) {}
+  }
+
+  spawnHandFlash(player, left = false) {
+    const p = left ? leftHandWorldPos(player) : handWorldPos(player);
+    const s = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 12, 12),
+      new THREE.MeshBasicMaterial({ color: COLOR.midFire, transparent: true, opacity: 0.9 })
+    );
+    s.position.copy(p);
+    this.transient.add(s);
+    this.queue.push({ obj: s, until: now() + 0.12 * FX.timeScale, fade: true, mat: s.material, scaleRate: 1.8 });
+  }
+
+  // Colored variant for skill-tinted flashes
+  spawnHandFlashColored(player, color = COLOR.midFire, left = false) {
+    const p = left ? leftHandWorldPos(player) : handWorldPos(player);
+    const s = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 12, 12),
+      new THREE.MeshBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.95 })
+    );
+    s.position.copy(p);
+    this.transient.add(s);
+    this.queue.push({ obj: s, until: now() + 0.14 * FX.timeScale, fade: true, mat: s.material, scaleRate: 2.0 });
+  }
+
+  /**
+   * Spawn a small floating damage text at world position.
+   * amount may be a number or string. Color is a hex number.
+   */
+  spawnDamagePopup(worldPos, amount, color = "#ffe1e1") {
+    // Throttle popups on lower qualities to reduce CanvasTexture churn
+    const q = this.quality || "high";
+    if (q === "low" && Math.random() > 0.3) return;
+    if (q === "medium" && Math.random() > 0.6) return;
+    if (!worldPos) return;
+    const text = String(Math.floor(Number(amount) || amount));
+    const w = 160;
+    const h = 64;
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d");
+    // Background transparent
+    ctx.clearRect(0, 0, w, h);
+    // Shadow / stroke for readability
+    ctx.font = "bold 36px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = "rgba(0,0,0,0.6)";
+    ctx.strokeText(text, w / 2, h / 2);
+    ctx.fillStyle = `${color}`;
+    ctx.fillText(text, w / 2, h / 2);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.needsUpdate = true;
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true });
+    const spr = new THREE.Sprite(mat);
+
+    // Scale sprite so it's readable in world units
+    const scaleBase = 0.8;
+    const scale = scaleBase + Math.min(2.0, text.length * 0.08);
+    spr.scale.set(scale * (w / 128), scale * (h / 64), 1);
+    spr.position.set(worldPos.x, worldPos.y + 2.4, worldPos.z);
+
+    this.transient.add(spr);
+    this.queue.push({
+      obj: spr,
+      until: now() + 1.0 * FX.popupDurationScale,
+      fade: true,
+      mat: mat,
+      velY: 0.9,
+      map: tex,
+    });
+  }
+
+  // Hand crackle sparks around hand anchor (fire embers/sparks)
+  spawnHandCrackle(player, left = false, strength = 1) {
+    if (!player) return;
+    const origin = left ? leftHandWorldPos(player) : handWorldPos(player);
+    const qMul = this.quality === "low" ? 0.4 : (this.quality === "medium" ? 0.6 : 1);
+    const count = Math.max(1, Math.round((2 + Math.random() * 2 * strength) * qMul));
+    for (let i = 0; i < count; i++) {
+      const dir = new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.2), (Math.random() - 0.5)).normalize();
+      const len = 0.35 + Math.random() * 0.5 * strength;
+      const to = origin.clone().add(dir.multiplyScalar(len));
+      // Fire sparks/embers
+      this.spawnBeam(origin.clone(), to, COLOR.midFire, 0.06);
+    }
+  }
+
+  // Short arc connecting both hands (fire stream between hands)
+  spawnHandLink(player, life = 0.08) {
+    if (!player) return;
+    const a = handWorldPos(player);
+    const b = leftHandWorldPos(player);
+    this.spawnFireStreamAuto(a, b, COLOR.midFire, life);
+  }
+
+  // ----- Frame update -----
+  update(t, dt) {
+    // Adaptive VFX throttling based on FPS to reduce draw calls on low-end devices
+    let fps = 60;
+    try { fps = (window.__perfMetrics && window.__perfMetrics.fps) ? window.__perfMetrics.fps : (1000 / Math.max(0.001, (window.__perfMetrics && window.__perfMetrics.avgMs) || 16.7)); } catch (_) {}
+    const __fadeBoost = fps < 20 ? 2.4 : (fps < 28 ? 1.8 : (fps < 40 ? 1.25 : 1));
+    try {
+      const maxAllowed = fps < 20 ? 28 : (fps < 28 ? 42 : (fps < 40 ? 80 : 120));
+      if (this.queue.length > maxAllowed) {
+        const toCull = Math.min(this.queue.length - maxAllowed, Math.floor(this.queue.length * 0.2));
+        // Mark a subset to end soon; disposal occurs below when t >= until
+        for (let k = 0; k < toCull; k++) {
+          const idx = (k % this.queue.length);
+          const e = this.queue[idx];
+          if (e) e.until = Math.min(e.until || (t + 0.3), t + 0.12);
+        }
+      }
+    } catch (_) {}
+
+    for (let i = this.queue.length - 1; i >= 0; i--) {
+      const e = this.queue[i];
+
+      // Projectile motion (fireballs, etc.)
+      if (e.projectile && e.obj && e.obj.position) {
+        const elapsed = t - e.startTime;
+        const progress = Math.min(1, elapsed / e.travelTime);
+        
+        // Lerp position from start to end
+        const newPos = this._tmpVecA.copy(e.from).lerp(this._tmpVecB.copy(e.to), progress);
+        e.obj.position.copy(newPos);
+        
+        // Add slight wobble for organic fire movement
+        const wobble = Math.sin(t * 15) * 0.1;
+        e.obj.position.y += wobble;
+        
+        // Spawn fire trail particles
+        if (e.trail && this.quality !== "low" && Math.random() > 0.6) {
+          const trailPos = e.obj.position.clone();
+          const trailEnd = trailPos.clone().add(new THREE.Vector3(
+            (Math.random() - 0.5) * 0.3,
+            -0.2 - Math.random() * 0.3,
+            (Math.random() - 0.5) * 0.3
+          ));
+          this.spawnBeam(trailPos, trailEnd, e.trailColor || COLOR.fire, 0.08);
+        }
+        
+        // Check if reached destination
+        if (progress >= 1 && e.onComplete) {
+          try { e.onComplete(e.to); } catch (_) {}
+        }
+      }
+
+      // Vertical motion for popups
+      if (e.velY && e.obj && e.obj.position) {
+        e.obj.position.y += e.velY * dt;
+      }
+
+      // Optional animated scaling (for pings)
+      if (e.scaleRate && e.obj && e.obj.scale) {
+        const s = 1 + (e.scaleRate || 0) * dt * FX.scaleRateScale;
+        e.obj.scale.multiplyScalar(s);
+      }
+
+      // Follow an entity (for bubbles/rings that should stick to a unit)
+      if (e.follow && e.obj && typeof e.follow.pos === "function") {
+        const p = e.follow.pos();
+        try { e.obj.position.set(p.x, (e.followYOffset ?? e.obj.position.y), p.z); } catch (_) {}
+      }
+
+      // Pulsing scale (breathing bubble, buff auras)
+      if (e.pulseAmp && e.obj && e.obj.scale) {
+        const base = e.baseScale || 1;
+        const rate = (e.pulseRate || 3) * FX.pulseRateScale;
+        const amp = e.pulseAmp || 0.05;
+        const s2 = base * (1 + Math.sin(t * rate) * amp);
+        try { e.obj.scale.set(s2, s2, s2); } catch (_) {}
+      }
+
+      // Spin rotation (e.g., storm cloud disc)
+      if (e.spinRate && e.obj && e.obj.rotation) {
+        try { e.obj.rotation.y += (e.spinRate || 0) * dt * FX.spinRateScale; } catch (_) {}
+      }
+
+      // Orbiting orbs around a followed entity
+      if (e.orbitChildren && e.obj) {
+        const cnt = e.orbitChildren.length || 0;
+        e.orbitBase = (e.orbitBase || 0) + (e.orbitRate || 4) * dt * FX.orbitRateScale;
+        const base = e.orbitBase || 0;
+        const r = e.orbitR || 1.2;
+        const y = e.orbitYOffset ?? 1.2;
+        for (let i = 0; i < cnt; i++) {
+          const child = e.orbitChildren[i];
+          if (!child) continue;
+          const ang = base + (i * Math.PI * 2) / Math.max(1, cnt);
+          try { child.position.set(Math.cos(ang) * r, y, Math.sin(ang) * r); } catch (_) {}
+        }
+      }
+
+      if (e.fade) {
+        const fadeOne = (m) => {
+          if (!m) return;
+          m.opacity = m.opacity ?? 1;
+          m.transparent = true;
+          m.opacity = Math.max(0, m.opacity - dt * 1.8 * FX.fadeSpeedScale * __fadeBoost);
+        };
+        if (e.mat) fadeOne(e.mat);
+        if (e.mats && Array.isArray(e.mats)) e.mats.forEach(fadeOne);
+      }
+
+      if (t >= e.until) {
+        // Remove from either transient or indicators group if present
+        this.transient.remove(e.obj);
+        this.indicators.remove(e.obj);
+        // Dispose recursively
+        const disposeMat = (m) => {
+          try { if (m && m.map) m.map.dispose?.(); } catch (_) {}
+          try { m && m.dispose?.(); } catch (_) {}
+        };
+        const disposeObj = (o) => {
+          try { o.geometry && o.geometry.dispose?.(); } catch (_) {}
+          try {
+            if (Array.isArray(o.material)) o.material.forEach(disposeMat);
+            else disposeMat(o.material);
+          } catch (_) {}
+        };
+        try {
+          if (e.obj && typeof e.obj.traverse === "function") {
+            e.obj.traverse(disposeObj);
+          } else {
+            disposeObj(e.obj);
+          }
+        } catch (_) {}
+        this.queue.splice(i, 1);
+      }
+    }
+  }
+}
