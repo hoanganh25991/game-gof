@@ -3,10 +3,10 @@ import { COLOR, FX } from "./constants.js";
 import { now, parseThreeColor } from "./utils.js";
 import { handWorldPos, leftHandWorldPos } from "./entities.js";
 import { BaseEffects, normalizeColor, createGroundRing } from "./effects_base.js";
-import { executeSkillEffect, hasSkillEffect } from "./effects_registry.js";
+import { executeSkillEffect, hasSkillEffect, preloadEffects } from "./effects_loader.js";
 
 // Re-export for backward compatibility
-export { createGroundRing, normalizeColor };
+export { createGroundRing, normalizeColor, preloadEffects };
 
 /**
  * Unified Effects Manager
