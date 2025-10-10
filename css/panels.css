@@ -559,6 +559,7 @@
   display: grid;
 }
 .modal-box {
+  position: relative;
   min-width: 280px;
   max-width: 90vw;
   background: var(--system-bg);

@@ -198,7 +198,7 @@ function showReloadConfirm(t) {
     if (modal) {
       const titleEl = modal.querySelector("#qualityReloadTitle");
       const descEl = modal.querySelector(".modal-desc");
-      const btnCancel = document.getElementById("qualityReloadCancel") || modal.querySelector(".secondary");
+      const btnClose = document.getElementById("qualityReloadClose");
       const btnOk = document.getElementById("qualityReloadOk") || modal.querySelector(".primary");
 
       // Localize
@@ -206,7 +206,6 @@ function showReloadConfirm(t) {
         if (titleEl) titleEl.textContent = tt("settings.render.reloadTitle") || "Reload required";
         if (descEl) descEl.textContent =
           tt("settings.render.reloadDesc") || (tt("settings.render.reloadPrompt") || "Changing graphics quality requires a reload.");
-        if (btnCancel) btnCancel.textContent = tt("btn.cancel") || "Cancel";
         if (btnOk) btnOk.textContent = tt("btn.yes") || "Yes";
       } catch (_) {}
 
@@ -228,7 +227,7 @@ function showReloadConfirm(t) {
       modal.addEventListener("click", onClickBackdrop, true);
       try { modal.classList.remove("hidden"); } catch (_) {}
 
-      btnCancel?.addEventListener("click", function onC() { cleanup(); resolve(false); }, { once: true });
+      btnClose?.addEventListener("click", function onX() { cleanup(); resolve(false); }, { once: true });
       btnOk?.addEventListener("click", function onO() { cleanup(); resolve(true); }, { once: true });
       return;
     }
