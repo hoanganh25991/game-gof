@@ -5,16 +5,16 @@ A lightweight prototype featuring DOTA‑style controls, electric abilities, sim
 ## Overview
 
 **Game Play**
-![guide](./images/gof-game-play-iphone-14-pro-max-1.png)
+![guide](./image/gof-game-play-iphone-14-pro-max-1.png)
 
 **First Person**
-![guide](./images/gof-first-person-iphone-14-pro-max-4.png)
+![guide](./image/gof-first-person-iphone-14-pro-max-4.png)
 
 **Skills**
-![guide](./images/gof-skills-iphone-14-pro-max-2.png)
+![guide](./image/gof-skills-iphone-14-pro-max-2.png)
 
 **Guide**
-![guide](./images/gof-guides-iphone-14-pro-max.png)
+![guide](./image/gof-guides-iphone-14-pro-max.png)
 
 ### Demo
 
