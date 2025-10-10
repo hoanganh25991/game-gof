@@ -183,8 +183,6 @@ export class GameApp {
     this._cameraOffset = world.cameraOffset;
     this._cameraShake = world.cameraShake;
 
-
-
     // Initialize effects
     const renderQuality = this._settingsManager.getRenderQuality();
     this._effects = new EffectsManager(this._scene, { quality: renderQuality });
