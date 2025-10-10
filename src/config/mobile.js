@@ -37,8 +37,8 @@ export const MOBILE_OPTIMIZATIONS = {
 export function applyMobileRendererHints(renderer, { quality }) {
   if (!isMobile || !renderer) return;
   if (quality == "high") return;
-  console.log("applyMobileRendererHints", { quality })
   try {
+    console.log("[Mobile] Apply renderer hints", { quality })
     const currentRatio = renderer.getPixelRatio();
     const maxRatio = MOBILE_OPTIMIZATIONS.maxPixelRatio;
     if (currentRatio > maxRatio) {
