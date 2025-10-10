@@ -42,6 +42,7 @@ import { createDynamicSpawner } from "../spawn.js";
 import { createVillageFence } from "../village_fence.js";
 import { createPerformanceTracker, initVfxGating } from "../perf.js";
 import { createIndicators } from "../ui/indicators.js";
+import { preloadEffects } from "../effects_loader.js";
 import { wireUIBindings } from "../ui/bindings.js";
 import { wireMarkCooldownUI } from "../ui/mark_cooldown.js";
 import { wireTopBar } from "../ui/topbar.js";
@@ -199,6 +200,13 @@ export class GameApp {
       initialQuality: renderQuality,
       tracker: this._perfTracker
     });
+
+    // Preload modular skill effect files so they're registered before use.
+    try {
+      await preloadEffects();
+    } catch (e) {
+      console.warn('[GameApp] preloadEffects failed:', e);
+    }
   }
 
   async _initEnvironment() {

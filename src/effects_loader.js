@@ -95,7 +95,14 @@ async function loadEffects() {
   const totalCount = skillIds.length;
   console.log(`[EffectsLoader] Loaded ${loadedCount}/${totalCount} custom effects`);
   
+  // Warn about missing effect files
+  const missing = skillIds.filter(id => !effectsRegistry[id]);
+  if (missing.length) {
+    console.warn('[EffectsLoader] Missing effect implementations for:', missing.join(', '));
+  }
+
   isLoaded = true;
+  return effectsRegistry;
 }
 
 /**
@@ -172,5 +179,5 @@ export async function reloadEffects() {
  * Preload all effects (call during game initialization)
  */
 export async function preloadEffects() {
-  await loadEffects();
+  return await loadEffects();
 }

@@ -6,7 +6,7 @@ import { BaseEffects, normalizeColor, createGroundRing } from "./effects_base.js
 import { executeSkillEffect, hasSkillEffect, preloadEffects } from "./effects_loader.js";
 
 // Re-export for backward compatibility
-export { createGroundRing, normalizeColor, preloadEffects };
+export { createGroundRing, normalizeColor };
 
 /**
  * Unified Effects Manager
@@ -307,3 +307,6 @@ export class EffectsManager extends BaseEffects {
     });
   }
 }
+
+// Re-export preload helper
+export { preloadEffects };
