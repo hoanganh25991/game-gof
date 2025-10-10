@@ -284,7 +284,39 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
         boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
         textAlign: "center",
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif",
+        position: "relative",
       });
+
+      // Close button (X) at top-right
+      const closeBtn = document.createElement("button");
+      closeBtn.textContent = "✕";
+      closeBtn.setAttribute("type", "button");
+      Object.assign(closeBtn.style, {
+        position: "absolute",
+        top: "8px",
+        right: "8px",
+        width: "28px",
+        height: "28px",
+        borderRadius: "50%",
+        border: "1px solid var(--system-border)",
+        background: "var(--glass-strong)",
+        color: "var(--theme-white)",
+        cursor: "pointer",
+        fontSize: "18px",
+        fontWeight: "700",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0",
+        lineHeight: "1",
+      });
+      closeBtn.addEventListener("mouseenter", () => (closeBtn.style.background = "var(--theme-dark-orange)"));
+      closeBtn.addEventListener("mouseleave", () => (closeBtn.style.background = "var(--glass-strong)"));
+      closeBtn.addEventListener("click", () => {
+        cleanup();
+        resolve(null);
+      });
+      box.appendChild(closeBtn);
 
       const title = document.createElement("div");
       const nameLocal = tt(`skills.names.${sd.id}`) || sd.name;
@@ -341,33 +373,9 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
       tip.textContent = "Tip: press Q, W, E or R to choose quickly";
       Object.assign(tip.style, { fontSize: "12px", opacity: "0.8", marginTop: "6px" });
 
-      const actions = document.createElement("div");
-      Object.assign(actions.style, { marginTop: "10px", display: "flex", gap: "8px", justifyContent: "center" });
-
-      const cancel = document.createElement("button");
-      cancel.textContent = tt("btn.cancel") || "Cancel";
-      Object.assign(cancel.style, {
-        padding: "8px 12px",
-        borderRadius: "6px",
-        border: "1px solid var(--system-border)",
-        background: "var(--glass-strong)",
-        color: "var(--theme-white)",
-        cursor: "pointer",
-        fontWeight: "600",
-      });
-      cancel.addEventListener("mouseenter", () => (cancel.style.background = "var(--glass)"));
-      cancel.addEventListener("mouseleave", () => (cancel.style.background = "var(--glass-strong)"));
-      cancel.addEventListener("click", () => {
-        cleanup();
-        resolve(null);
-      });
-
-      actions.appendChild(cancel);
-
       box.appendChild(title);
       box.appendChild(grid);
       box.appendChild(tip);
-      box.appendChild(actions);
       root.appendChild(box);
 
       // Keyboard access
