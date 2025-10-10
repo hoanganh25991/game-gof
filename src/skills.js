@@ -782,8 +782,18 @@ export class SkillsSystem {
       this.effects.indicators.add(ring);
       this.effects.queue.push({ obj: ring, until: now() + 0.6 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 0.4 });
     } catch (_) { }
-    try { this.effects.spawnStormCloud(center, SK.radius || 12, fx.ring, SK.duration || 7, 3.6); } catch (_) { }
-    try { this.effects.spawnRingPulse(center, Math.max(6, (SK.radius || 12) * 0.85), fx.ring, 0.6, 1.4, 0.5); } catch (_) { }
+    try {
+      if (this.effects && typeof this.effects.executeSkillEffect === 'function') {
+        // Let the modular effect render the initial activation when available
+        this.effects.executeSkillEffect(SK.id, { center, radius: SK.radius || 12 });
+      } else {
+        this.effects.spawnStormCloud(center, SK.radius || 12, fx.ring, SK.duration || 7, 3.6);
+        this.effects.spawnRingPulse(center, Math.max(6, (SK.radius || 12) * 0.85), fx.ring, 0.6, 1.4, 0.5);
+      }
+    } catch (e) {
+      try { this.effects.spawnStormCloud(center, SK.radius || 12, fx.ring, SK.duration || 7, 3.6); } catch (_) {}
+      try { this.effects.spawnRingPulse(center, Math.max(6, (SK.radius || 12) * 0.85), fx.ring, 0.6, 1.4, 0.5); } catch (_) {}
+    }
 
     const rate = Math.max(0, (SK.strikes || 8) / Math.max(0.1, (SK.duration || 7)));
     const strikeRadius = SK.strikeRadius || ((SK.id === "fire_dome" || SK.id === "meteor_storm") ? 3.0 : 2.5);
@@ -791,6 +801,7 @@ export class SkillsSystem {
 
     // Accumulator-based scheduling
     this.storms.push({
+      id: SK.id,
       center,
       radius: SK.radius || 12,
       end: endT,
@@ -845,15 +856,6 @@ export class SkillsSystem {
         this.effects.spawnRingPulse(this.player.pos(), 4, fx.ring, 0.55, 1.2, 0.45);
       }
     } catch (_) { }
-  }
-
-  _castBuff(key) {
-    const SK = getSkill(key); if (!SK) return;
-    if (this.isOnCooldown(key) || !this.player.canSpend(SK.mana)) return;
-    this._vfxCastFlash(SK);
-    this.player.spend(SK.mana);
-    this.startCooldown(key, SK.cd);
-    // Damage buff (applies to basic + skills via getBasicDamage/scaleSkillDamage)
     const mult = Math.max(1.05, SK.buffMult || 1.3);
     const dur = Math.max(1, SK.buffDuration || 8);
     this.damageBuffMult = mult;
@@ -1165,13 +1167,24 @@ export class SkillsSystem {
         }
 
         try {
-          this.effects.spawnStrike(impact, 3, s.fx?.impact || COLOR.midFire);
-          audio.sfx("strike");
+          if (s.id && this.effects && typeof this.effects.executeSkillEffect === 'function') {
+            // Call modular skill effect for the specific strike when available.
+            try {
+              this.effects.executeSkillEffect(s.id, { strike: true, strikePos: impact, center: s.center, radius: s.radius, targets: inArea });
+            } catch (e) {
+              console.warn('[Skills] Modular strike failed for', s.id, e);
+              this.effects.spawnStrike(impact, 3, s.fx?.impact || COLOR.midFire);
+            }
+            audio.sfx("strike");
+          } else {
+            this.effects.spawnStrike(impact, 3, s.fx?.impact || COLOR.midFire);
+            audio.sfx("strike");
+          }
         } catch (_) { }
 
         // Damage around impact
         const hitR = Math.max(0.5, s.strikeRadius || 2.5);
-        try { this.effects.spawnRingPulse(impact, Math.max(1.4, hitR), (s.fx?.ring || s.fx?.impact || COLOR.ember), 0.3, 0.6, 0.4); } catch (_) { }
+  try { this.effects.spawnRingPulse(impact, Math.max(1.4, hitR), (s.fx?.ring || s.fx?.impact || COLOR.ember), 0.3, 0.6, 0.4); } catch (_) { }
         this.enemies.forEach((en) => {
           if (!en.alive) return;
           if (distance2D(en.pos(), impact) <= hitR) {
