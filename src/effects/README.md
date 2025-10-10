@@ -2,6 +2,13 @@
 
 This directory contains individual effect implementations for each skill.
 
+## 🎆 Recent Upgrade (COMPLETE)
+
+All 18 skills now have **unique, complex, and visually stunning effects**! Each skill has been redesigned with advanced Three.js models, multi-stage effects, and unique visual identities. See root directory documentation for details:
+- `EFFECTS_UPGRADE_SUMMARY.md` - Complete overview
+- `EFFECTS_DEVELOPER_GUIDE.md` - How to create effects
+- `EFFECTS_VISUAL_COMPARISON.md` - Before/after comparison
+
 ## How It Works
 
 1. **File Naming**: Each effect file is named after the skill ID (e.g., `flame_chain.js` for the `flame_chain` skill)
