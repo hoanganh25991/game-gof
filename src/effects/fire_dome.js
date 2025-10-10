@@ -7,21 +7,25 @@ import { SKILL_FX } from "../skills_fx.js";
  * UNIQUE VISUAL: Actual 3D dome structure with fire pillars,
  * semi-transparent shield dome, and rotating energy rings
  */
-export default function fireDomeEffect(baseEffects, params) {
-  const { center, radius, strike, strikePos } = params;
-  const fx = SKILL_FX.fire_dome || {};
-  const colors = fx.colors || {};
-  
-  if (strike && strikePos) {
-    // ===== DOME IMPACT (when something hits the dome) =====
-    createDomeImpact(baseEffects, strikePos, colors);
+class FireDomeEffect {
+  constructor(baseEffects, params) {
+    const { center, radius, strike, strikePos } = params || {};
+    const fx = SKILL_FX.fire_dome || {};
+    const colors = fx.colors || {};
     
-  } else if (center) {
-    // ===== CREATE FIRE DOME =====
-    const domeRadius = radius || 12;
-    createFireDome(baseEffects, center, domeRadius, colors);
+    if (strike && strikePos) {
+      // ===== DOME IMPACT (when something hits the dome) =====
+      createDomeImpact(baseEffects, strikePos, colors);
+    
+    } else if (center) {
+      // ===== CREATE FIRE DOME =====
+      const domeRadius = radius || 12;
+      createFireDome(baseEffects, center, domeRadius, colors);
+    }
   }
 }
+
+export default function fireDomeEffect(baseEffects, params) { return new FireDomeEffect(baseEffects, params); }
 
 /**
  * Create impact effect when dome is hit

@@ -9,23 +9,27 @@ import { FX } from "../constants.js";
  * UNIQUE VISUAL: Massive erupting volcano with 3D cone, lava fountains,
  * smoke columns, flying lava bombs with arcing trajectories
  */
-export default function volcanicWrathEffect(baseEffects, params) {
-  const { center, radius, strike, strikePos } = params;
-  const fx = SKILL_FX.volcanic_wrath || {};
-  const colors = fx.colors || {};
-  const size = fx.size || {};
-  const particles = fx.particles || {};
-  const custom = fx.custom || {};
-  
-  if (strike && strikePos) {
-    // Lava bomb impact - create molten splash
-    createLavaBombImpact(strikePos, size.lava || 1.5, colors, baseEffects);
+class VolcanicWrathEffect {
+  constructor(baseEffects, params) {
+    const { center, radius, strike, strikePos } = params || {};
+    const fx = SKILL_FX.volcanic_wrath || {};
+    const colors = fx.colors || {};
+    const size = fx.size || {};
+    const particles = fx.particles || {};
+    const custom = fx.custom || {};
     
-  } else if (center) {
-    // Create massive volcanic eruption
-    createVolcanoEruption(center, radius || 24, size, colors, custom, baseEffects);
+    if (strike && strikePos) {
+      // Lava bomb impact - create molten splash
+      createLavaBombImpact(strikePos, size.lava || 1.5, colors, baseEffects);
+    
+    } else if (center) {
+      // Create massive volcanic eruption
+      createVolcanoEruption(center, radius || 24, size, colors, custom, baseEffects);
+    }
   }
 }
+
+export default function volcanicWrathEffect(baseEffects, params) { return new VolcanicWrathEffect(baseEffects, params); }
 
 /**
  * Create lava bomb impact with molten splash

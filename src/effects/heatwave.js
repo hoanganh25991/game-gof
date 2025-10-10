@@ -7,15 +7,19 @@ import { SKILL_FX } from "../skills_fx.js";
  * UNIQUE VISUAL: Expanding wave of shimmering heat with visible distortion,
  * rippling air particles, and scorched ground trail
  */
-export default function heatwaveEffect(baseEffects, params) {
-  const { from, to } = params;
-  const fx = SKILL_FX.heatwave || {};
-  const colors = fx.colors || {};
-  
-  if (!from || !to) return;
-  
-  createHeatwave(baseEffects, from, to, colors);
+class HeatwaveEffect {
+  constructor(baseEffects, params) {
+    const { from, to } = params || {};
+    const fx = SKILL_FX.heatwave || {};
+    const colors = fx.colors || {};
+    
+    if (!from || !to) return;
+    
+    createHeatwave(baseEffects, from, to, colors);
+  }
 }
+
+export default function heatwaveEffect(baseEffects, params) { return new HeatwaveEffect(baseEffects, params); }
 
 /**
  * Create the heatwave traveling from source to target

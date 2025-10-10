@@ -7,23 +7,27 @@ import { SKILL_FX } from "../skills_fx.js";
  * UNIQUE VISUAL: Actual chain links made of fire connecting targets,
  * with glowing connection points and sparking particles
  */
-export default function flameChainEffect(baseEffects, params) {
-  const { from, to, targets, chain } = params;
-  const fx = SKILL_FX.flame_chain || {};
-  const colors = fx.colors || {};
-  
-  if (chain && chain.length > 0) {
-    // Draw chain connections between all targets
-    for (let i = 0; i < chain.length - 1; i++) {
-      const start = chain[i];
-      const end = chain[i + 1];
-      createFlameChainLink(baseEffects, start, end, colors);
+class FlameChainEffect {
+  constructor(baseEffects, params) {
+    const { from, to, targets, chain } = params || {};
+    const fx = SKILL_FX.flame_chain || {};
+    const colors = fx.colors || {};
+    
+    if (chain && chain.length > 0) {
+      // Draw chain connections between all targets
+      for (let i = 0; i < chain.length - 1; i++) {
+        const start = chain[i];
+        const end = chain[i + 1];
+        createFlameChainLink(baseEffects, start, end, colors);
+      }
+    } else if (from && to) {
+      // Single chain link
+      createFlameChainLink(baseEffects, from, to, colors);
     }
-  } else if (from && to) {
-    // Single chain link
-    createFlameChainLink(baseEffects, from, to, colors);
   }
 }
+
+export default function flameChainEffect(baseEffects, params) { return new FlameChainEffect(baseEffects, params); }
 
 /**
  * Create a single flame chain link between two points

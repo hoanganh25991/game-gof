@@ -11,15 +11,16 @@ import { SKILL_FX } from "../skills_fx.js";
  * - Massive debris explosion
  * - Scorched earth crater
  */
-export default function pyroclasmEffect(baseEffects, params) {
-  const { center, radius } = params;
-  const fx = SKILL_FX.pyroclasm || {};
-  const colors = fx.colors || {};
-  
-  if (!center) return;
-  
-  const blastRadius = (radius || 20) * 1.5;
-  const scene = baseEffects.scene;
+class PyroclasmEffect {
+  constructor(baseEffects, params) {
+    const { center, radius } = params || {};
+    const fx = SKILL_FX.pyroclasm || {};
+    const colors = fx.colors || {};
+    
+    if (!center) return;
+    
+    const blastRadius = (radius || 20) * 1.5;
+    const scene = baseEffects.scene;
   
   // ============================================================================
   // STAGE 1: GROUND CRATER (immediate)
@@ -340,8 +341,11 @@ export default function pyroclasmEffect(baseEffects, params) {
     requestAnimationFrame(animate);
   }
   
-  animate();
-  
-  // Add impact flash at center
-  baseEffects.spawnImpact(center, 4, colors.explosion || "#ffff00", 3.0);
+    animate();
+    
+    // Add impact flash at center
+    baseEffects.spawnImpact(center, 4, colors.explosion || "#ffff00", 3.0);
+  }
 }
+
+export default function pyroclasmEffect(baseEffects, params) { return new PyroclasmEffect(baseEffects, params); }

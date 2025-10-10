@@ -9,16 +9,17 @@ import { FX } from "../constants.js";
  * UNIQUE VISUAL: Massive spinning fireball with layered flames,
  * spiral trail, and spectacular multi-stage explosion
  */
-export default function fireballEffect(baseEffects, params) {
-  const { from, to } = params;
-  const fx = SKILL_FX.fireball || {};
-  const colors = fx.colors || {};
-  const size = fx.size || {};
-  const particles = fx.particles || {};
-  const custom = fx.custom || {};
-  
-  // Create actual 3D fireball
-  const fireballGroup = new THREE.Group();
+class FireballEffect {
+  constructor(baseEffects, params) {
+    const { from, to } = params || {};
+    const fx = SKILL_FX.fireball || {};
+    const colors = fx.colors || {};
+    const size = fx.size || {};
+    const particles = fx.particles || {};
+    const custom = fx.custom || {};
+    
+    // Create actual 3D fireball
+    const fireballGroup = new THREE.Group();
   const ballSize = size.ball || 0.6;
   
   // Core (bright yellow)
@@ -159,7 +160,10 @@ export default function fireballEffect(baseEffects, params) {
   };
   
   animateFireball();
+  }
 }
+
+export default function fireballEffect(baseEffects, params) { return new FireballEffect(baseEffects, params); }
 
 /**
  * Create spectacular fireball explosion

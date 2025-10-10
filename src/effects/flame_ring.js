@@ -7,16 +7,20 @@ import { SKILL_FX } from "../skills_fx.js";
  * UNIQUE VISUAL: Rotating 3D torus ring of fire with flame spouts,
  * spinning particles, and pulsing energy core
  */
-export default function flameRingEffect(baseEffects, params) {
-  const { center, radius } = params;
-  const fx = SKILL_FX.flame_ring || {};
-  const colors = fx.colors || {};
-  
-  if (!center) return;
-  
-  const ringRadius = radius || 8;
-  createFlameRing(baseEffects, center, ringRadius, colors);
+class FlameRingEffect {
+  constructor(baseEffects, params) {
+    const { center, radius } = params || {};
+    const fx = SKILL_FX.flame_ring || {};
+    const colors = fx.colors || {};
+    
+    if (!center) return;
+    
+    const ringRadius = radius || 8;
+    createFlameRing(baseEffects, center, ringRadius, colors);
+  }
 }
+
+export default function flameRingEffect(baseEffects, params) { return new FlameRingEffect(baseEffects, params); }
 
 /**
  * Create the rotating flame ring

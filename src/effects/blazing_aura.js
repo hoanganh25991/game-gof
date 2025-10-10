@@ -12,8 +12,9 @@ import { SKILL_FX } from "../skills_fx.js";
  * - Tall flame pillars
  * - Spiral heat effect
  */
-export default function blazingAuraEffect(baseEffects, params) {
-  const { center, radius, activation, duration = 6000 } = params;
+class BlazingAuraEffect {
+  constructor(baseEffects, params) {
+    const { center, radius, activation, duration = 6000 } = params || {};
   const fx = SKILL_FX.blazing_aura || {};
   const colors = fx.colors || {};
   
@@ -383,5 +384,8 @@ export default function blazingAuraEffect(baseEffects, params) {
     requestAnimationFrame(animate);
   }
   
-  animate();
+    animate();
+  }
 }
+
+export default function blazingAuraEffect(baseEffects, params) { return new BlazingAuraEffect(baseEffects, params); }

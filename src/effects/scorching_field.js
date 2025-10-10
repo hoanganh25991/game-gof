@@ -11,15 +11,16 @@ import { SKILL_FX } from "../skills_fx.js";
  * - Floating embers across the field
  * - Pulsing ground fire
  */
-export default function scorchingFieldEffect(baseEffects, params) {
-  const { center, radius, activation, duration = 8000 } = params;
-  const fx = SKILL_FX.scorching_field || {};
-  const colors = fx.colors || {};
-  
-  if (!center) return;
-  
-  const fieldRadius = (radius || 13) * 1.0;
-  const scene = baseEffects.scene;
+class ScorchingFieldEffect {
+  constructor(baseEffects, params) {
+    const { center, radius, activation, duration = 8000 } = params || {};
+    const fx = SKILL_FX.scorching_field || {};
+    const colors = fx.colors || {};
+    
+    if (!center) return;
+    
+    const fieldRadius = (radius || 13) * 1.0;
+    const scene = baseEffects.scene;
   
   // ============================================================================
   // STAGE 1: SCORCHED GROUND BASE
@@ -356,5 +357,8 @@ export default function scorchingFieldEffect(baseEffects, params) {
     requestAnimationFrame(animate);
   }
   
-  animate();
+    animate();
+  }
 }
+
+export default function scorchingFieldEffect(baseEffects, params) { return new ScorchingFieldEffect(baseEffects, params); }

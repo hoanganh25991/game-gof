@@ -7,16 +7,20 @@ import { SKILL_FX } from "../skills_fx.js";
  * UNIQUE VISUAL: Massive mushroom cloud explosion with expanding fireball,
  * multiple shockwaves, fire pillars, and debris particles
  */
-export default function infernoBlastEffect(baseEffects, params) {
-  const { center, radius } = params;
-  const fx = SKILL_FX.inferno_blast || {};
-  const colors = fx.colors || {};
-  
-  if (!center) return;
-  
-  const blastRadius = radius || 16;
-  createInfernoBlast(baseEffects, center, blastRadius, colors);
+class InfernoBlastEffect {
+  constructor(baseEffects, params) {
+    const { center, radius } = params || {};
+    const fx = SKILL_FX.inferno_blast || {};
+    const colors = fx.colors || {};
+    
+    if (!center) return;
+    
+    const blastRadius = radius || 16;
+    createInfernoBlast(baseEffects, center, blastRadius, colors);
+  }
 }
+
+export default function infernoBlastEffect(baseEffects, params) { return new InfernoBlastEffect(baseEffects, params); }
 
 /**
  * Create the massive inferno blast explosion

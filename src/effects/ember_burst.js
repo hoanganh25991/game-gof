@@ -11,15 +11,16 @@ import { SKILL_FX } from "../skills_fx.js";
  * - Glowing ember trails
  * - Heat distortion waves
  */
-export default function emberBurstEffect(baseEffects, params) {
-  const { center, radius } = params;
-  const fx = SKILL_FX.ember_burst || {};
-  const colors = fx.colors || {};
-  
-  if (!center) return;
-  
-  const burstRadius = (radius || 15) * 1.2;
-  const scene = baseEffects.scene;
+class EmberBurstEffect {
+  constructor(baseEffects, params) {
+    const { center, radius } = params || {};
+    const fx = SKILL_FX.ember_burst || {};
+    const colors = fx.colors || {};
+    
+    if (!center) return;
+    
+    const burstRadius = (radius || 15) * 1.2;
+    const scene = baseEffects.scene;
   
   // ============================================================================
   // STAGE 1: CENTRAL EXPLOSION CORE
@@ -343,8 +344,11 @@ export default function emberBurstEffect(baseEffects, params) {
     requestAnimationFrame(animate);
   }
   
-  animate();
-  
-  // Add impact flash
-  baseEffects.spawnImpact(center, 3, colors.primary || "#ffa500", 2.0);
+    animate();
+    
+    // Add impact flash
+    baseEffects.spawnImpact(center, 3, colors.primary || "#ffa500", 2.0);
+  }
 }
+
+export default function emberBurstEffect(baseEffects, params) { return new EmberBurstEffect(baseEffects, params); }

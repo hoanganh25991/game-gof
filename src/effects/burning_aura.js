@@ -11,8 +11,9 @@ import { SKILL_FX } from "../skills_fx.js";
  * - Heat distortion waves
  * - Central glowing core
  */
-export default function burningAuraEffect(baseEffects, params) {
-  const { center, radius, activation, duration = 6000 } = params;
+class BurningAuraEffect {
+  constructor(baseEffects, params) {
+    const { center, radius, activation, duration = 6000 } = params || {};
   const fx = SKILL_FX.burning_aura || {};
   const colors = fx.colors || {};
   
@@ -315,5 +316,8 @@ export default function burningAuraEffect(baseEffects, params) {
     requestAnimationFrame(animate);
   }
   
-  animate();
+    animate();
+  }
 }
+
+export default function burningAuraEffect(baseEffects, params) { return new BurningAuraEffect(baseEffects, params); }

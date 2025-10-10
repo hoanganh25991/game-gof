@@ -12,15 +12,16 @@ import { SKILL_FX } from "../skills_fx.js";
  * - Pulsing overload core
  * - Ground devastation
  */
-export default function infernoOverloadEffect(baseEffects, params) {
-  const { center, radius, activation, duration = 3000 } = params;
-  const fx = SKILL_FX.inferno_overload || {};
-  const colors = fx.colors || {};
-  
-  if (!center) return;
-  
-  const overloadRadius = (radius || 15) * 1.5;
-  const scene = baseEffects.scene;
+class InfernoOverloadEffect {
+  constructor(baseEffects, params) {
+    const { center, radius, activation, duration = 3000 } = params || {};
+    const fx = SKILL_FX.inferno_overload || {};
+    const colors = fx.colors || {};
+    
+    if (!center) return;
+    
+    const overloadRadius = (radius || 15) * 1.5;
+    const scene = baseEffects.scene;
   
   // ============================================================================
   // STAGE 1: MASSIVE EXPLOSION CORE
@@ -351,10 +352,13 @@ export default function infernoOverloadEffect(baseEffects, params) {
     requestAnimationFrame(animate);
   }
   
-  animate();
-  
-  // Add massive impact
-  if (activation) {
-    baseEffects.spawnImpact(center, 4, colors.explosion || "#ffff00", 3.0);
+    animate();
+    
+    // Add massive impact
+    if (activation) {
+      baseEffects.spawnImpact(center, 4, colors.explosion || "#ffff00", 3.0);
+    }
   }
 }
+
+export default function infernoOverloadEffect(baseEffects, params) { return new InfernoOverloadEffect(baseEffects, params); }

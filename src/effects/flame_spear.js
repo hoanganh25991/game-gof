@@ -9,13 +9,14 @@ import { FX } from "../constants.js";
  * UNIQUE VISUAL: Actual 3D flaming spear with glowing tip, spiral flames,
  * and piercing impact with penetration effect
  */
-export default function flameSpearEffect(baseEffects, params) {
-  const { from, to } = params;
-  const fx = SKILL_FX.flame_spear || {};
-  const colors = fx.colors || {};
-  const size = fx.size || {};
-  const particles = fx.particles || {};
-  const custom = fx.custom || {};
+class FlameSpearEffect {
+  constructor(baseEffects, params) {
+    const { from, to } = params || {};
+    const fx = SKILL_FX.flame_spear || {};
+    const colors = fx.colors || {};
+    const size = fx.size || {};
+    const particles = fx.particles || {};
+    const custom = fx.custom || {};
   
   // Create 3D spear model
   const spearGroup = new THREE.Group();
@@ -194,7 +195,10 @@ export default function flameSpearEffect(baseEffects, params) {
   };
   
   animateSpear();
+  }
 }
+
+export default function flameSpearEffect(baseEffects, params) { return new FlameSpearEffect(baseEffects, params); }
 
 /**
  * Create piercing spear impact with penetration effect

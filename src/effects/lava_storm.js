@@ -7,21 +7,25 @@ import { SKILL_FX } from "../skills_fx.js";
  * UNIQUE VISUAL: Realistic bubbling lava pools with erupting geysers,
  * molten ground with cracks, and splashing lava particles
  */
-export default function lavaStormEffect(baseEffects, params) {
-  const { center, radius, strike, strikePos } = params;
-  const fx = SKILL_FX.lava_storm || {};
-  const colors = fx.colors || {};
-  
-  if (strike && strikePos) {
-    // ===== LAVA GEYSER ERUPTION =====
-    createLavaGeyser(baseEffects, strikePos, colors);
+class LavaStormEffect {
+  constructor(baseEffects, params) {
+    const { center, radius, strike, strikePos } = params || {};
+    const fx = SKILL_FX.lava_storm || {};
+    const colors = fx.colors || {};
     
-  } else if (center) {
-    // ===== LAVA STORM AREA EFFECT =====
-    const stormRadius = radius || 28;
-    createLavaStormArea(baseEffects, center, stormRadius, colors);
+    if (strike && strikePos) {
+      // ===== LAVA GEYSER ERUPTION =====
+      createLavaGeyser(baseEffects, strikePos, colors);
+    
+    } else if (center) {
+      // ===== LAVA STORM AREA EFFECT =====
+      const stormRadius = radius || 28;
+      createLavaStormArea(baseEffects, center, stormRadius, colors);
+    }
   }
 }
+
+export default function lavaStormEffect(baseEffects, params) { return new LavaStormEffect(baseEffects, params); }
 
 /**
  * Create a single lava geyser eruption at a point

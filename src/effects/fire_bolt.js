@@ -9,13 +9,14 @@ import { FX } from "../constants.js";
  * UNIQUE VISUAL: Lightning-fast bolt with electric-like segments,
  * crackling sparks, and concentrated piercing impact
  */
-export default function fireBoltEffect(baseEffects, params) {
-  const { from, to } = params;
-  const fx = SKILL_FX.fire_bolt || {};
-  const colors = fx.colors || {};
-  const size = fx.size || {};
-  const particles = fx.particles || {};
-  const custom = fx.custom || {};
+class FireBoltEffect {
+  constructor(baseEffects, params) {
+    const { from, to } = params || {};
+    const fx = SKILL_FX.fire_bolt || {};
+    const colors = fx.colors || {};
+    const size = fx.size || {};
+    const particles = fx.particles || {};
+    const custom = fx.custom || {};
   
   // Create segmented bolt (like lightning)
   const boltGroup = new THREE.Group();
@@ -162,7 +163,10 @@ export default function fireBoltEffect(baseEffects, params) {
       });
     }, i * 10);
   }
+  }
 }
+
+export default function fireBoltEffect(baseEffects, params) { return new FireBoltEffect(baseEffects, params); }
 
 /**
  * Create concentrated piercing bolt impact

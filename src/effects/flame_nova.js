@@ -7,16 +7,20 @@ import { SKILL_FX } from "../skills_fx.js";
  * UNIQUE VISUAL: Explosive radial nova with expanding fire wave,
  * flame rays shooting outward, and a bright core explosion
  */
-export default function flameNovaEffect(baseEffects, params) {
-  const { center, radius } = params;
-  const fx = SKILL_FX.flame_nova || {};
-  const colors = fx.colors || {};
-  
-  if (!center) return;
-  
-  const novaRadius = radius || 14;
-  createFlameNova(baseEffects, center, novaRadius, colors);
+class FlameNovaEffect {
+  constructor(baseEffects, params) {
+    const { center, radius } = params || {};
+    const fx = SKILL_FX.flame_nova || {};
+    const colors = fx.colors || {};
+    
+    if (!center) return;
+    
+    const novaRadius = radius || 14;
+    createFlameNova(baseEffects, center, novaRadius, colors);
+  }
 }
+
+export default function flameNovaEffect(baseEffects, params) { return new FlameNovaEffect(baseEffects, params); }
 
 /**
  * Create the flame nova explosion
