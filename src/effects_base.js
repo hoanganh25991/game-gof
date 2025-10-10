@@ -336,6 +336,230 @@ export class BaseEffects {
   }
 
   /**
+   * Spawn a spiral effect (for trails, tornadoes, etc.)
+   */
+  spawnSpiral(center, radius = 2, height = 4, color = COLOR.fire, duration = 0.8, turns = 3) {
+    try {
+      const points = [];
+      const segments = Math.max(20, Math.round(turns * 12));
+      
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const angle = t * Math.PI * 2 * turns;
+        const r = radius * (1 - t * 0.3); // Taper toward top
+        const x = center.x + Math.cos(angle) * r;
+        const y = center.y + t * height;
+        const z = center.z + Math.sin(angle) * r;
+        points.push(new THREE.Vector3(x, y, z));
+      }
+      
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ 
+        color: normalizeColor(color), 
+        transparent: true, 
+        opacity: 0.8,
+        linewidth: 2
+      });
+      const spiral = new THREE.Line(geometry, material);
+      this.transient.add(spiral);
+      this.queue.push({ 
+        obj: spiral, 
+        until: now() + duration * FX.timeScale, 
+        fade: true, 
+        mat: material,
+        spinRate: 2.0
+      });
+    } catch (_) {}
+  }
+
+  /**
+   * Spawn a cone/fountain effect (for explosions, geysers)
+   */
+  spawnCone(apex, direction, angle = 30, length = 3, color = COLOR.fire, rays = 12, duration = 0.3) {
+    try {
+      const dir = this._tmpVecA.copy(direction).normalize();
+      const angleRad = (angle * Math.PI) / 180;
+      
+      // Create perpendicular vectors for cone base
+      const perp1 = this._tmpVecB.set(-dir.z, 0, dir.x).normalize();
+      const perp2 = this._tmpVecC.crossVectors(dir, perp1).normalize();
+      
+      for (let i = 0; i < rays; i++) {
+        const theta = (i / rays) * Math.PI * 2;
+        const offset = perp1.clone().multiplyScalar(Math.cos(theta))
+          .add(perp2.clone().multiplyScalar(Math.sin(theta)))
+          .multiplyScalar(Math.tan(angleRad) * length);
+        
+        const endPoint = apex.clone()
+          .add(dir.clone().multiplyScalar(length))
+          .add(offset);
+        
+        this.spawnBeam(apex, endPoint, color, duration);
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * Spawn a shockwave ring that expands outward
+   */
+  spawnShockwave(center, maxRadius = 8, color = COLOR.fire, duration = 0.6, thickness = 0.3) {
+    try {
+      const ring = createGroundRing(0.1, thickness, color, 0.7);
+      ring.position.set(center.x, 0.05, center.z);
+      this.indicators.add(ring);
+      
+      this.queue.push({ 
+        obj: ring, 
+        until: now() + duration * FX.timeScale, 
+        fade: true, 
+        mat: ring.material,
+        shockwave: true,
+        shockwaveMaxRadius: maxRadius,
+        shockwaveThickness: thickness,
+        shockwaveStartTime: now(),
+        shockwaveDuration: duration
+      });
+    } catch (_) {}
+  }
+
+  /**
+   * Spawn particle burst (many small particles flying outward)
+   */
+  spawnParticleBurst(center, count = 30, color = COLOR.fire, speed = 5, size = 0.1, lifetime = 1.0) {
+    try {
+      for (let i = 0; i < Math.min(count, this.quality === "low" ? 15 : (this.quality === "medium" ? 25 : 50)); i++) {
+        // Random direction
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI * 0.5; // Upward bias
+        
+        const dir = new THREE.Vector3(
+          Math.sin(phi) * Math.cos(theta),
+          Math.cos(phi),
+          Math.sin(phi) * Math.sin(theta)
+        );
+        
+        const particle = new THREE.Mesh(
+          new THREE.SphereGeometry(size, 6, 6),
+          new THREE.MeshBasicMaterial({ 
+            color: normalizeColor(color), 
+            transparent: true, 
+            opacity: 0.9 
+          })
+        );
+        
+        particle.position.copy(center);
+        this.transient.add(particle);
+        
+        this.queue.push({
+          obj: particle,
+          until: now() + lifetime * FX.timeScale,
+          fade: true,
+          mat: particle.material,
+          particle: true,
+          velocity: dir.multiplyScalar(speed * (0.5 + Math.random() * 0.5)),
+          gravity: -9.8
+        });
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * Spawn a pillar/column effect (vertical beam with glow)
+   */
+  spawnPillar(position, height = 5, radius = 0.3, color = COLOR.fire, duration = 0.5) {
+    try {
+      const geometry = new THREE.CylinderGeometry(radius, radius * 1.5, height, 12);
+      const material = new THREE.MeshBasicMaterial({ 
+        color: normalizeColor(color), 
+        transparent: true, 
+        opacity: 0.7 
+      });
+      
+      const pillar = new THREE.Mesh(geometry, material);
+      pillar.position.set(position.x, height / 2, position.z);
+      this.transient.add(pillar);
+      
+      // Add glow layer
+      const glowGeo = new THREE.CylinderGeometry(radius * 1.5, radius * 2, height, 12);
+      const glowMat = new THREE.MeshBasicMaterial({ 
+        color: COLOR.accent, 
+        transparent: true, 
+        opacity: 0.3 
+      });
+      const glow = new THREE.Mesh(glowGeo, glowMat);
+      pillar.add(glow);
+      
+      this.queue.push({ 
+        obj: pillar, 
+        until: now() + duration * FX.timeScale, 
+        fade: true, 
+        mat: material,
+        mats: [material, glowMat],
+        scaleRate: 0.5
+      });
+    } catch (_) {}
+  }
+
+  /**
+   * Spawn a lightning bolt effect (jagged line)
+   */
+  spawnLightning(from, to, color = COLOR.accent, branches = 2, duration = 0.1) {
+    try {
+      const points = [from.clone()];
+      const dir = this._tmpVecA.copy(to).sub(from);
+      const dist = dir.length();
+      const segments = Math.max(5, Math.floor(dist / 2));
+      
+      // Create jagged path
+      for (let i = 1; i < segments; i++) {
+        const t = i / segments;
+        const point = from.clone().add(dir.clone().multiplyScalar(t));
+        
+        // Add random offset perpendicular to direction
+        const offset = dist * 0.15 * (Math.random() - 0.5);
+        point.x += offset * (Math.random() - 0.5);
+        point.y += offset * (Math.random() - 0.5) * 0.5;
+        point.z += offset * (Math.random() - 0.5);
+        
+        points.push(point);
+      }
+      points.push(to.clone());
+      
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ 
+        color: normalizeColor(color), 
+        transparent: true, 
+        opacity: 1.0,
+        linewidth: 3
+      });
+      const lightning = new THREE.Line(geometry, material);
+      this.transient.add(lightning);
+      
+      this.queue.push({ 
+        obj: lightning, 
+        until: now() + duration * FX.timeScale, 
+        fade: true, 
+        mat: material
+      });
+      
+      // Add branches
+      if (branches > 0 && points.length > 2) {
+        for (let b = 0; b < branches; b++) {
+          const branchIdx = Math.floor(Math.random() * (points.length - 2)) + 1;
+          const branchStart = points[branchIdx];
+          const branchDir = new THREE.Vector3(
+            (Math.random() - 0.5) * dist * 0.3,
+            (Math.random() - 0.5) * dist * 0.2,
+            (Math.random() - 0.5) * dist * 0.3
+          );
+          const branchEnd = branchStart.clone().add(branchDir);
+          this.spawnLightning(branchStart, branchEnd, color, 0, duration * 0.8);
+        }
+      }
+    } catch (_) {}
+  }
+
+  /**
    * Update all active effects
    */
   update(t, dt) {
@@ -393,6 +617,26 @@ export class BaseEffects {
       // Vertical motion for popups
       if (e.velY && e.obj && e.obj.position) {
         e.obj.position.y += e.velY * dt;
+      }
+
+      // Particle physics (velocity + gravity)
+      if (e.particle && e.velocity && e.obj && e.obj.position) {
+        e.obj.position.x += e.velocity.x * dt;
+        e.obj.position.y += e.velocity.y * dt;
+        e.obj.position.z += e.velocity.z * dt;
+        
+        if (e.gravity) {
+          e.velocity.y += e.gravity * dt;
+        }
+      }
+
+      // Shockwave expansion
+      if (e.shockwave && e.obj && e.obj.scale) {
+        const elapsed = t - e.shockwaveStartTime;
+        const progress = Math.min(1, elapsed / e.shockwaveDuration);
+        const currentRadius = progress * e.shockwaveMaxRadius;
+        const scale = currentRadius / e.shockwaveThickness;
+        e.obj.scale.set(scale, 1, scale);
       }
 
       // Animated scaling

@@ -1,50 +1,134 @@
 import * as THREE from "../../vendor/three/build/three.module.js";
 import { SKILL_FX } from "../skills_fx.js";
 
-const __vA = new THREE.Vector3();
-const __vB = new THREE.Vector3();
-
 /**
  * Flame Nova Effect
- * Expanding shockwave with multiple ring pulses and radial beams
+ * 
+ * UNIQUE VISUAL: Explosive radial burst with flame rays shooting outward,
+ * multiple pulse waves, and a bright core explosion
  */
 export default function flameNovaEffect(baseEffects, params) {
   const { center, radius } = params;
   const fx = SKILL_FX.flame_nova || {};
-  const colors = {
-    beam: fx.beam || "#ff6347",
-    ring: fx.ring || "#ff8c00",
-    impact: fx.impact || "#ffa500"
-  };
+  const colors = fx.colors || {};
+  const size = fx.size || {};
+  const particles = fx.particles || {};
+  const custom = fx.custom || {};
   
-  // Expanding shockwave
-  baseEffects.spawnRing(center, radius, colors.ring, 0.5, 0.8, 0.7);
+  if (!center) return;
   
-  // Multiple ring pulses
-  setTimeout(() => {
-    baseEffects.spawnRing(center, radius * 0.7, colors.ring, 0.4, 0.6, 0.6);
-  }, 50);
-  setTimeout(() => {
-    baseEffects.spawnRing(center, radius * 0.4, colors.ring, 0.3, 0.4, 0.5);
-  }, 100);
+  const novaRadius = (radius || 14) * (size.ring || 1.5);
   
-  // Central burst
-  baseEffects.spawnImpact(center, radius * 0.3, colors.impact, 1.2);
-  
-  // Radial beams
-  const beamCount = baseEffects.quality === "low" ? 8 : 12;
-  for (let i = 0; i < beamCount; i++) {
-    const ang = (i / beamCount) * Math.PI * 2;
-    const target = __vA.set(
-      center.x + Math.cos(ang) * radius,
-      center.y + 0.3,
-      center.z + Math.sin(ang) * radius
+  // Central core explosion
+  if (custom.coreExplosion) {
+    baseEffects.spawnSphere(
+      center,
+      size.core || 1.0,
+      colors.core || "#ffff00",
+      0.3,
+      1.0
     );
-    baseEffects.spawnBeam(
-      __vB.set(center.x, center.y + 0.2, center.z),
-      target,
-      colors.beam,
-      0.25
+    
+    // Upward explosion cone
+    baseEffects.spawnCone(
+      center,
+      new THREE.Vector3(0, 1, 0),
+      60,
+      4,
+      colors.accent || "#ffd700",
+      20,
+      0.4
     );
   }
+  
+  // Multiple expanding pulse waves
+  const pulseCount = custom.pulseWaves || 3;
+  for (let i = 0; i < pulseCount; i++) {
+    setTimeout(() => {
+      baseEffects.spawnShockwave(
+        center,
+        novaRadius * (i + 1) / pulseCount,
+        i === 0 ? colors.core || "#ffff00" : colors.primary || "#ff6347",
+        0.6,
+        0.4
+      );
+    }, i * 120);
+  }
+  
+  // Radial flame rays
+  const rayCount = custom.flameRays || 16;
+  for (let i = 0; i < rayCount; i++) {
+    const angle = (i / rayCount) * Math.PI * 2;
+    const rayEnd = new THREE.Vector3(
+      center.x + Math.cos(angle) * novaRadius,
+      center.y + 0.5,
+      center.z + Math.sin(angle) * novaRadius
+    );
+    
+    // Main ray beam
+    baseEffects.spawnBeam(
+      center,
+      rayEnd,
+      colors.primary || "#ff6347",
+      0.3
+    );
+    
+    // Secondary thicker ray
+    const midPoint = new THREE.Vector3().lerpVectors(center, rayEnd, 0.5);
+    baseEffects.spawnBeam(
+      center,
+      midPoint,
+      colors.secondary || "#ff4500",
+      0.25
+    );
+    
+    // Flame pillar at ray end
+    baseEffects.spawnPillar(
+      rayEnd,
+      (size.flames || 1.2) * 2,
+      0.25,
+      colors.accent || "#ffd700",
+      0.5
+    );
+    
+    // Impact at ray end
+    baseEffects.spawnImpact(
+      rayEnd,
+      1.0,
+      colors.primary || "#ff6347",
+      0.8
+    );
+  }
+  
+  // Massive particle burst
+  baseEffects.spawnParticleBurst(
+    center,
+    particles.count || 60,
+    colors.secondary || "#ff4500",
+    particles.speed || 8.0,
+    0.15,
+    particles.lifetime || 1.2
+  );
+  
+  // Secondary particle wave
+  setTimeout(() => {
+    baseEffects.spawnParticleBurst(
+      center,
+      40,
+      colors.accent || "#ffd700",
+      6.0,
+      0.12,
+      1.0
+    );
+  }, 150);
+  
+  // Ground ring
+  baseEffects.spawnRing(
+    center,
+    novaRadius,
+    colors.primary || "#ff6347",
+    0.8,
+    1.0,
+    0.6
+  );
 }

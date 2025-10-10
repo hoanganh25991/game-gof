@@ -1,51 +1,117 @@
 import * as THREE from "../../vendor/three/build/three.module.js";
 import { SKILL_FX } from "../skills_fx.js";
 
-const __vA = new THREE.Vector3();
-const __vB = new THREE.Vector3();
-
 /**
  * Inferno Blast Effect
- * Large AOE explosion with expanding ring and radial beams
+ * 
+ * UNIQUE VISUAL: Massive explosion with multiple shockwave rings,
+ * vertical fire columns, particle debris, and smoke clouds
  */
 export default function infernoBlastEffect(baseEffects, params) {
-  const { center, radius, targets } = params;
+  const { center, radius } = params;
   const fx = SKILL_FX.inferno_blast || {};
-  const colors = {
-    beam: fx.beam || "#ff6347",
-    ring: fx.ring || "#ff8c00",
-    impact: fx.impact || "#ffa500"
-  };
+  const colors = fx.colors || {};
+  const size = fx.size || {};
+  const particles = fx.particles || {};
+  const custom = fx.custom || {};
   
-  // Large expanding ring
-  baseEffects.spawnRing(center, radius, colors.ring, 0.5, 1.0, 0.7);
+  if (!center) return;
   
-  // Central explosion
-  baseEffects.spawnImpact(center, radius * 0.5, colors.impact, 1.5);
+  // Central core explosion
+  baseEffects.spawnSphere(
+    center,
+    (size.core || 2.0) * 1.5,
+    colors.accent || "#ffff00",
+    0.3,
+    1.0
+  );
   
-  // Impact on each target
-  if (targets) {
-    targets.forEach(target => {
-      const pos = target.pos ? target.pos() : target;
-      baseEffects.spawnImpact(pos, 1.0, colors.impact, 0.6);
-    });
+  // Multiple expanding shockwave rings
+  const shockwaveCount = custom.shockwaveRings || 3;
+  for (let i = 0; i < shockwaveCount; i++) {
+    setTimeout(() => {
+      baseEffects.spawnShockwave(
+        center,
+        (radius || 16) * (size.shockwave || 3.5) / shockwaveCount * (i + 1),
+        i === 0 ? colors.accent || "#ffff00" : colors.primary || "#ff4500",
+        0.8,
+        0.4
+      );
+    }, i * 100);
   }
   
-  // Radial fire beams
-  const beamCount = baseEffects.quality === "low" ? 6 : (baseEffects.quality === "medium" ? 10 : 16);
-  for (let i = 0; i < beamCount; i++) {
-    const ang = (i / beamCount) * Math.PI * 2;
-    const r = radius * 0.8;
-    const target = __vA.set(
-      center.x + Math.cos(ang) * r,
-      center.y + 0.5,
-      center.z + Math.sin(ang) * r
+  // Vertical fire columns around the blast
+  const columnCount = custom.fireColumns || 8;
+  for (let i = 0; i < columnCount; i++) {
+    const angle = (i / columnCount) * Math.PI * 2;
+    const dist = (radius || 16) * 0.6;
+    const columnPos = new THREE.Vector3(
+      center.x + Math.cos(angle) * dist,
+      center.y,
+      center.z + Math.sin(angle) * dist
     );
-    baseEffects.spawnBeam(
-      __vB.set(center.x, center.y + 0.2, center.z),
-      target,
-      colors.beam,
-      0.2
+    
+    baseEffects.spawnPillar(
+      columnPos,
+      (size.flames || 1.8) * 4,
+      0.4,
+      colors.primary || "#ff4500",
+      0.6
     );
   }
+  
+  // Massive particle explosion
+  baseEffects.spawnParticleBurst(
+    center,
+    particles.count || 50,
+    colors.primary || "#ff4500",
+    particles.speed || 8.0,
+    0.2,
+    particles.lifetime || 1.2
+  );
+  
+  // Secondary particle burst (embers)
+  setTimeout(() => {
+    baseEffects.spawnParticleBurst(
+      center,
+      30,
+      colors.secondary || "#ff6347",
+      5.0,
+      0.15,
+      1.5
+    );
+  }, 150);
+  
+  // Cone blast upward
+  baseEffects.spawnCone(
+    center,
+    new THREE.Vector3(0, 1, 0),
+    45,
+    size.flames || 1.8 * 3,
+    colors.accent || "#ffff00",
+    16,
+    0.4
+  );
+  
+  // Ground impact ring
+  baseEffects.spawnRing(
+    center,
+    radius || 16,
+    colors.primary || "#ff4500",
+    1.0,
+    1.2,
+    0.6
+  );
+  
+  // Smoke particles (dark)
+  setTimeout(() => {
+    baseEffects.spawnParticleBurst(
+      new THREE.Vector3(center.x, center.y + 2, center.z),
+      20,
+      colors.smoke || "#2a2a2a",
+      3.0,
+      0.4,
+      2.0
+    );
+  }, 300);
 }
