@@ -29,6 +29,7 @@
 /* Shared name styles for both .skill and .skill-btn */
 .skill .name,
 .skill-btn .name{
+  visibility: hidden;
   position: absolute;
   left: 6px;
   bottom: 6px;
