@@ -580,6 +580,79 @@
   margin-top: 12px;
 }
 
+/* Modal close button (X at top-right) */
+.modal-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--system-border);
+  background: var(--glass-strong);
+  color: var(--theme-white);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.2s ease;
+}
+.modal-close-btn:hover {
+  background: var(--theme-dark-orange);
+}
+
+/* Skill Assign Modal specific styles */
+.skill-assign-box {
+  position: relative;
+  min-width: 300px;
+  text-align: center;
+}
+.skill-assign-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 16px;
+  padding-right: 28px; /* Space for close button */
+}
+.skill-assign-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+.skill-assign-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.skill-assign-slot button {
+  padding: 12px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--system-border);
+  background: var(--system-bg);
+  color: var(--system-text);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.skill-assign-slot button:hover {
+  background: var(--theme-dark-orange);
+}
+.skill-assign-slot-info {
+  font-size: 11px;
+  opacity: 0.8;
+}
+.skill-assign-tip {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 6px;
+}
+
 /* Slider inline value badge (used next to range inputs) */
 .slider-value {
   margin-left: 6px;

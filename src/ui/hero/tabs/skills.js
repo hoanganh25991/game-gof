@@ -253,130 +253,57 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     applyLoadoutChange(next);
   }
 
-  // Modal for key assignment (replaces the old assign bar)
+  // Modal for key assignment (uses static HTML modal)
   function showKeyAssignModal(skillId) {
     return new Promise((resolve) => {
       const sd = SKILL_POOL.find((s) => s.id === skillId);
       if (!sd) return resolve(null);
 
-      const root = document.createElement("div");
-      root.id = "__skillAssignModal";
-      Object.assign(root.style, {
-        position: "fixed",
-        inset: "0",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--glass)",
-        zIndex: "9999",
-        backdropFilter: "blur(2px)",
-      });
+      // Get static modal elements
+      const modal = document.getElementById("skillAssignModal");
+      const titleEl = document.getElementById("skillAssignTitle");
+      const gridEl = document.getElementById("skillAssignGrid");
+      const closeBtn = modal.querySelector(".modal-close-btn");
+      
+      if (!modal || !titleEl || !gridEl || !closeBtn) return resolve(null);
 
-      const box = document.createElement("div");
-      Object.assign(box.style, {
-        minWidth: "300px",
-        maxWidth: "90vw",
-        background: "var(--system-bg)",
-        border: "1px solid var(--system-border)",
-        borderRadius: "10px",
-        padding: "14px",
-        color: "var(--system-text)",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-        textAlign: "center",
-        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif",
-        position: "relative",
-      });
-
-      // Close button (X) at top-right
-      const closeBtn = document.createElement("button");
-      closeBtn.textContent = "✕";
-      closeBtn.setAttribute("type", "button");
-      Object.assign(closeBtn.style, {
-        position: "absolute",
-        top: "8px",
-        right: "8px",
-        width: "28px",
-        height: "28px",
-        borderRadius: "50%",
-        border: "1px solid var(--system-border)",
-        background: "var(--glass-strong)",
-        color: "var(--theme-white)",
-        cursor: "pointer",
-        fontSize: "18px",
-        fontWeight: "700",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "0",
-        lineHeight: "1",
-      });
-      closeBtn.addEventListener("mouseenter", () => (closeBtn.style.background = "var(--theme-dark-orange)"));
-      closeBtn.addEventListener("mouseleave", () => (closeBtn.style.background = "var(--glass-strong)"));
-      closeBtn.addEventListener("click", () => {
-        cleanup();
-        resolve(null);
-      });
-      box.appendChild(closeBtn);
-
-      const title = document.createElement("div");
+      // Set title
       const nameLocal = tt(`skills.names.${sd.id}`) || sd.name;
       const shortLocal = tt(`skills.shorts.${sd.id}`) || sd.short || "";
-      title.textContent = `${tt("assign.assign")} ${nameLocal} (${shortLocal}) ${sd.icon || ""} ${tt("assign.toSlot")}`;
-      Object.assign(title.style, { fontWeight: "600", marginBottom: "10px", fontSize: "16px" });
+      titleEl.textContent = `${tt("assign.assign")} ${nameLocal} (${shortLocal}) ${sd.icon || ""} ${tt("assign.toSlot")}`;
 
-      const grid = document.createElement("div");
-      Object.assign(grid.style, {
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gap: "10px",
-        marginTop: "6px",
-        marginBottom: "10px",
-      });
-
+      // Clear and populate grid
+      gridEl.innerHTML = "";
       const keys = ["Q", "W", "E", "R"];
       keys.forEach((k, i) => {
         const wrap = document.createElement("div");
-        Object.assign(wrap.style, { display: "flex", flexDirection: "column", gap: "6px" });
+        wrap.className = "skill-assign-slot";
 
         const btn = document.createElement("button");
         btn.setAttribute("type", "button");
         btn.textContent = k;
         const currentSkill = SKILL_POOL.find((s) => s.id === activeLoadout[i]);
         btn.title = currentSkill ? (tt(`skills.names.${currentSkill.id}`) || currentSkill.name || k) : k;
-        Object.assign(btn.style, {
-          padding: "12px 6px",
-          borderRadius: "8px",
-          border: "1px solid var(--system-border)",
-          background: "var(--system-bg)",
-          color: "var(--system-text)",
-          fontSize: "18px",
-          fontWeight: "700",
-          cursor: "pointer",
-        });
-        btn.addEventListener("mouseenter", () => (btn.style.background = "var(--theme-dark-orange)"));
-        btn.addEventListener("mouseleave", () => (btn.style.background = "var(--system-bg)"));
         btn.addEventListener("click", () => {
           cleanup();
           resolve(i);
         });
 
-        wrap.appendChild(btn);
         const info = document.createElement("div");
+        info.className = "skill-assign-slot-info";
         info.textContent = currentSkill ? `(${tt(`skills.names.${currentSkill.id}`) || currentSkill.name})` : "(empty)";
-        Object.assign(info.style, { fontSize: "11px", opacity: "0.8" });
-        wrap.appendChild(info);
 
-        grid.appendChild(wrap);
+        wrap.appendChild(btn);
+        wrap.appendChild(info);
+        gridEl.appendChild(wrap);
       });
 
-      const tip = document.createElement("div");
-      tip.textContent = "Tip: press Q, W, E or R to choose quickly";
-      Object.assign(tip.style, { fontSize: "12px", opacity: "0.8", marginTop: "6px" });
-
-      box.appendChild(title);
-      box.appendChild(grid);
-      box.appendChild(tip);
-      root.appendChild(box);
+      // Close button handler
+      const onClose = () => {
+        cleanup();
+        resolve(null);
+      };
+      closeBtn.addEventListener("click", onClose);
 
       // Keyboard access
       const onKey = (ev) => {
@@ -394,15 +321,14 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
       };
       document.addEventListener("keydown", onKey, true);
 
-      document.body.appendChild(root);
+      // Show modal
+      modal.classList.remove("hidden");
 
       function cleanup() {
         document.removeEventListener("keydown", onKey, true);
-        try {
-          root.remove();
-        } catch (_) {
-          if (root && root.parentNode) root.parentNode.removeChild(root);
-        }
+        closeBtn.removeEventListener("click", onClose);
+        modal.classList.add("hidden");
+        gridEl.innerHTML = "";
       }
     });
   }

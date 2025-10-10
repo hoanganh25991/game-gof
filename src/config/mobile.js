@@ -34,8 +34,10 @@ export const MOBILE_OPTIMIZATIONS = {
  * Apply mobile GPU/CPU optimizations on renderer where applicable.
  * Safe to call on desktop; it will be a no-op except logging.
  */
-export function applyMobileRendererHints(renderer) {
+export function applyMobileRendererHints(renderer, { quality }) {
   if (!isMobile || !renderer) return;
+  if (quality == "high") return;
+  console.log("applyMobileRendererHints", { quality })
   try {
     const currentRatio = renderer.getPixelRatio();
     const maxRatio = MOBILE_OPTIMIZATIONS.maxPixelRatio;

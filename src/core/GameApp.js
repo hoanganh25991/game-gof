@@ -183,12 +183,14 @@ export class GameApp {
     this._cameraOffset = world.cameraOffset;
     this._cameraShake = world.cameraShake;
 
-    // Apply mobile optimizations
-    applyMobileRendererHints(this._renderer);
+
 
     // Initialize effects
     const renderQuality = this._settingsManager.getRenderQuality();
     this._effects = new EffectsManager(this._scene, { quality: renderQuality });
+
+    // Apply mobile optimizations
+    applyMobileRendererHints(this._renderer, {quality: renderQuality});
 
     // Initialize performance tracking
     this._perfTracker = createPerformanceTracker(this._renderer, { targetFPS: 90, autoAdjust: true });
