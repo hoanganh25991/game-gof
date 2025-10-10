@@ -2,7 +2,7 @@
 
 Scope
 - 2D UI elements for player stats and skill cooldowns.
-- Minimap (200x200 canvas) centered on the player showing nearby world actors.
+- Minimap (canvas) centered on the player showing nearby world actors.
 
 HUD
 - Bars and text for:
@@ -16,7 +16,7 @@ HUD
   - When countdown reaches 0, hide the numeric label (no "0.0" displayed).
 
 Minimap
-- 200x200 canvas rendering:
+- Canvas rendering:
   - Background panel with subtle frame.
   - Player-centered coordinate space.
   - Village ring drawn relative to player’s center using REST_RADIUS.

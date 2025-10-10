@@ -35,5 +35,3 @@ Modules:
 - Acceptance Criteria: ./acceptance.md
 - Controls Quick Reference: ./controls.md
 - Test Checklist (Smoke): ./smoke-tests.md
-
-Source baseline: ../requirements.md
