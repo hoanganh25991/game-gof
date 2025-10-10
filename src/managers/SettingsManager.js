@@ -111,11 +111,11 @@ export class SettingsManager {
           rain: !!parsed.rain,
           rainLevel: Number.isFinite(parseInt(parsed.rainLevel, 10)) ? parseInt(parsed.rainLevel, 10) : 1
         };
-      }
-
-      // Mobile: Disable rain if configured
-      if (this.#isMobile && this.#MOBILE_OPTIMIZATIONS.disableRain) {
-        this.#environmentSettings.rain = false;
+      } else {
+        // Mobile: Disable rain by default if configured (only when no saved preference exists)
+        if (this.#isMobile && this.#MOBILE_OPTIMIZATIONS.disableRain) {
+          this.#environmentSettings.rain = false;
+        }
       }
     } catch (err) {
       console.warn('[SettingsManager] Failed to load environment settings:', err);
@@ -287,11 +287,7 @@ export class SettingsManager {
    * Set rain enabled state
    */
   setRainEnabled(enabled) {
-    // Mobile: Respect rain disable flag
-    if (this.#isMobile && this.#MOBILE_OPTIMIZATIONS.disableRain) {
-      this.#environmentSettings.rain = false;
-      return;
-    }
+    // Allow users to override mobile optimization if they explicitly enable rain
     this.#environmentSettings.rain = !!enabled;
     this.#saveEnvironmentSettings();
   }
