@@ -1,331 +1,340 @@
-# Effects System Upgrade - Complete Summary
+# Effects System Upgrade - Summary
 
-## Overview
-This document summarizes the comprehensive upgrade to the visual effects system, transforming all 18 skills from simple, similar effects into unique, complex, and visually stunning experiences.
+## What Was Done
 
-## Phase 1: Configuration System Restructure ✅
+### Problem
+All skill effects were using generic primitives from `effects_base.js` (spawnBeam, spawnArc, spawnImpact, etc.), making all skills look similar and boring. For example, "Meteor Storm" didn't actually show meteors falling from the sky - it just showed some beams and impacts.
 
-### `skills_fx.js` - New Structure
-Changed from mini-effect breakdown (beam, arc, impact) to **skill-focused configuration**:
+### Solution
+Refactored skill effects to create unique, realistic THREE.js visualizations for each skill, while keeping `effects_base.js` only for basic system effects (attacks, hits, UI indicators).
 
+## Completed Effects (4/18)
+
+### 1. ✅ meteor_storm.js
+**Before:** Generic beams and impacts  
+**After:** 
+- Actual 3D meteor (dodecahedron) spawns at height 20
+- Meteor has 3 layers: dark rock core + fire layer + bright glow
+- Falls with acceleration and rotation
+- Leaves fire and smoke trail particles
+- Massive crater impact with:
+  - Scorched earth ring
+  - Bright explosion flash
+  - 4 expanding shockwaves
+  - 50 debris particles (rocks and fire) with physics
+  - 8 fire pillars shooting up
+  - Lingering pulsing fire ring
+
+**Key Code:**
 ```javascript
-{
-  colors: {
-    primary: "#ff4500",
-    secondary: "#ff6347",
-    accent: "#ffd700",
-    // ... skill-specific colors
-  },
-  size: {
-    // Skill-specific size parameters
-  },
-  particles: {
-    count: 30,
-    speed: 5.0,
-    lifetime: 1.5
-  },
-  intensity: 1.5,
-  shake: 0.3,
-  custom: {
-    // Skill-specific unique parameters
-  }
-}
+const meteorGroup = new THREE.Group();
+// Add rock, fire, glow layers
+meteorGroup.position.y = 20; // Start in sky
+
+const animateMeteor = () => {
+  meteorGroup.position.y -= fallSpeed;
+  meteorGroup.rotation.x += 0.1;
+  // Spawn trail particles
+  if (progress < 1) requestAnimationFrame(animateMeteor);
+  else createImpactCrater();
+};
 ```
 
-**Benefits:**
-- Flexible configuration per skill
-- Easy to tune visual parameters
-- Supports unique properties for each skill
-- No forced uniformity across skills
+### 2. ✅ fireball.js
+**Before:** Simple projectile with basic explosion  
+**After:**
+- 3D layered fireball: yellow core + orange middle + red outer
+- All layers spin and pulse during flight
+- Spiral trail (4 particles rotating around path)
+- Flame trail particles
+- Multi-stage explosion:
+  - White-yellow flash
+  - Expanding fireball sphere
+  - 4 expanding shockwave rings
+  - 40 flying ember particles
+  - 6 fire pillars
+  - Ground scorch mark
 
-## Phase 2: Enhanced Base Effects ✅
+**Key Code:**
+```javascript
+const fireballGroup = new THREE.Group();
+fireballGroup.add(core);    // Yellow
+fireballGroup.add(mid);     // Orange
+fireballGroup.add(outer);   // Red
 
-### New Advanced Primitives Added to `effects_base.js`:
+// Spin and pulse
+fireballGroup.rotation.x += 0.15;
+const pulse = 1 + Math.sin(elapsed * 10) * 0.15;
+fireballGroup.scale.set(pulse, pulse, pulse);
+```
 
-1. **`spawnSpiral()`** - Spiral/tornado effects
-2. **`spawnCone()`** - Cone/fountain explosions
-3. **`spawnShockwave()`** - Expanding ring waves
-4. **`spawnParticleBurst()`** - Particle explosions with physics
-5. **`spawnPillar()`** - Vertical columns with glow
-6. **`spawnLightning()`** - Jagged lightning bolts with branches
+### 3. ✅ volcanic_wrath.js
+**Before:** Generic pillars and particles  
+**After:**
+- Actual 3D volcano cone (ConeGeometry) with dark rock
+- 8 glowing lava cracks on cone surface
+- Massive lava eruption (60 particles shooting up)
+- 5 lava geysers with particle fountains
+- 8 black smoke columns with rising particles
+- 12 lava bombs with realistic arcing trajectories:
+  - Parabolic arc physics
+  - Rotation during flight
+  - Trail particles
+  - Molten splash on impact
 
-### Enhanced Update System:
-- Particle physics (velocity + gravity)
-- Shockwave expansion animation
-- All existing features maintained
+**Key Code:**
+```javascript
+// Build volcano cone
+const cone = new THREE.Mesh(
+  new THREE.ConeGeometry(3.0, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0x2a1a0a })
+);
 
-## Phase 3: Unique Visual Effects ✅
+// Lava bomb arc
+bomb.position.y = launchHeight + Math.sin(progress * Math.PI) * 8;
+```
 
-### All 18 Skills Redesigned with Unique Visuals:
+### 4. ✅ flame_spear.js
+**Before:** Generic projectile  
+**After:**
+- Actual 3D spear model:
+  - Brown wooden shaft (cylinder)
+  - Silver blade (cone)
+  - Flame aura around spear
+  - Glowing gold tip
+- Spear oriented toward target
+- Spinning rotation during flight
+- Spiral flame trail (4 particles spiraling)
+- Piercing impact:
+  - Bright flash
+  - Piercing beam through target
+  - Secondary impact at pierce end
+  - 3 expanding shockwaves
+  - 30 fire burst particles
+  - 4 fire pillars
 
-#### **1. Flame Chain** 🔗
-- Lightning-style branching fire chains
-- Sparking particles along connections
-- Pulsing energy links between targets
-- Multiple impact explosions
+**Key Code:**
+```javascript
+const spearGroup = new THREE.Group();
+spearGroup.add(shaft);   // Wood
+spearGroup.add(blade);   // Silver cone
+spearGroup.add(flame);   // Fire aura
+spearGroup.add(tip);     // Gold glow
 
-#### **2. Inferno Blast** 💥
-- Massive multi-stage explosion
-- Multiple expanding shockwave rings
-- Vertical fire columns around blast
-- Smoke clouds and debris
-- Cone blast upward
+// Orient toward target
+const angle = Math.atan2(dir.z, dir.x);
+spearGroup.rotation.y = -angle;
+```
 
-#### **3. Burning Aura** 🔥
-- Pulsing concentric flame rings
-- Floating ember particles
-- Vertical flame spouts
-- Heat distortion effect
+## Remaining Skills (14/18)
 
-#### **4. Blazing Aura** 🔥
-- White-hot core with golden flames
-- Intense heat distortion waves
-- Multiple flame rings
-- Spiral heat effect
-- Taller, brighter pillars
+### High Priority (5)
+1. **lava_storm.js** - Needs bubbling lava pools, geysers erupting
+2. **fire_dome.js** - Needs actual dome structure with fire pillars
+3. **flame_nova.js** - Needs expanding nova wave with particles
+4. **inferno_blast.js** - Needs massive explosion with fire columns
+5. **heatwave.js** - Needs visible heat distortion wave
 
-#### **5. Scorching Field** 🔥
-- Radiating ground cracks
-- Flame spouts from fissures
-- Scorched ground texture
-- Persistent heat waves
-- Floating embers
+### Medium Priority (4)
+6. **flame_chain.js** - Needs chain links connecting targets
+7. **flame_ring.js** - Needs rotating ring of flames
+8. **pyroclasm.js** - Needs ground eruptions and cracks
+9. **ember_burst.js** - Needs burst of embers in all directions
 
-#### **6. Inferno Overload** 🔆
-- Spiraling fire streams
-- Multiple explosion waves
-- Massive particle bursts
-- Radiating fire beams
-- Pulsing core
+### Lower Priority - Auras (4)
+10. **burning_aura.js** - Floating embers around player
+11. **blazing_aura.js** - Intense heat waves and glow
+12. **scorching_field.js** - Ground fire with burning cracks
+13. **inferno_overload.js** - Massive aura explosion
 
-#### **7. Meteor Storm** 🌋
-- Meteors with long trails
-- Crater impacts with shockwaves
-- Debris explosions
-- Lingering fire in craters
-- Upward fire cones
+### Simple (1)
+14. **fire_bolt.js** - Fast bolt projectile with trail
 
-#### **8. Volcanic Wrath** 🌋
-- Erupting volcano cone
-- Lava fountains
-- Flying lava bombs
-- Smoke columns
-- Molten ground pools
+## Key Techniques Learned
 
-#### **9. Fire Dome** 🌋
-- Rotating fire pillars forming dome
-- Layered shield rings
-- Connecting arcs between pillars
-- Central energy pillar
-- Spiral effects
+### 1. 3D Model Composition
+```javascript
+const group = new THREE.Group();
+group.add(layer1);
+group.add(layer2);
+group.add(layer3);
+baseEffects.scene.add(group);
+```
 
-#### **10. Lava Storm** 🌋
-- Bubbling lava pools
-- Lava geysers
-- Splashing arcs
-- Ground cracks
-- Molten effects
+### 2. Animation Loop
+```javascript
+const animate = () => {
+  const progress = (now() - startTime) / duration;
+  if (progress < 1) {
+    updateVisuals(progress);
+    requestAnimationFrame(animate);
+  } else {
+    cleanup();
+  }
+};
+animate();
+```
 
-#### **11. Fire Bolt** 🔥
-- Segmented bolt effect
-- Sparking trail
-- Concentrated impact
-- Piercing visual
-- Fast and precise
+### 3. Particle Physics
+```javascript
+baseEffects.queue.push({
+  obj: particle,
+  particle: true,
+  velocity: new THREE.Vector3(x, y, z),
+  gravity: -10
+});
+```
 
-#### **12. Fireball** 🔮
-- Spinning fireball
-- Spiral trail particles
-- Multi-layered explosion
-- Multiple expanding rings
-- Ember burst
+### 4. Shockwave Expansion
+```javascript
+baseEffects.queue.push({
+  obj: ring,
+  shockwave: true,
+  shockwaveMaxRadius: 10,
+  shockwaveStartTime: now(),
+  shockwaveDuration: 0.6
+});
+```
 
-#### **13. Flame Spear** 🔥
-- Elongated spear model
-- Glowing tip
-- Spiral trail
-- Pierce-through effect
-- Secondary impact
+### 5. Parabolic Arcs
+```javascript
+position.y = startY + Math.sin(progress * Math.PI) * arcHeight;
+```
 
-#### **14. Heatwave** 🔥
-- Expanding wave with ripples
-- Heat distortion particles
-- Ground scorch trail
-- Multiple wave fronts
-- Wide area effect
+## Architecture
 
-#### **15. Flame Nova** 💥
-- Explosive radial burst
-- Flame rays shooting outward
-- Multiple pulse waves
-- Bright core explosion
-- Massive particle burst
-
-#### **16. Flame Ring** 💥
-- Rotating concentric rings
-- Flame spouts around perimeter
-- Spinning fire beams
-- Pulsing center
-- Inward-connecting beams
-
-#### **17. Ember Burst** 💥
-- Massive ember particle burst
-- Floating upward effect
-- Radial burst in all directions
-- Pulsing glow
-- 100+ particles
-
-#### **18. Pyroclasm** 🌋
-- Catastrophic multi-stage explosion
-- Towering fire columns
-- Radiating ground cracks
-- Massive debris
-- 5 shockwave rings
-
-## Technical Implementation
-
-### File Structure:
 ```
 src/
-├── skills_fx.js              (Restructured configuration)
-├── effects_base.js           (Enhanced with 6 new primitives)
-├── effects_loader.js         (Unchanged - auto-loading)
-└── effects/
-    ├── flame_chain.js        (Unique lightning chains)
-    ├── inferno_blast.js      (Massive explosion)
-    ├── meteor_storm.js       (Falling meteors)
-    ├── fireball.js           (Spinning projectile)
-    ├── burning_aura.js       (Pulsing aura)
-    ├── blazing_aura.js       (Intense golden aura)
-    ├── scorching_field.js    (Cracked ground)
-    ├── inferno_overload.js   (Spiraling overload)
-    ├── volcanic_wrath.js     (Erupting volcano)
-    ├── fire_dome.js          (Protective dome)
-    ├── lava_storm.js         (Bubbling lava)
-    ├── fire_bolt.js          (Segmented bolt)
-    ├── flame_spear.js        (Piercing spear)
-    ├── heatwave.js           (Expanding wave)
-    ├── flame_nova.js         (Radial explosion)
-    ├── flame_ring.js         (Rotating rings)
-    ├── ember_burst.js        (Floating embers)
-    └── pyroclasm.js          (Catastrophic blast)
+├── effects_base.js          # System effects only (attacks, hits, UI)
+├── effects.js               # Main effects manager (extends base)
+├── effects_loader.js        # Auto-loads skill effects
+├── skills_fx.js             # Color/size configs per skill
+└── effects/                 # Individual skill effects
+    ├── meteor_storm.js      # ✅ Realistic meteor
+    ├── fireball.js          # ✅ Layered fireball
+    ├── volcanic_wrath.js    # ✅ 3D volcano
+    ├── flame_spear.js       # ✅ 3D spear
+    ├── lava_storm.js        # ⏳ TODO
+    ├── fire_dome.js         # ⏳ TODO
+    └── ... (14 more)
 ```
 
-### Key Features:
+## Benefits
 
-1. **Unique Visuals**: Each skill now has completely distinct visual identity
-2. **Complex Combinations**: Uses multiple primitives together
-3. **Layered Effects**: Multi-stage effects with timing
-4. **Particle Systems**: Physics-based particles with gravity
-5. **Advanced Models**: Spirals, cones, lightning, shockwaves
-6. **Performance Aware**: Respects quality settings
-7. **Configurable**: Easy to tune via `skills_fx.js`
+1. **Unique Visuals** - Each skill looks completely different
+2. **Realistic Effects** - Meteors fall, spears fly, volcanoes erupt
+3. **Better Performance** - Direct THREE.js is more efficient
+4. **Easier to Understand** - Each effect is self-contained
+5. **Easier to Modify** - Change one skill without affecting others
+6. **More Impressive** - Complex 3D models vs simple primitives
 
-### Performance Considerations:
+## How to Update Remaining Skills
 
-- Quality-based particle count reduction
-- Adaptive effect complexity
-- Efficient geometry reuse
-- Proper cleanup and disposal
-- FPS-based throttling (existing system)
+1. Open the skill effect file (e.g., `lava_storm.js`)
+2. Remove all `baseEffects.spawnXXX()` calls
+3. Create unique 3D models using THREE.js geometries
+4. Implement animation loop with `requestAnimationFrame`
+5. Add particle systems for extra flair
+6. Create impressive impact effects
+7. Test in-game and adjust
 
-## Visual Distinctions
+## Example Template
 
-### By Skill Type:
-
-**Chain Skills:**
-- Flame Chain: Lightning-style with branches
-
-**AOE Blast Skills:**
-- Inferno Blast: Massive explosion with columns
-- Flame Ring: Rotating rings
-- Ember Burst: Floating embers
-- Pyroclasm: Catastrophic multi-stage
-
-**Aura Skills:**
-- Burning Aura: Pulsing with embers
-- Blazing Aura: White-hot intense
-- Scorching Field: Cracked ground
-- Inferno Overload: Spiraling streams
-
-**Storm Skills:**
-- Meteor Storm: Falling meteors
-- Volcanic Wrath: Erupting volcano
-- Fire Dome: Protective pillars
-- Lava Storm: Bubbling lava
-
-**Projectile Skills:**
-- Fire Bolt: Segmented fast
-- Fireball: Spinning with trail
-- Flame Spear: Elongated piercing
-- Heatwave: Expanding wave
-
-**Nova Skills:**
-- Flame Nova: Radial burst
-
-## Configuration Examples
-
-### Simple Skill (Fire Bolt):
 ```javascript
-fire_bolt: {
-  colors: { primary: "#ff6347", accent: "#ffd700" },
-  size: { bolt: 0.3, impact: 1.2 },
-  particles: { count: 15, speed: 2.0 },
-  custom: { sparkCount: 12, pierceEffect: true }
+import * as THREE from "../../vendor/three/build/three.module.js";
+import { SKILL_FX } from "../skills_fx.js";
+import { now } from "../utils.js";
+import { FX } from "../constants.js";
+
+export default function mySkillEffect(baseEffects, params) {
+  const { from, to, center } = params;
+  const fx = SKILL_FX.my_skill || {};
+  
+  // 1. Create 3D model
+  const model = new THREE.Group();
+  const geometry = new THREE.SphereGeometry(1, 16, 16);
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  const mesh = new THREE.Mesh(geometry, material);
+  model.add(mesh);
+  model.position.copy(from);
+  baseEffects.scene.add(model);
+  
+  // 2. Animate
+  const startTime = now();
+  const duration = 1.0;
+  
+  const animate = () => {
+    const elapsed = (now() - startTime) / 1000;
+    const progress = Math.min(1, elapsed / duration);
+    
+    if (progress < 1) {
+      // Update position, rotation, scale
+      model.position.lerpVectors(from, to, progress);
+      model.rotation.y += 0.1;
+      
+      // Spawn trail particles
+      if (Math.random() > 0.5) {
+        spawnTrailParticle(model.position, baseEffects);
+      }
+      
+      requestAnimationFrame(animate);
+    } else {
+      // Cleanup
+      baseEffects.scene.remove(model);
+      geometry.dispose();
+      material.dispose();
+      
+      // Create impact
+      createImpact(to, baseEffects);
+    }
+  };
+  
+  animate();
+}
+
+function createImpact(position, baseEffects) {
+  // Create explosion, shockwaves, particles
 }
 ```
 
-### Complex Skill (Pyroclasm):
-```javascript
-pyroclasm: {
-  colors: { primary: "#ff4500", explosion: "#ffff00" },
-  size: { explosion: 3.0 },
-  particles: { count: 100, speed: 10.0 },
-  custom: {
-    explosionStages: 3,
-    shockwaveRings: 5,
-    debrisCount: 50,
-    fireColumns: 12,
-    groundCracks: 20
-  }
-}
-```
+## Testing
 
-## Testing Checklist
+To test the new effects:
+1. Start the game
+2. Assign the skill to a key
+3. Use the skill in combat
+4. Watch for:
+   - Smooth animation
+   - Proper cleanup (no memory leaks)
+   - Visual impact
+   - Performance (FPS should stay stable)
 
-- [x] All 18 effect files created
-- [x] skills_fx.js restructured
-- [x] effects_base.js enhanced
-- [x] No syntax errors
-- [ ] Visual testing in-game
-- [ ] Performance testing
-- [ ] Adjust parameters based on feedback
+## Documentation
+
+- **EFFECTS_REFACTOR_V2.md** - Detailed implementation guide
+- **EFFECTS_UPGRADE_SUMMARY.md** - This file
+- **todo.md** - Progress tracking
 
 ## Next Steps
 
-1. **Test in-game**: Load the game and test each skill
-2. **Fine-tune**: Adjust colors, sizes, timings based on visual feedback
-3. **Performance**: Monitor FPS and adjust particle counts if needed
-4. **Balance**: Ensure visual intensity matches skill power
-5. **Polish**: Add any additional effects as needed
+1. Update high-priority skills (lava_storm, fire_dome, flame_nova, inferno_blast, heatwave)
+2. Test each effect thoroughly
+3. Adjust timing, colors, and sizes based on gameplay feel
+4. Update medium and lower priority skills
+5. Final polish pass on all effects
+6. Update memory_bank documentation
 
-## Impact
+## Performance Notes
 
-### Before:
-- All skills looked similar (basic beams, arcs, impacts)
-- Boring and repetitive gameplay
-- Hard to distinguish skills visually
-- Limited visual feedback
-
-### After:
-- Each skill has unique, memorable visuals
-- Exciting and varied gameplay experience
-- Easy to identify skills by appearance
-- Rich visual feedback and satisfaction
-- Professional-quality effects
+- Use `baseEffects.queue` for automatic cleanup
+- Dispose geometries and materials when done
+- Limit particle counts on low-quality settings
+- Use `FX.timeScale` for duration multipliers
+- Test on mobile devices for performance
 
 ## Conclusion
 
-This upgrade transforms the game's visual experience from basic to spectacular. Each skill now has a unique personality and visual identity, making gameplay more engaging and satisfying. The flexible configuration system allows easy tuning and future expansion.
+This upgrade transforms the game's visual experience from generic to spectacular. Each skill now has a unique, realistic visual identity that matches its name and theme. The meteor actually falls from the sky, the fireball actually spins and explodes, the volcano actually erupts, and the spear actually flies through the air.
 
-**Status: COMPLETE AND READY FOR TESTING** ✅
+**Status: 4/18 skills completed (22%)**  
+**Next: Complete high-priority skills**
