@@ -22,29 +22,58 @@ export function initHeroPreview(skills, opts = {}) {
 
   skills.previewSkill = function enhancedPreview(def) {
     try {
-      showKeySelectOverlay(def)
-        .then((key) => {
-          if (!key) {
-            // cancelled or invalid -> fallback to old preview visuals (no cast)
-            try { originalPreview(def); } catch (_) {}
-            return;
-          }
-          // Fade out Hero Screen first
-          return fadeOut(heroScreen, 300).then(async () => {
-            // Countdown 2,1 and cast; confirmation handled inside
-            await showCastingOverlayAndCast(skills, def, key);
-          }).then(() => {
-            // Fade back in after countdown + cast + display
-            fadeIn(heroScreen, 300);
-          });
-        })
-        .catch(() => {
-          try { originalPreview(def); } catch (_) {}
-        });
+      // Find the key with the least cooldown
+      const key = findKeyWithLeastCooldown(skills);
+      
+      if (!key) {
+        // No available key -> fallback to old preview visuals (no cast)
+        try { originalPreview(def); } catch (_) {}
+        return;
+      }
+      
+      // Fade out Hero Screen first
+      fadeOut(heroScreen, 300).then(async () => {
+        // Countdown and cast; confirmation handled inside
+        await showCastingOverlayAndCast(skills, def, key, false); // false = don't persist assignment
+      }).then(() => {
+        // Fade back in after countdown + cast + display
+        fadeIn(heroScreen, 300);
+      }).catch(() => {
+        try { originalPreview(def); } catch (_) {}
+      });
     } catch (_) {
       try { originalPreview(def); } catch (_) {}
     }
   };
+}
+
+/* ============================
+   Helper Functions
+============================ */
+
+/**
+ * Find the key (Q/W/E/R) with the least cooldown remaining
+ * @param {Object} skills - The skills system with cooldowns
+ * @returns {string|null} - The key with least cooldown, or null if none available
+ */
+function findKeyWithLeastCooldown(skills) {
+  const keys = ["Q", "W", "E", "R"];
+  const currentTime = now();
+  
+  let bestKey = null;
+  let minCooldown = Infinity;
+  
+  for (const key of keys) {
+    const cooldownEnd = skills.cooldowns?.[key] || 0;
+    const remaining = Math.max(0, cooldownEnd - currentTime);
+    
+    if (remaining < minCooldown) {
+      minCooldown = remaining;
+      bestKey = key;
+    }
+  }
+  
+  return bestKey;
 }
 
 /* ============================
@@ -194,7 +223,7 @@ function showKeySelectOverlay(def) {
   });
 }
 
-async function showCastingOverlayAndCast(skills, def, key) {
+async function showCastingOverlayAndCast(skills, def, key, persist = true) {
   // Root overlay
   const root = document.createElement("div");
   root.id = "__previewCasting";
@@ -251,19 +280,32 @@ async function showCastingOverlayAndCast(skills, def, key) {
       }
     }
 
-    // Persist assignment, then cast
+    // Temporarily assign skill for preview, then cast
     if (def) {
       const upgradeManager = getSkillUpgradeManager();
       const baseSkill = Object.assign({}, def);
       // Apply upgrade bonuses based on skill level
       const upgradedSkill = upgradeManager.applyUpgradeBonuses(def.id, baseSkill);
+      
+      // Store the original skill if we're not persisting
+      const originalSkill = persist ? null : getSkill(key);
+      
       setSkill(key, upgradedSkill);
-      // Persist selection to storage and refresh labels if available
-      persistAssignment(key, def);
+      
+      // Persist selection to storage and refresh labels if requested
+      if (persist) {
+        persistAssignment(key, def);
+      }
+      
+      try {
+        skills.castSkill(key);
+      } catch (_) {}
+      
+      // Restore original skill if we're not persisting
+      if (!persist && originalSkill) {
+        setSkill(key, originalSkill);
+      }
     }
-    try {
-      skills.castSkill(key);
-    } catch (_) {}
 
     // Show brief confirmation (keep small); mapping remains assigned and persisted
     number.style.fontSize = "42px";

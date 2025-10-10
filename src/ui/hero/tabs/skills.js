@@ -253,42 +253,153 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     applyLoadoutChange(next);
   }
 
-  // Assign bar (appears when a skill is selected; lets user pick Q/W/E/R)
-  const assignBar = document.createElement("div");
-  assignBar.className = "assign-bar";
-  const assignLabel = document.createElement("div");
-  assignLabel.className = "assign-label";
-  const assignBtns = document.createElement("div");
-  assignBtns.className = "assign-btns";
-  const keysRow = ["Q", "W", "E", "R"].map((k, i) => {
-    const b = document.createElement("button");
-    b.className = "pill-btn pill-btn--yellow";
-    b.textContent = k;
-    b.addEventListener("click", () => {
-      if (selectedSkillId != null) assignSkillTo(i, selectedSkillId);
-    });
-    return b;
-  });
-  keysRow.forEach((b) => assignBtns.appendChild(b));
-  const cancelBtn = document.createElement("button");
-  cancelBtn.className = "pill-btn";
-  cancelBtn.textContent = "❌";
-  cancelBtn.title = tt("btn.cancel");
-  cancelBtn.addEventListener("click", () => {
-    selectedSkillId = null;
-    try {
-      list.querySelectorAll(".items-row").forEach((it) => {
-        it.classList.remove("selected");
-      });
-    } catch (_) {}
-    assignBar.classList.remove("active");
-  });
-  assignBtns.appendChild(cancelBtn);
-  assignBar.appendChild(assignLabel);
-  assignBar.appendChild(assignBtns);
-  rightCol.appendChild(assignBar);
+  // Modal for key assignment (replaces the old assign bar)
+  function showKeyAssignModal(skillId) {
+    return new Promise((resolve) => {
+      const sd = SKILL_POOL.find((s) => s.id === skillId);
+      if (!sd) return resolve(null);
 
-  // Slots selection
+      const root = document.createElement("div");
+      root.id = "__skillAssignModal";
+      Object.assign(root.style, {
+        position: "fixed",
+        inset: "0",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--glass)",
+        zIndex: "9999",
+        backdropFilter: "blur(2px)",
+      });
+
+      const box = document.createElement("div");
+      Object.assign(box.style, {
+        minWidth: "300px",
+        maxWidth: "90vw",
+        background: "var(--system-bg)",
+        border: "1px solid var(--system-border)",
+        borderRadius: "10px",
+        padding: "14px",
+        color: "var(--system-text)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+        textAlign: "center",
+        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif",
+      });
+
+      const title = document.createElement("div");
+      const nameLocal = tt(`skills.names.${sd.id}`) || sd.name;
+      const shortLocal = tt(`skills.shorts.${sd.id}`) || sd.short || "";
+      title.textContent = `${tt("assign.assign")} ${nameLocal} (${shortLocal}) ${sd.icon || ""} ${tt("assign.toSlot")}`;
+      Object.assign(title.style, { fontWeight: "600", marginBottom: "10px", fontSize: "16px" });
+
+      const grid = document.createElement("div");
+      Object.assign(grid.style, {
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        gap: "10px",
+        marginTop: "6px",
+        marginBottom: "10px",
+      });
+
+      const keys = ["Q", "W", "E", "R"];
+      keys.forEach((k, i) => {
+        const wrap = document.createElement("div");
+        Object.assign(wrap.style, { display: "flex", flexDirection: "column", gap: "6px" });
+
+        const btn = document.createElement("button");
+        btn.setAttribute("type", "button");
+        btn.textContent = k;
+        const currentSkill = SKILL_POOL.find((s) => s.id === activeLoadout[i]);
+        btn.title = currentSkill ? (tt(`skills.names.${currentSkill.id}`) || currentSkill.name || k) : k;
+        Object.assign(btn.style, {
+          padding: "12px 6px",
+          borderRadius: "8px",
+          border: "1px solid var(--system-border)",
+          background: "var(--system-bg)",
+          color: "var(--system-text)",
+          fontSize: "18px",
+          fontWeight: "700",
+          cursor: "pointer",
+        });
+        btn.addEventListener("mouseenter", () => (btn.style.background = "var(--theme-dark-orange)"));
+        btn.addEventListener("mouseleave", () => (btn.style.background = "var(--system-bg)"));
+        btn.addEventListener("click", () => {
+          cleanup();
+          resolve(i);
+        });
+
+        wrap.appendChild(btn);
+        const info = document.createElement("div");
+        info.textContent = currentSkill ? `(${tt(`skills.names.${currentSkill.id}`) || currentSkill.name})` : "(empty)";
+        Object.assign(info.style, { fontSize: "11px", opacity: "0.8" });
+        wrap.appendChild(info);
+
+        grid.appendChild(wrap);
+      });
+
+      const tip = document.createElement("div");
+      tip.textContent = "Tip: press Q, W, E or R to choose quickly";
+      Object.assign(tip.style, { fontSize: "12px", opacity: "0.8", marginTop: "6px" });
+
+      const actions = document.createElement("div");
+      Object.assign(actions.style, { marginTop: "10px", display: "flex", gap: "8px", justifyContent: "center" });
+
+      const cancel = document.createElement("button");
+      cancel.textContent = tt("btn.cancel") || "Cancel";
+      Object.assign(cancel.style, {
+        padding: "8px 12px",
+        borderRadius: "6px",
+        border: "1px solid var(--system-border)",
+        background: "var(--glass-strong)",
+        color: "var(--theme-white)",
+        cursor: "pointer",
+        fontWeight: "600",
+      });
+      cancel.addEventListener("mouseenter", () => (cancel.style.background = "var(--glass)"));
+      cancel.addEventListener("mouseleave", () => (cancel.style.background = "var(--glass-strong)"));
+      cancel.addEventListener("click", () => {
+        cleanup();
+        resolve(null);
+      });
+
+      actions.appendChild(cancel);
+
+      box.appendChild(title);
+      box.appendChild(grid);
+      box.appendChild(tip);
+      box.appendChild(actions);
+      root.appendChild(box);
+
+      // Keyboard access
+      const onKey = (ev) => {
+        const k = String(ev.key || "").toUpperCase();
+        const idx = ["Q", "W", "E", "R"].indexOf(k);
+        if (idx !== -1) {
+          ev.preventDefault?.();
+          cleanup();
+          resolve(idx);
+        } else if (k === "ESCAPE") {
+          ev.preventDefault?.();
+          cleanup();
+          resolve(null);
+        }
+      };
+      document.addEventListener("keydown", onKey, true);
+
+      document.body.appendChild(root);
+
+      function cleanup() {
+        document.removeEventListener("keydown", onKey, true);
+        try {
+          root.remove();
+        } catch (_) {
+          if (root && root.parentNode) root.parentNode.removeChild(root);
+        }
+      }
+    });
+  }
+
+  // Slots selection (kept for potential future use)
   slotsWrap.querySelectorAll(".loadout-slot").forEach((slotEl) => {
     slotEl.addEventListener("click", () => {
       slotsWrap.querySelectorAll(".loadout-slot").forEach((s) => s.classList.remove("selected"));
@@ -297,7 +408,7 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
     });
   });
 
-  function showAssignBar(skillId) {
+  async function showAssignBar(skillId) {
     selectedSkillId = skillId;
     // highlight the selected item
     try {
@@ -309,18 +420,27 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
         }
       });
     } catch (_) {}
-    const sd = SKILL_POOL.find((s) => s.id === skillId);
-    const icon = sd ? (sd.icon || "") : "";
-    const nameLocal2 = sd ? (tt(`skills.names.${sd.id}`) || sd.name || "") : "";
-    const shortLocal2 = sd ? (tt(`skills.shorts.${sd.id}`) || sd.short || "") : "";
-    assignLabel.textContent = `${tt("assign.assign")} ${nameLocal2} (${shortLocal2}) ${icon} ${tt("assign.toSlot")}`;
-    assignBar.classList.add("active");
+    
+    // Show modal and wait for user selection
+    const slotIndex = await showKeyAssignModal(skillId);
+    
+    // Clear selection
+    try {
+      list.querySelectorAll(".items-row").forEach((it) => {
+        it.classList.remove("selected");
+      });
+    } catch (_) {}
+    
+    // If user selected a slot, assign the skill
+    if (slotIndex !== null && slotIndex !== undefined) {
+      assignSkillTo(slotIndex, skillId);
+    }
   }
 
   // Pool item interactions
   list.querySelectorAll(".items-row").forEach((itemEl) => {
     const skillId = itemEl.dataset.skillId;
-    // Click on row = select and show assign bar (no instant assign)
+    // Click on row = select and show assign modal (no instant assign)
     itemEl.addEventListener("click", () => {
       showAssignBar(skillId);
     });
