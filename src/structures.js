@@ -348,7 +348,7 @@ export async function placeStructures(params = {}) {
         });
 
         if (__q !== "low" && acquireLight(2)) {
-          const torchL = new THREE.PointLight(COLOR.yellow, __q === "medium" ? 0.5 : 0.8, 14, 2);
+          const torchL = new THREE.PointLight(COLOR.themeYellow, __q === "medium" ? 0.5 : 0.8, 14, 2);
           torchL.position.set(pos.x + 2.5, 1.2, pos.z - 4.5);
           const torchR = torchL.clone();
           torchR.position.set(pos.x - 2.5, 1.2, pos.z - 4.5);
@@ -452,7 +452,7 @@ export async function placeStructures(params = {}) {
         });
 
         if (__q !== "low" && acquireLight(1)) {
-          const l = new THREE.PointLight(COLOR.yellow, __q === "medium" ? 0.35 : 0.55, 10, 2);
+          const l = new THREE.PointLight(COLOR.themeYellow, __q === "medium" ? 0.35 : 0.55, 10, 2);
           l.position.set(pos.x, 1.0, pos.z);
           root.add(l);
         }

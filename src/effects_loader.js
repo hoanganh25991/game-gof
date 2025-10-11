@@ -32,9 +32,9 @@ let isLoaded = false;
 function getSkillColors(skillId) {
   const fx = SKILL_FX[skillId] || {};
   return {
-    beam: fx.beam ?? COLOR.fire,
-    arc: fx.arc ?? COLOR.accent,
-    impact: fx.impact ?? COLOR.fire,
+    beam: fx.beam ?? COLOR.themeOrange,
+    arc: fx.arc ?? COLOR.themeAccent,
+    impact: fx.impact ?? COLOR.themeOrange,
     ring: fx.ring ?? COLOR.ember,
     hand: fx.hand ?? COLOR.ember,
     shake: fx.shake ?? 0.2

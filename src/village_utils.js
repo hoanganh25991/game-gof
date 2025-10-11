@@ -51,7 +51,7 @@ export function createHouseCluster(center, count, radius, options = {}) {
         const intensity = lights === 'dim' ? 0.4 : 0.9;
         const dist = lights === 'dim' ? 4 : 6;
         const decay = 2;
-        const lanternLight = new THREE.PointLight(COLOR.yellow, intensity, dist, decay);
+        const lanternLight = new THREE.PointLight(COLOR.themeYellow, intensity, dist, decay);
         lanternLight.position.set(0.6, 0.8, 0.6);
         lanternLight.castShadow = false;
         house.add(lanternLight);
@@ -65,7 +65,7 @@ export function createHouseCluster(center, count, radius, options = {}) {
       const lanternBulb = new THREE.Mesh(
         new THREE.SphereGeometry(0.08, 8, 8),
         new THREE.MeshStandardMaterial({
-          emissive: COLOR.yellow,
+          emissive: COLOR.themeYellow,
           emissiveIntensity,
           color: COLOR.volcano,
           roughness: 0.7

@@ -43,8 +43,8 @@ export class SkillsSystem {
     const id = def && def.id;
     const e = (id && SKILL_FX[id]) || {};
     return {
-      beam: e.beam ?? COLOR.fire, // Orange-red fire beam
-      impact: e.impact ?? COLOR.midFire, // Tomato red impact
+      beam: e.beam ?? COLOR.themeOrange, // Orange-red fire beam
+      impact: e.impact ?? COLOR.themeLightOrange, // Tomato red impact
       ring: e.ring ?? COLOR.ember, // Ember orange ring
       arc: e.arc ?? COLOR.arc, // Bright orange arc
       hand: e.hand ?? COLOR.ember, // Ember orange hand
@@ -301,12 +301,12 @@ export class SkillsSystem {
     const dmg = Math.max(1, Math.floor(baseDmg * (up.dmgMul || 1)));
 
     this.effects.spawnProjectile(from, to, {
-      color: COLOR.fire,
+      color: COLOR.themeOrange,
       size: 0.35,
       speed: 25,
       onComplete: (hitPos) => {
         // Impact explosion at target
-        this.effects.spawnStrike(hitPos, 1.2, COLOR.fire);
+        this.effects.spawnStrike(hitPos, 1.2, COLOR.themeOrange);
         if (hasValidTarget) {
           this.effects.spawnHitDecal(target.pos(), COLOR.ember);
         }

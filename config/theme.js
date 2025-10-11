@@ -83,7 +83,7 @@ export const THEME_COLORS = {
   // Skill/environment shared tokens
   ember: "#ffa500",
   lava: "#ff4500",
-  villageColor: "#ffb347",
+  village: "#ffb347",
   ash: "#696969",
   volcano: "#8b4513",
   
@@ -184,38 +184,7 @@ export const CSS_READY = THEME_READY;
  * Direct color access (uses JavaScript values, not CSS)
  * Provides convenient aliases for commonly used colors
  */
-export const COLOR = {
-  // Primary fire theme (aliases)
-  fire: THEME_COLORS.themeOrange,
-  darkFire: THEME_COLORS.darkOrange,
-  midFire: THEME_COLORS.themeLightOrange,
-  
-  // Direct references to THEME_COLORS
-  white: THEME_COLORS.white,
-  hp: THEME_COLORS.hp,
-  mp: THEME_COLORS.mp,
-  xp: THEME_COLORS.xp,
-  accent: THEME_COLORS.themeAccent,
-  yellow: THEME_COLORS.themeYellow,
-  themeDark: THEME_COLORS.themeDark,
-  textWarm: THEME_COLORS.textWarm,
-  textWarmLight: THEME_COLORS.textWarmLight,
-  enemy: THEME_COLORS.enemy,
-  enemyDark: THEME_COLORS.enemyDark,
-  portal: THEME_COLORS.portal,
-  village: THEME_COLORS.villageColor,
-  lava: THEME_COLORS.lava,
-  ember: THEME_COLORS.ember,
-  ash: THEME_COLORS.ash,
-  volcano: THEME_COLORS.volcano,
-  
-  // Environment colors
-  ambientDark: THEME_COLORS.ambientDark,
-  rock: THEME_COLORS.rock,
-  trunk: THEME_COLORS.trunk,
-  stem: THEME_COLORS.stem,
-  tomato: THEME_COLORS.tomato,
-};
+export const COLOR = THEME_COLORS;
 
 /**
  * CSS variable references for DOM styling (preferred for live theming)

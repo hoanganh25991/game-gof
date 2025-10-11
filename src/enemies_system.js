@@ -328,15 +328,15 @@ export class EnemiesSystem {
     try {
       if (en.attackEffect === "melee") {
         // lightweight strike
-        try { this.#effects.spawnStrike(this.#player.pos(), 0.9, COLOR.accent); } catch (_) {}
+        try { this.#effects.spawnStrike(this.#player.pos(), 0.9, COLOR.themeAccent); } catch (_) {}
       } else if (en.attackEffect === "fire") {
         if (this.#shouldSpawnVfx && this.#shouldSpawnVfx("fire", from)) {
           this.#effects.spawnProjectile(from.clone(), to.clone(), {
-            color: en.beamColor || COLOR.midFire,
+            color: en.beamColor || COLOR.themeLightOrange,
             size: 0.3,
             speed: 20,
             onComplete: (hitPos) => {
-              this.#effects.spawnHitDecal(hitPos, 0.8, COLOR.fire);
+              this.#effects.spawnHitDecal(hitPos, 0.8, COLOR.themeOrange);
             }
           });
         }
@@ -344,11 +344,11 @@ export class EnemiesSystem {
         // default ranged
         if (this.#shouldSpawnVfx && this.#shouldSpawnVfx("largeBeam", from)) {
           this.#effects.spawnProjectile(from.clone(), to.clone(), {
-            color: en.beamColor || COLOR.midFire,
+            color: en.beamColor || COLOR.themeLightOrange,
             size: 0.25,
             speed: 22,
             onComplete: (hitPos) => {
-              this.#effects.spawnHitDecal(hitPos, COLOR.fire);
+              this.#effects.spawnHitDecal(hitPos, COLOR.themeOrange);
             }
           });
         }

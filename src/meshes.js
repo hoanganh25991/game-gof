@@ -13,7 +13,7 @@ export function createGoTMesh() {
   // Torso
   const torsoGeo = new THREE.CapsuleGeometry(0.75, 1.25, 6, 14);
   const torsoMat = new THREE.MeshStandardMaterial({
-    color: COLOR.midFire,
+    color: COLOR.themeLightOrange,
     emissive: 0x5a2a0a,
     metalness: 0.2,
     roughness: 0.55,
@@ -48,7 +48,7 @@ export function createGoTMesh() {
   body.add(crown);
 
   // Shoulder pads
-  const shoulderMat = new THREE.MeshStandardMaterial({ color: COLOR.darkFire, emissive: 0x3e1e0a, metalness: 0.35, roughness: 0.45 });
+  const shoulderMat = new THREE.MeshStandardMaterial({ color: COLOR.darkOrange, emissive: 0x3e1e0a, metalness: 0.35, roughness: 0.45 });
   const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), shoulderMat);
   shoulderL.position.set(-0.7, 1.45, 0.1);
   const shoulderR = shoulderL.clone();
@@ -67,7 +67,7 @@ export function createGoTMesh() {
   // Right hand fire (no weapon)
   const arm = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.14, 0.6, 6, 10),
-    new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: 0x5a2a0a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: COLOR.themeLightOrange, emissive: 0x5a2a0a, roughness: 0.55 })
   );
   arm.position.set(0.65, 1.3, 0.15);
   arm.rotation.z = -Math.PI * 0.25;
@@ -86,7 +86,7 @@ export function createGoTMesh() {
   // Left hand fire orb + light (for FP two-hands effect)
   const leftFireOrb = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.2, 0),
-    new THREE.MeshStandardMaterial({ color: COLOR.fire, emissive: 0xffa02d, emissiveIntensity: 2.0, roughness: 0.15, metalness: 0.1 })
+    new THREE.MeshStandardMaterial({ color: COLOR.themeOrange, emissive: 0xffa02d, emissiveIntensity: 2.0, roughness: 0.15, metalness: 0.1 })
   );
   leftHandAnchor.add(leftFireOrb);
   const leftHandLight = new THREE.PointLight(0xffb366, 1.0, 18, 2);
@@ -94,7 +94,7 @@ export function createGoTMesh() {
 
   const fireOrb = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.2, 0),
-    new THREE.MeshStandardMaterial({ color: COLOR.fire, emissive: 0xffa02d, emissiveIntensity: 2.2, roughness: 0.15, metalness: 0.1 })
+    new THREE.MeshStandardMaterial({ color: COLOR.themeOrange, emissive: 0xffa02d, emissiveIntensity: 2.2, roughness: 0.15, metalness: 0.1 })
   );
   handAnchor.add(fireOrb);
 
@@ -110,7 +110,7 @@ export function createGoTMesh() {
   // Left arm (symmetric)
   const armL = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.14, 0.6, 6, 10),
-    new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: 0x5a2a0a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: COLOR.themeLightOrange, emissive: 0x5a2a0a, roughness: 0.55 })
   );
   armL.position.set(-0.65, 1.3, 0.15);
   armL.rotation.z = Math.PI * 0.25;
@@ -122,7 +122,7 @@ export function createGoTMesh() {
   // Biceps bulges
   const bicepR = new THREE.Mesh(
     new THREE.SphereGeometry(0.18, 14, 14),
-    new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: 0x5a2a0a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: COLOR.themeLightOrange, emissive: 0x5a2a0a, roughness: 0.55 })
   );
   bicepR.position.set(0.55, 1.45, 0.12);
   const bicepL = bicepR.clone();
@@ -132,7 +132,7 @@ export function createGoTMesh() {
   // Tunic (waist cloth)
   const tunic = new THREE.Mesh(
     new THREE.CylinderGeometry(0.95, 0.9, 1.0, 28, 1, true),
-    new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: 0x3e1f0a, metalness: 0.2, roughness: 0.7, side: THREE.DoubleSide })
+    new THREE.MeshStandardMaterial({ color: COLOR.themeLightOrange, emissive: 0x3e1f0a, metalness: 0.2, roughness: 0.7, side: THREE.DoubleSide })
   );
   tunic.position.set(0, 0.6, 0);
   body.add(tunic);

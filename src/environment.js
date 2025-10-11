@@ -121,7 +121,7 @@ export async function initEnvironment(scene, options = {}) {
   root.add(ambient);
 
   // warm directional light to enhance fire ambiance (soft)
-  const sun = new THREE.DirectionalLight(COLOR.fire, 0.36);
+  const sun = new THREE.DirectionalLight(COLOR.themeOrange, 0.36);
   sun.position.set(60, 80, -40);
   sun.castShadow = false;
   root.add(sun);
@@ -187,7 +187,7 @@ export async function initEnvironment(scene, options = {}) {
   const stemGeo = new THREE.CylinderGeometry(0.02, 0.02, 1);
   const stemMat = new THREE.MeshStandardMaterial({ color: COLOR.stem });
   const petalGeo = new THREE.SphereGeometry(1, 6, 6);
-  const petalMat = new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: COLOR.lava });
+  const petalMat = new THREE.MeshStandardMaterial({ color: COLOR.themeLightOrange, emissive: COLOR.lava });
   const stemInst = new THREE.InstancedMesh(stemGeo, stemMat, cfg.flowerCount);
   const petalInst = new THREE.InstancedMesh(petalGeo, petalMat, cfg.flowerCount);
 
@@ -381,7 +381,7 @@ export async function initEnvironment(scene, options = {}) {
     }
     const geom = new THREE.BufferGeometry();
     geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const mat = new THREE.PointsMaterial({ color: COLOR.midFire, size: 0.08, transparent: true, opacity: 0.8 });
+    const mat = new THREE.PointsMaterial({ color: COLOR.themeLightOrange, size: 0.08, transparent: true, opacity: 0.8 });
     const pts = new THREE.Points(geom, mat);
     pts.name = "rain";
     root.add(pts);
@@ -406,7 +406,7 @@ export async function initEnvironment(scene, options = {}) {
     // simple water shimmer: slightly change rotation/scale or material roughness
     if (water && water.material) {
       const m = water.material;
-      m.emissive = m.emissive || new THREE.Color(COLOR.darkFire);
+      m.emissive = m.emissive || new THREE.Color(COLOR.darkOrange);
       m.emissiveIntensity = 0.02 + Math.sin(t * 0.8) * 0.02;
       // gentle animated offset if material map exists
       if (m.map) {
