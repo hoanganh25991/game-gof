@@ -1,26 +1,9 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
 import { WORLD, storageKey } from "../config/index.js";
-import { COLOR, THEME_COLORS } from "../config/theme.js";
+import { COLOR } from "../config/theme.js";
 import { createCypressTree, createOliveTree } from "./meshes.js";
 import { createHouseCluster } from "./village_utils.js";
-
-// Environment color palette - All colors sourced from theme.js
-// Converts hex color strings to Three.js integer format
-const ENV_COLORS = {
-  fogDark: parseInt(COLOR.themeDark.replace('#', '0x'), 16),
-  sunAccent: parseInt(COLOR.fire.replace('#', '0x'), 16),
-  fire: parseInt(COLOR.lava.replace('#', '0x'), 16),
-  midFire: parseInt(COLOR.midFire.replace('#', '0x'), 16),
-  yellow: parseInt(COLOR.yellow.replace('#', '0x'), 16),
-  volcano: parseInt(COLOR.volcano.replace('#', '0x'), 16),
-  ambientDark: parseInt(COLOR.ambientDark.replace('#', '0x'), 16),
-  rock: parseInt(COLOR.rock.replace('#', '0x'), 16),
-  trunk: parseInt(COLOR.trunk.replace('#', '0x'), 16),
-  stem: parseInt(COLOR.stem.replace('#', '0x'), 16),
-  darkFire: parseInt(THEME_COLORS.darkFire.replace('#', '0x'), 16),
-  tomato: parseInt(COLOR.tomato.replace('#', '0x'), 16),
-};
 
 /**
  * Export environment object creation functions for chunk_manager
@@ -34,7 +17,7 @@ export function createEnvironmentTree(type = "cypress") {
 
 export function createEnvironmentRock() {
   const geo = new THREE.DodecahedronGeometry(1, 0);
-  const mat = new THREE.MeshStandardMaterial({ color: ENV_COLORS.rock, roughness: 0.9 });
+  const mat = new THREE.MeshStandardMaterial({ color: COLOR.rock, roughness: 0.9 });
   const rock = new THREE.Mesh(geo, mat);
   rock.castShadow = true;
   return rock;
@@ -44,13 +27,13 @@ export function createEnvironmentFlower() {
   const g = new THREE.Group();
   const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(0.02, 0.02, 0.24),
-    new THREE.MeshStandardMaterial({ color: ENV_COLORS.stem })
+    new THREE.MeshStandardMaterial({ color: COLOR.stem })
   );
   stem.position.y = 0.12;
   g.add(stem);
   const petal = new THREE.Mesh(
     new THREE.SphereGeometry(0.08, 6, 6),
-    new THREE.MeshStandardMaterial({ color: ENV_COLORS.tomato, emissive: ENV_COLORS.fire })
+    new THREE.MeshStandardMaterial({ color: COLOR.tomato, emissive: COLOR.lava })
   );
   petal.position.y = 0.28;
   g.add(petal);
@@ -114,13 +97,9 @@ export async function initEnvironment(scene, options = {}) {
       cfg.flowerCount = 0;
       cfg.villageCount = 0;
     }
-  } catch (_) {}
-  // Road segments based on quality
-  const __roadSegs = __q === "low" ? 36 : (__q === "medium" ? 80 : 140);
+  } catch (_) { }
   // Whether to add light sources on houses (skip on low, dim on medium)
   const __houseLights = __q === "high" ? "full" : (__q === "medium" ? "dim" : "none");
-  // Fireflies density factor
-  const __fireflyMul = __q === "low" ? 0.25 : (__q === "medium" ? 0.5 : 1);
   // Dynamic light budget to cap per-frame lighting cost
   const __lightBudget = (__q === "low") ? 0 : (__q === "medium" ? 6 : 10);
   let __lightBudgetLeft = __lightBudget;
@@ -135,14 +114,14 @@ export async function initEnvironment(scene, options = {}) {
   const rng = createSeededRNG(cfg.seed);
 
   // atmospheric fog tuned for fire/volcanic theme
-  scene.fog = scene.fog || new THREE.FogExp2(ENV_COLORS.fogDark, 0.0009);
+  scene.fog = scene.fog || new THREE.FogExp2(COLOR.themeDark, 0.0009);
 
   // Ambient & directional light to match fire / volcanic theme (complements existing lights)
-  const ambient = new THREE.AmbientLight(ENV_COLORS.ambientDark, 0.68);
+  const ambient = new THREE.AmbientLight(COLOR.ambientDark, 0.68);
   root.add(ambient);
 
   // warm directional light to enhance fire ambiance (soft)
-  const sun = new THREE.DirectionalLight(ENV_COLORS.sunAccent, 0.36);
+  const sun = new THREE.DirectionalLight(COLOR.fire, 0.36);
   sun.position.set(60, 80, -40);
   sun.castShadow = false;
   root.add(sun);
@@ -189,7 +168,7 @@ export async function initEnvironment(scene, options = {}) {
   // Scatter props via InstancedMesh batching (reduce draw calls significantly)
   // Trees: trunk + foliage instanced
   const trunkGeo = new THREE.CylinderGeometry(0.12, 0.12, 1, 6);
-  const trunkMat = new THREE.MeshStandardMaterial({ color: ENV_COLORS.trunk });
+  const trunkMat = new THREE.MeshStandardMaterial({ color: COLOR.trunk });
   const foliageGeo = new THREE.ConeGeometry(1, 1, 8);
   const foliageMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.05, 0.7, 0.27) });
 
@@ -200,15 +179,15 @@ export async function initEnvironment(scene, options = {}) {
 
   // Rocks
   const rockGeo = new THREE.DodecahedronGeometry(1, 0);
-  const rockMat = new THREE.MeshStandardMaterial({ color: ENV_COLORS.rock });
+  const rockMat = new THREE.MeshStandardMaterial({ color: COLOR.rock });
   const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, cfg.rockCount);
   rockInst.castShadow = true; rockInst.receiveShadow = true;
 
   // Flowers (stems + petals)
   const stemGeo = new THREE.CylinderGeometry(0.02, 0.02, 1);
-  const stemMat = new THREE.MeshStandardMaterial({ color: ENV_COLORS.stem });
+  const stemMat = new THREE.MeshStandardMaterial({ color: COLOR.stem });
   const petalGeo = new THREE.SphereGeometry(1, 6, 6);
-  const petalMat = new THREE.MeshStandardMaterial({ color: ENV_COLORS.midFire, emissive: ENV_COLORS.fire });
+  const petalMat = new THREE.MeshStandardMaterial({ color: COLOR.midFire, emissive: COLOR.lava });
   const stemInst = new THREE.InstancedMesh(stemGeo, stemMat, cfg.flowerCount);
   const petalInst = new THREE.InstancedMesh(petalGeo, petalMat, cfg.flowerCount);
 
@@ -306,7 +285,7 @@ export async function initEnvironment(scene, options = {}) {
       decorations: true,
       scaleMin: 0.9,
       scaleMax: 0.5,
-      ENV_COLORS,
+      COLOR,
       acquireLight
     });
     vgroup.name = "village";
@@ -350,7 +329,7 @@ export async function initEnvironment(scene, options = {}) {
           return seededRandomPosInBounds();
         }
       });
-      
+
       // Make structures available globally for minimap
       if (structuresAPI && typeof window !== 'undefined') {
         window.__structuresAPI = structuresAPI;
@@ -366,7 +345,7 @@ export async function initEnvironment(scene, options = {}) {
   if (cfg.enableWater) {
     const geo = new THREE.CircleGeometry(cfg.waterRadius, 64);
     const mat = new THREE.MeshStandardMaterial({
-      color: ENV_COLORS.fire,
+      color: COLOR.lava,
       metalness: 0.35,
       roughness: 0.35,
       transparent: true,
@@ -402,7 +381,7 @@ export async function initEnvironment(scene, options = {}) {
     }
     const geom = new THREE.BufferGeometry();
     geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const mat = new THREE.PointsMaterial({ color: ENV_COLORS.midFire, size: 0.08, transparent: true, opacity: 0.8 });
+    const mat = new THREE.PointsMaterial({ color: COLOR.midFire, size: 0.08, transparent: true, opacity: 0.8 });
     const pts = new THREE.Points(geom, mat);
     pts.name = "rain";
     root.add(pts);
@@ -427,7 +406,7 @@ export async function initEnvironment(scene, options = {}) {
     // simple water shimmer: slightly change rotation/scale or material roughness
     if (water && water.material) {
       const m = water.material;
-      m.emissive = m.emissive || new THREE.Color(ENV_COLORS.darkFire);
+      m.emissive = m.emissive || new THREE.Color(COLOR.darkFire);
       m.emissiveIntensity = 0.02 + Math.sin(t * 0.8) * 0.02;
       // gentle animated offset if material map exists
       if (m.map) {
@@ -484,7 +463,7 @@ export async function initEnvironment(scene, options = {}) {
             __rainDownscaled = false;
             __rainStride = (__q === "high" ? 1 : (__q === "medium" ? 2 : 3));
           }
-        } catch (_) {}
+        } catch (_) { }
       }
     }
   }
@@ -501,8 +480,8 @@ export async function initEnvironment(scene, options = {}) {
     cfg.rainCount = n;
     // Remove old points if any
     if (rain.points) {
-      try { root.remove(rain.points); } catch (_) {}
-      try { rain.points.geometry.dispose?.(); } catch (_) {}
+      try { root.remove(rain.points); } catch (_) { }
+      try { rain.points.geometry.dispose?.(); } catch (_) { }
       rain.points = null;
       rain.velocities = null;
     }

@@ -1,5 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { createHouse } from "./meshes.js";
+import { COLOR } from "../config/theme.js";
 
 /**
  * Creates a cluster of houses in circular arrangement
@@ -13,7 +14,6 @@ import { createHouse } from "./meshes.js";
  * @param {boolean} options.decorations - Whether to add ground decorations
  * @param {number} options.scaleMin - Minimum house scale
  * @param {number} options.scaleMax - Additional random scale variation
- * @param {object} options.ENV_COLORS - Color palette object
  * @param {function} options.acquireLight - Function to check if light budget available
  * @returns {THREE.Group} Group containing all houses
  */
@@ -23,11 +23,6 @@ export function createHouseCluster(center, count, radius, options = {}) {
     decorations = true,
     scaleMin = 0.9,
     scaleMax = 0.5,
-    ENV_COLORS = {
-      yellow: 0xffeb3b,
-      volcano: 0xd32f2f,
-      stem: 0x4a2a1a
-    },
     acquireLight = null
   } = options;
 
@@ -56,7 +51,7 @@ export function createHouseCluster(center, count, radius, options = {}) {
         const intensity = lights === 'dim' ? 0.4 : 0.9;
         const dist = lights === 'dim' ? 4 : 6;
         const decay = 2;
-        const lanternLight = new THREE.PointLight(ENV_COLORS.yellow, intensity, dist, decay);
+        const lanternLight = new THREE.PointLight(COLOR.yellow, intensity, dist, decay);
         lanternLight.position.set(0.6, 0.8, 0.6);
         lanternLight.castShadow = false;
         house.add(lanternLight);
@@ -70,9 +65,9 @@ export function createHouseCluster(center, count, radius, options = {}) {
       const lanternBulb = new THREE.Mesh(
         new THREE.SphereGeometry(0.08, 8, 8),
         new THREE.MeshStandardMaterial({
-          emissive: ENV_COLORS.yellow,
+          emissive: COLOR.yellow,
           emissiveIntensity,
-          color: ENV_COLORS.volcano,
+          color: COLOR.volcano,
           roughness: 0.7
         })
       );
@@ -83,7 +78,7 @@ export function createHouseCluster(center, count, radius, options = {}) {
       if (decorations) {
         const peb = new THREE.Mesh(
           new THREE.DodecahedronGeometry(0.22, 0),
-          new THREE.MeshStandardMaterial({ color: ENV_COLORS.stem, roughness: 0.95 })
+          new THREE.MeshStandardMaterial({ color: COLOR.stem, roughness: 0.95 })
         );
         peb.position.set(0.9, 0.02, 0.2);
         peb.scale.setScalar(0.8 + Math.random() * 0.6);
