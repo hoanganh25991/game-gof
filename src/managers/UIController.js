@@ -57,6 +57,20 @@ export class UIController {
   }
 
   /**
+   * Set player reference (for late initialization)
+   */
+  setPlayer(player) {
+    this.#player = player;
+  }
+
+  /**
+   * Set hero bars reference (for late initialization)
+   */
+  setHeroBars(heroBars) {
+    this.#heroBars = heroBars;
+  }
+
+  /**
    * Update HUD (health/mana bars, level, etc.)
    * Throttled for performance
    */

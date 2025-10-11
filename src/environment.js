@@ -679,3 +679,19 @@ export async function initEnvironment(scene, options = {}) {
     setRainLevel: manager.setRainLevel.bind(manager),
   };
 }
+
+/**
+ * Update environment to follow player position (e.g., for rain effects)
+ */
+export function updateEnvironmentFollow(env, player) {
+  if (!env || !env.root || !player) return;
+  
+  // Update rain position to follow player if rain exists
+  try {
+    const rainObj = env.root.children.find(child => child.name === "rain");
+    if (rainObj && player.position) {
+      rainObj.position.x = player.position.x;
+      rainObj.position.z = player.position.z;
+    }
+  } catch (_) {}
+}
