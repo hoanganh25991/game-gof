@@ -4,7 +4,7 @@
  * - Persists current map index and unlocked max to localStorage
  * - Provides a simple API to integrate with UI and enemy spawning
  */
-import { STORAGE_KEYS } from "../config/constants.js";
+import { STORAGE_KEYS } from "../config/index.js";
 
 export function applyMapEnemyCss(modsOrTint) {
   try {

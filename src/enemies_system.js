@@ -15,7 +15,7 @@
  * - No raycast coupling
  */
 
-import { COLOR } from "../config/constants.js";
+import { COLOR } from "../config/index.js";
 
 export class EnemiesSystem {
   // Private fields for dependencies

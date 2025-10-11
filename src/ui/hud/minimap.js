@@ -1,4 +1,4 @@
-import { VILLAGE_POS, REST_RADIUS, CSS_COLOR } from "../../../config/constants.js";
+import { VILLAGE_POS, REST_RADIUS, CSS_COLOR } from "../../../config/index.js";
 
 /**
  * MinimapUI

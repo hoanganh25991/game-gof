@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { hashStringToInt, createSeededRNG, seededRange } from "./utils.js";
-import { STORAGE_KEYS } from "../config/constants.js";
+import { STORAGE_KEYS } from "../config/index.js";
 import { createEnvironmentTree, createEnvironmentRock, createEnvironmentFlower } from "./environment.js";
 import { createStructureWithLabel, getStructureProtectionRadius, getStructureProtectionColor } from "./structures.js";
 

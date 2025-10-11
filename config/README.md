@@ -11,9 +11,13 @@ The `config/constants.js` file has been refactored into a modular structure for 
 - `STORAGE_KEYS` - Object containing all storage key definitions
 
 ### theme.js
-**Purpose**: Theme colors and CSS variable management
-- `CSS_READY` - Promise that resolves when CSS variables are loaded
-- `COLOR` - Dynamic color getters from CSS variables
+**Purpose**: Theme colors and CSS variable management (JavaScript as source of truth)
+- `THEME_COLORS` - All color definitions in JavaScript (source of truth)
+- `initializeTheme()` - Function to inject colors into CSS variables (called on game load)
+- `updateThemeColor()` - Function to dynamically update a specific color
+- `THEME_READY` - Promise that resolves when theme is initialized
+- `CSS_READY` - Backward compatibility alias for THEME_READY
+- `COLOR` - Direct color access from JavaScript values
 - `CSS_VAR` - CSS variable references for DOM styling
 - `CSS_COLOR` - CSS color values for Canvas2D contexts
 
@@ -43,10 +47,37 @@ The `config/constants.js` file has been refactored into a modular structure for 
 
 ## Usage
 
+### Theme Initialization
+The theme system uses JavaScript as the source of truth. On game load, call `initializeTheme()` to populate CSS variables:
+
+```javascript
+import { initializeTheme, THEME_READY } from "../config/theme.js";
+
+// Initialize theme (injects JS colors into CSS variables)
+initializeTheme();
+await THEME_READY;
+
+// Optionally override specific colors
+initializeTheme({
+  themeOrange: "#ff0000",  // Custom fire color
+  themeDark: "#000000"
+});
+```
+
+### Dynamic Theme Updates
+You can update colors at runtime:
+
+```javascript
+import { updateThemeColor } from "../config/theme.js";
+
+// Change theme color dynamically (updates both JS and CSS)
+updateThemeColor('themeOrange', '#ff0000');
+```
+
 ### Option 1: Import from specific modules (recommended for new code)
 ```javascript
 import { STORAGE_KEYS } from "../config/storage.js";
-import { COLOR, CSS_VAR } from "../config/theme.js";
+import { COLOR, CSS_VAR, initializeTheme } from "../config/theme.js";
 import { WORLD } from "../config/world.js";
 ```
 
@@ -57,7 +88,7 @@ import { STORAGE_KEYS, COLOR, WORLD, SCALING } from "../config/index.js";
 
 ### Option 3: Import from constants.js (backward compatibility)
 ```javascript
-import { STORAGE_KEYS, COLOR, WORLD } from "../config/constants.js";
+import { STORAGE_KEYS, COLOR, WORLD } from "../config/index.js";
 ```
 
 ## Backward Compatibility
@@ -71,3 +102,26 @@ The original `config/constants.js` file now re-exports all constants from the ne
 3. **Improved Tree-shaking**: Bundlers can better optimize unused code
 4. **Clear Dependencies**: Each module explicitly imports what it needs
 5. **Backward Compatible**: Existing imports continue to work
+6. **JavaScript-Driven Theming**: Colors defined in JS can be easily modified programmatically
+7. **Single Source of Truth**: All theme colors defined in one place (THEME_COLORS)
+8. **Dynamic Theming**: Update colors at runtime with `updateThemeColor()`
+
+## Theme System Details
+
+### How It Works
+
+1. **Definition**: All colors are defined in `THEME_COLORS` object in `config/theme.js`
+2. **Initialization**: On game load, `initializeTheme()` injects these colors into CSS variables
+3. **Access**: 
+   - Use `COLOR` object for direct JavaScript access
+   - Use `CSS_VAR` for CSS variable references in DOM styling
+   - Use `CSS_COLOR` for Canvas2D contexts
+4. **Updates**: Call `updateThemeColor(key, value)` to change colors at runtime
+
+### Migration from CSS to JS
+
+Previously, colors were defined in `css/base.css` and read by JavaScript. Now:
+- Colors are defined in JavaScript (`THEME_COLORS`)
+- `initializeTheme()` populates CSS variables from JavaScript
+- This allows dynamic theme changes controlled entirely by JavaScript
+- CSS can still reference these colors via `var(--color-name)`

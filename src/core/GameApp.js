@@ -4,7 +4,8 @@
  */
 
 import * as THREE from "../../vendor/three/build/three.module.js";
-import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey, CSS_READY } from "../../config/constants.js";
+import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey } from "../../config/index.js";
+import { initializeTheme, THEME_READY } from "../../config/theme.js";
 import { setLoadoutAndApply, getSkill, setSkill } from "../skills_api.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "../world.js";
 import { UIManager } from "../ui/hud/index.js";
@@ -136,7 +137,9 @@ export class GameApp {
    * Initialize the entire application
    */
   async init() {
-    await CSS_READY;
+    // Initialize theme colors from JavaScript into CSS variables
+    initializeTheme();
+    await THEME_READY;
     
     await this._initSettings();
     await this._initWorld();

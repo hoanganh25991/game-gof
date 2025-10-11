@@ -248,11 +248,10 @@ class AudioSystem {
 
   sfx(name, opts = {}) {
     if (!this.#enabled) return;
-    
+
     // First, check if there's a configuration in SKILL_SOUNDS
     let soundConfig = SKILL_SOUNDS[name] || DEFAULT_SOUNDS[name];
-    console.log({soundConfig})
-    
+
     // If we have a configuration, play it
     if (soundConfig) {
       // Handle array of sounds (play all simultaneously)
@@ -265,7 +264,7 @@ class AudioSystem {
       }
       return;
     }
-    
+
     return this.#playStrike();
   }
 
@@ -282,7 +281,7 @@ class AudioSystem {
     if (this.#audioBufferCache.has(url)) {
       return this.#audioBufferCache.get(url);
     }
-    
+
     try {
       const response = await fetch(url);
       const arrayBuffer = await response.arrayBuffer();
@@ -302,16 +301,16 @@ class AudioSystem {
    */
   #playAudioBuffer(buffer, gain = 0.7) {
     if (!buffer || !this.#ctx) return;
-    
+
     const source = this.#ctx.createBufferSource();
     source.buffer = buffer;
-    
+
     const g = this.#ctx.createGain();
     g.gain.value = gain;
-    
+
     source.connect(g);
     g.connect(this.#sfxGain);
-    
+
     try { source.start(0); } catch (_) { }
   }
 
@@ -322,7 +321,7 @@ class AudioSystem {
    */
   #playProceduralSound(config, opts = {}) {
     const merged = { ...config, ...opts };
-    
+
     switch (merged.type) {
       case "zap":
         this.#playZap({
@@ -334,7 +333,7 @@ class AudioSystem {
           gain: merged.gain || 0.7
         });
         break;
-        
+
       case "noiseBurst":
         this.#playNoiseBurst({
           dur: merged.dur,
@@ -344,7 +343,7 @@ class AudioSystem {
           gain: merged.gain
         });
         break;
-        
+
       case "blip":
         this.#playBlip({
           freq: merged.freq,
@@ -352,15 +351,15 @@ class AudioSystem {
           gain: merged.gain
         });
         break;
-        
+
       case "strike":
         this.#playStrike();
         break;
-        
+
       case "boom":
         this.#playBoom();
         break;
-        
+
       default:
         console.warn(`[audio] Unknown procedural sound type: ${merged.type}`);
     }
@@ -376,13 +375,13 @@ class AudioSystem {
     if (!this.#enabled) return;
     this.#ensureCtx(); this.#resume();
     if (!this.#ctx) return;
-    
+
     if (!soundConfig) {
       // Fallback to generic cast sound
       this.sfx("cast", opts);
       return;
     }
-    
+
     // Handle string (MP3 URL)
     if (typeof soundConfig === "string") {
       const buffer = await this.#loadAudioBuffer(soundConfig);
@@ -391,7 +390,7 @@ class AudioSystem {
       }
       return;
     }
-    
+
     // Handle array (multiple sounds)
     if (Array.isArray(soundConfig)) {
       for (const config of soundConfig) {
@@ -406,7 +405,7 @@ class AudioSystem {
       }
       return;
     }
-    
+
     // Handle object (procedural sound)
     if (typeof soundConfig === "object") {
       this.#playProceduralSound(soundConfig, opts);
@@ -420,7 +419,7 @@ class AudioSystem {
    */
   async preloadSkillSounds(soundConfigs) {
     const promises = [];
-    
+
     for (const soundConfig of soundConfigs) {
       if (typeof soundConfig === "string") {
         promises.push(this.#loadAudioBuffer(soundConfig));
@@ -432,7 +431,7 @@ class AudioSystem {
         }
       }
     }
-    
+
     await Promise.all(promises);
   }
 

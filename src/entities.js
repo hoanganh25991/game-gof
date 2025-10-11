@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "../config/constants.js";
+import { COLOR, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "../config/index.js";
 import { createGoTMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
 import { distance2D, now, parseThreeColor } from "./utils.js";
 import { getSkillUpgradeManager } from "./skills_upgrade.js";

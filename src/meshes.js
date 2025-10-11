@@ -1,7 +1,7 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { GLTFLoader } from "../vendor/three/examples/jsm/loaders/GLTFLoader.js";
-import { COLOR } from "../config/constants.js";
-import { HERO_MODEL_URL } from "../config/constants.js";
+import { COLOR } from "../config/index.js";
+import { HERO_MODEL_URL } from "../config/index.js";
 import { parseThreeColor } from "./utils.js";
 
 

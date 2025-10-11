@@ -1,5 +1,5 @@
 import { clamp01 } from "../../utils.js";
-import { CSS_VAR, CSS_COLOR } from "../../../config/constants.js";
+import { CSS_VAR, CSS_COLOR } from "../../../config/index.js";
 
 /**
  * PlayerBarsUI

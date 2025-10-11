@@ -1,151 +1,219 @@
-// Utilities to resolve theme colors from css/base.css variables at runtime
-const __styleCache = { computed: null };
+/**
+ * Theme configuration - JavaScript as source of truth
+ * Colors are defined here and injected into CSS variables on load
+ */
 
-function getRootComputedStyle() {
-  if (typeof window === "undefined" || typeof document === "undefined") return null;
-  if (!__styleCache.computed) {
-    __styleCache.computed = getComputedStyle(document.documentElement);
-  }
-  return __styleCache.computed;
-}
+// Define all color values in JavaScript (source of truth)
+export const THEME_COLORS = {
+  // Primary theme palette (FIRE THEME - orange/red)
+  themeDark: "#1a0a05",
+  themeOrange: "#ff6b35",
+  themeLightOrange: "#ff8c42",
+  themeWhite: "#ffffff",
+  themeAccent: "#ffa552",
+  themeYellow: "#ffd94a",
 
-function readCssVar(varName) {
-  const cs = getRootComputedStyle();
-  if (!cs) return "";
-  return cs.getPropertyValue(varName)?.trim() || "";
+  // Backwards-compatible aliases
+  white: "#ffe6d9",
+  orange: "#ff6b35",
+  darkOrange: "#cc5529",
+  lightOrange: "#ff8c42",
+
+  // Gameplay / UI tokens
+  hp: "#ff4444",
+  mp: "#4488ff",
+  xp: "#ffaa44",
+  bg: "#0a0503",
+  enemy: "#4a0e0e",
+  enemyDark: "#2b0505",
+
+  // Glass / overlay tokens
+  glass: "#1A0A05B3",
+  glassStrong: "#1A0A05D9",
+  accent: "#ffa552",
+
+  // System (settings / hero / flash) theme tokens
+  systemBg: "linear-gradient(180deg, #28140AF2, #1E0F08F2)",
+  systemBorder: "#FF6B354D",
+  systemText: "#ffe6d9",
+  systemAccent: "#ffa552",
+
+  // Common color values - for consistency
+  borderOrange: "#FF8C4259",
+  borderOrangeLight: "#FF8C424D",
+  borderOrangeSubtle: "#FF8C4226",
+  borderWhiteSubtle: "#FFFFFF1F",
+  borderWhiteFaint: "#FFFFFF0F",
+
+  // Background gradients
+  bgRadialFire: "radial-gradient(1200px 1200px at 70% 30%, #2a1510 0%, #1a0f0a 50%, #0a0503 100%)",
+  bgDarkFire: "#28140A99",
+  bgDarkerFire: "#1A0D08CC",
+
+  // Text colors
+  textWarm: "#ffe6d9",
+  textWarmLight: "#ffd4b3",
+
+  // Shadow values
+  shadowMedium: "0 8px 30px #00000059",
+  shadowStrong: "0 8px 30px #00000073",
+
+  // Glow effects
+  glowOrange: "#FF8C4299",
+  glowOrangeStrong: "#FF8C42CC",
+
+  // Canvas/HUD utility colors
+  roadUnderlay: "#D2C8BE26",
+  roadDark: "#2B2420E6",
+  villageRing: "#5AFF8B99",
+  villageRingFaint: "#5AFF8B59",
+  portal: "#7C4DFFE6",
+  portalAlt: "#B478FFE6",
+  enemyDot: "#FF5050F2",
+  yellowGlowStrong: "#FFD75AF2",
+  playerDot: "#7ECCFFFF",
+
+  // Structure minimap colors
+  templeDot: "#FFD700F2",
+  villaDot: "#FFA500F2",
+  columnDot: "#F0E68CF2",
+  statueDot: "#DAA520F2",
+  obeliskDot: "#CD853FF2",
+
+  // Skill/environment shared tokens
+  ember: "#ffa500",
+  lava: "#ff4500",
+  villageColor: "#ffb347",
+  ash: "#696969",
+  volcano: "#8b4513",
+};
+
+/**
+ * Converts camelCase to kebab-case for CSS variable names
+ */
+function toKebabCase(str) {
+  return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
 /**
- * CSS readiness: resolves when base.css :root variables are available.
- * No fallbacks; we simply delay until computed styles contain our keys.
- * Dispatches a 'css-vars-ready' event on window when ready.
+ * Injects theme colors into CSS custom properties
+ * Call this on game load to populate CSS variables from JavaScript
  */
-export const CSS_READY = (() => {
+export function initializeTheme(customColors = {}) {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  // Merge custom colors with defaults
+  const colors = { ...THEME_COLORS, ...customColors };
+
+  // Set each color as a CSS variable
+  const root = document.documentElement;
+  Object.entries(colors).forEach(([key, value]) => {
+    const cssVarName = `--${toKebabCase(key)}`;
+    root.style.setProperty(cssVarName, value);
+  });
+
+  // Dispatch event to signal theme is ready
+  try {
+    window.dispatchEvent(new Event("theme-initialized"));
+  } catch (_) {}
+}
+
+/**
+ * Update a specific theme color dynamically
+ * @param {string} colorKey - The color key from THEME_COLORS (e.g., 'themeOrange')
+ * @param {string} value - The new color value (e.g., '#ff0000')
+ */
+export function updateThemeColor(colorKey, value) {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  
+  const cssVarName = `--${toKebabCase(colorKey)}`;
+  document.documentElement.style.setProperty(cssVarName, value);
+  
+  // Also update the THEME_COLORS object
+  THEME_COLORS[colorKey] = value;
+}
+
+/**
+ * Promise that resolves when theme is initialized
+ */
+export const THEME_READY = (() => {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return Promise.resolve(true);
   }
-  const keys = ["--theme-orange", "--system-text", "--glass"];
-  const hasVars = () => {
+  
+  // Check if already initialized
+  const isInitialized = () => {
     try {
-      const cs = getComputedStyle(document.documentElement);
-      return keys.every((k) => (cs.getPropertyValue(k) || "").trim().length > 0);
-    } catch (_) { return false; }
+      const style = getComputedStyle(document.documentElement);
+      return style.getPropertyValue("--theme-orange").trim().length > 0;
+    } catch (_) {
+      return false;
+    }
   };
-  if (hasVars()) return Promise.resolve(true);
+
+  if (isInitialized()) return Promise.resolve(true);
+
   return new Promise((resolve) => {
-    let rafId = 0;
-    const check = () => {
-      if (hasVars()) {
-        // Bust cached computed style so subsequent reads see final values
-        try { __styleCache.computed = null; } catch (_) {}
-        try { window.dispatchEvent(new Event("css-vars-ready")); } catch (_) {}
-        if (rafId) cancelAnimationFrame(rafId);
-        resolve(true);
-        return;
-      }
-      rafId = requestAnimationFrame(check);
+    const handler = () => {
+      resolve(true);
     };
-    try { window.addEventListener("load", check, { once: true }); } catch (_) {}
-    check();
+    window.addEventListener("theme-initialized", handler, { once: true });
+    
+    // Fallback: auto-initialize if not done within 100ms
+    setTimeout(() => {
+      if (!isInitialized()) {
+        initializeTheme();
+      }
+      resolve(true);
+    }, 100);
   });
 })();
 
+// Backward compatibility alias
+export const CSS_READY = THEME_READY;
+
+/**
+ * Direct color access (uses JavaScript values, not CSS)
+ * Provides convenient aliases for commonly used colors
+ */
 export const COLOR = {
-  // Values resolve from css/base.css :root at runtime with fallbacks to previous literals
-  get fire() { return readCssVar("--theme-orange"); },          // primary fire orange
-  get darkFire() { return readCssVar("--dark-orange"); },       // deep dark
-  get midFire() { return readCssVar("--theme-light-orange"); }, // lighter orange
-  get white() { return readCssVar("--white"); },                // warm text white
-  get hp() { return readCssVar("--hp"); },                      // HP red
-  get mp() { return readCssVar("--mp"); },                      // MP blue (fallback: dark orange)
-  get xp() { return readCssVar("--xp"); },                      // XP gold/orange
-  // Extended theme tokens (from css/base.css)
-  get accent() { return readCssVar("--theme-accent"); },
-  get yellow() { return readCssVar("--theme-yellow"); },
-  get themeDark() { return readCssVar("--theme-dark"); },
-  get textWarm() { return readCssVar("--text-warm"); },
-  get textWarmLight() { return readCssVar("--text-warm-light"); },
-
-  // Enemy color tokens resolved from css/base.css (string values like "#RRGGBB")
-  get enemy() { return readCssVar("--enemy"); },
-  get enemyDark() { return readCssVar("--enemy-dark"); },
-
-  // Extra color tokens resolved from CSS_COLOR (string values suitable for Canvas/CSS)
-  get portal() { return CSS_COLOR.portal; },
-  get village() { return CSS_COLOR.village; },
-  get lava() { return CSS_COLOR.lava; },
-  get ember() { return CSS_COLOR.ember; },
-  get ash() { return CSS_COLOR.ash; },
-  get volcano() { return CSS_COLOR.volcano; },
-};
-
-// CSS variable references for DOM styling (preferred for live theming)
-export const CSS_VAR = {
-  themeDark: "var(--theme-dark)",
-  themeOrange: "var(--theme-orange)",
-  themeLightOrange: "var(--theme-light-orange)",
-  themeWhite: "var(--theme-white)",
-  themeAccent: "var(--theme-accent)",
-  themeYellow: "var(--theme-yellow)",
-  white: "var(--white)",
-  accent: "var(--accent)",
-  // System UI
-  systemBg: "var(--system-bg)",
-  systemBorder: "var(--system-border)",
-  systemText: "var(--system-text)",
-  systemAccent: "var(--system-accent)",
-  // Common borders / glass
-  borderOrange: "var(--border-orange)",
-  borderOrangeLight: "var(--border-orange-light)",
-  borderOrangeSubtle: "var(--border-orange-subtle)",
-  borderWhiteSubtle: "var(--border-white-subtle)",
-  borderWhiteFaint: "var(--border-white-faint)",
-  glass: "var(--glass)",
-  glassStrong: "var(--glass-strong)",
-  textWarm: "var(--text-warm)",
-  textWarmLight: "var(--text-warm-light)",
-  shadowMedium: "var(--shadow-medium)",
-  shadowStrong: "var(--shadow-strong)",
-  glowOrange: "var(--glow-orange)",
-  glowOrangeStrong: "var(--glow-orange-strong)",
+  // Primary fire theme (aliases)
+  fire: THEME_COLORS.themeOrange,
+  darkFire: THEME_COLORS.darkOrange,
+  midFire: THEME_COLORS.themeLightOrange,
+  
+  // Direct references to THEME_COLORS
+  white: THEME_COLORS.white,
+  hp: THEME_COLORS.hp,
+  mp: THEME_COLORS.mp,
+  xp: THEME_COLORS.xp,
+  accent: THEME_COLORS.themeAccent,
+  yellow: THEME_COLORS.themeYellow,
+  themeDark: THEME_COLORS.themeDark,
+  textWarm: THEME_COLORS.textWarm,
+  textWarmLight: THEME_COLORS.textWarmLight,
+  enemy: THEME_COLORS.enemy,
+  enemyDark: THEME_COLORS.enemyDark,
+  portal: THEME_COLORS.portal,
+  village: THEME_COLORS.villageColor,
+  lava: THEME_COLORS.lava,
+  ember: THEME_COLORS.ember,
+  ash: THEME_COLORS.ash,
+  volcano: THEME_COLORS.volcano,
 };
 
 /**
- * CSS color values intended for non-CSS contexts (e.g., Canvas2D), resolved dynamically
- * from css/base.css at runtime when possible. Falls back to literals if unavailable.
+ * CSS variable references for DOM styling (preferred for live theming)
+ * Dynamically generated from THEME_COLORS keys
+ * Example: themeDark -> "var(--theme-dark)"
  */
-export const CSS_COLOR = {
-  // Mirrors css/base.css tokens (resolved at runtime with fallbacks)
-  get glass() { return readCssVar("--glass"); },
-  get glassStrong() { return readCssVar("--glass-strong"); },
-  get borderOrange() { return readCssVar("--border-orange"); },
-  get borderOrangeLight() { return readCssVar("--border-orange-light"); },
-  get borderOrangeSubtle() { return readCssVar("--border-orange-subtle"); },
-  get borderWhiteSubtle() { return readCssVar("--border-white-subtle"); },
-  get borderWhiteFaint() { return readCssVar("--border-white-faint"); },
+export const CSS_VAR = Object.keys(THEME_COLORS).reduce((acc, key) => {
+  acc[key] = `var(--${toKebabCase(key)})`;
+  return acc;
+}, {});
 
-  // Useful UI colors promoted to CSS variables (resolved dynamically with fallbacks)
-  get roadUnderlay() { return readCssVar("--road-underlay"); },
-  get roadDark() { return readCssVar("--road-dark"); },
-  get villageRing() { return readCssVar("--village-ring"); },
-  get villageRingFaint() { return readCssVar("--village-ring-faint"); },
-  get portal() { return readCssVar("--portal"); },
-  get portalAlt() { return readCssVar("--portal-alt"); },
-  get enemyDot() { return readCssVar("--enemy-dot"); },
-  get yellowGlowStrong() { return readCssVar("--yellow-glow-strong"); },
-  get playerDot() { return readCssVar("--player-dot"); },
-
-  // Structure minimap colors
-  get templeDot() { return readCssVar("--temple-dot"); },
-  get villaDot() { return readCssVar("--villa-dot"); },
-  get columnDot() { return readCssVar("--column-dot"); },
-  get statueDot() { return readCssVar("--statue-dot"); },
-  get obeliskDot() { return readCssVar("--obelisk-dot"); },
-
-  // Skill/environment tokens (string colors; override via CSS vars if desired)
-  get ember() { return readCssVar("--ember"); },
-  get lava() { return readCssVar("--lava"); },
-  get village() { return readCssVar("--village-color"); },
-  get ash() { return readCssVar("--ash"); },
-  get volcano() { return readCssVar("--volcano"); },
-};
+/**
+ * CSS color values for non-CSS contexts (e.g., Canvas2D)
+ * Direct reference to THEME_COLORS for immediate access
+ */
+export const CSS_COLOR = THEME_COLORS;

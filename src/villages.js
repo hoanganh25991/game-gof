@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, VILLAGE_POS, REST_RADIUS } from "../config/constants.js";
+import { COLOR, VILLAGE_POS, REST_RADIUS } from "../config/index.js";
 import { createHouse } from "./meshes.js";
 
 /**

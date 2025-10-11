@@ -11,7 +11,7 @@
  */
 
 import { SKILLS_POOL } from "../config/skills_pool.js";
-import { STORAGE_KEYS } from "../config/constants.js";
+import { STORAGE_KEYS } from "../config/index.js";
 
 const STORAGE_KEY = STORAGE_KEYS.skillLevels;
 const STORAGE_KEY_POINTS = STORAGE_KEYS.skillPoints;

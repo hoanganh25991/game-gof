@@ -1,4 +1,4 @@
-import { SCALING } from "../../../../config/constants.js";
+import { SCALING } from "../../../../config/index.js";
 
 /**
  * Render the Skillbook tab: list of skills with detail panel and preview button.
