@@ -3,6 +3,8 @@
    - Procedural SFX (free): fire bursts, booms, hits, strikes, aura blips, etc.
    - Gentle, relaxing generative background music (focus preset)
 */
+import { SKILL_SOUNDS, DEFAULT_SOUNDS } from '../config/skills_sound.js';
+
 export const audio = (() => {
   let ctx = null;
   let masterGain, sfxGain, musicGain;
@@ -208,53 +210,35 @@ export const audio = (() => {
   }
 
   function playStrike() {
-    // Bright crack: highpass noise + tiny sine ping
     playNoiseBurst({ dur: 0.12, type: "highpass", cutoff: 1200, q: 0.6, gain: 0.35 });
     playBlip({ freq: 1300, dur: 0.05, gain: 0.25 });
   }
 
   function playBoom() {
-    // Soft boom: lowpass noise, longer decay
     playNoiseBurst({ dur: 0.28, type: "lowpass", cutoff: 380, q: 0.7, gain: 0.65 });
   }
 
   function sfx(name, opts = {}) {
     if (!enabled) return;
-    switch (name) {
-      case "basic":
-        return playZap({ freqStart: 1200, freqEnd: 380, dur: 0.10, gain: 0.6, ...opts });
-      case "cast":
-      case "cast_aoe":
-      case "cast_beam":
-      case "cast_nova":
-      case "cast_chain":
-        return playNoiseBurst({ dur: 0.18, type: "bandpass", cutoff: 900, q: 3.2, gain: 0.4, ...opts });
-      case "chain_hit":
-        return playZap({ freqStart: 1400, freqEnd: 600, dur: 0.07, gain: 0.33, ...opts });
-      case "beam":
-        return playZap({ freqStart: 1000, freqEnd: 500, dur: 0.09, gain: 0.45, ...opts });
-      case "strike":
-        return playStrike();
-      case "boom":
-        return playBoom();
-      case "aura_on":
-        return playBlip({ freq: 520, dur: 0.08, gain: 0.28 });
-      case "aura_off":
-        return playBlip({ freq: 320, dur: 0.08, gain: 0.25 });
-      case "aura_tick":
-        return playBlip({ freq: 800, dur: 0.03, gain: 0.12 });
-      case "player_hit":
-        return playBlip({ freq: 180, dur: 0.12, gain: 0.45 });
-      case "enemy_die":
-        // small falling tone + soft noise tail
-        playZap({ freqStart: 700, freqEnd: 180, dur: 0.16, gain: 0.35 });
-        return playNoiseBurst({ dur: 0.22, type: "lowpass", cutoff: 600, q: 0.9, gain: 0.25 });
-      case "storm_start":
-        return playNoiseBurst({ dur: 0.55, type: "lowpass", cutoff: 300, q: 0.6, gain: 0.3 });
-      default:
-        // no-op
-        return;
+    
+    // First, check if there's a configuration in SKILL_SOUNDS
+    let soundConfig = SKILL_SOUNDS[name] || DEFAULT_SOUNDS[name];
+    console.log({soundConfig})
+    
+    // If we have a configuration, play it
+    if (soundConfig) {
+      // Handle array of sounds (play all simultaneously)
+      if (Array.isArray(soundConfig)) {
+        for (const config of soundConfig) {
+          playProceduralSound(config, opts);
+        }
+      } else {
+        playProceduralSound(soundConfig, opts);
+      }
+      return;
     }
+    
+    return playStrike();
   }
 
   // ============================================================================

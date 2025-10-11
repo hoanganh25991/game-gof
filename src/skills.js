@@ -313,7 +313,7 @@ export class SkillsSystem {
       },
     });
 
-    audio.sfx("basic");
+    audio.sfx("basic_attack");
 
     // FP hand VFX for basic attack - fire casting effects
     this._spawnCastingHandEffect();
@@ -504,6 +504,7 @@ export class SkillsSystem {
     this.startCooldown(key, SK.cd);
 
     // Execute using shared logic
+    audio.sfx(key);
     this._executeSkillLogic(SK, point);
   }
 

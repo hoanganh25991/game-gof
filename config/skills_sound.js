@@ -254,75 +254,8 @@ export const SKILL_SOUNDS = {
  * Default fallback sounds by skill type
  * Used when a specific skill ID is not found in SKILL_SOUNDS
  */
-export const DEFAULT_SOUNDS_BY_TYPE = {
-  chain: {
-    type: "noiseBurst",
-    dur: 0.18,
-    filterType: "bandpass",
-    cutoff: 900,
-    q: 3.2,
-    gain: 0.4
-  },
-  
-  aoe: {
-    type: "noiseBurst",
-    dur: 0.25,
-    filterType: "lowpass",
-    cutoff: 600,
-    q: 1.2,
-    gain: 0.65
-  },
-  
-  beam: {
-    type: "zap",
-    freqStart: 1000,
-    freqEnd: 500,
-    dur: 0.09,
-    gain: 0.45
-  },
-  
-  nova: {
-    type: "noiseBurst",
-    dur: 0.22,
-    filterType: "bandpass",
-    cutoff: 800,
-    q: 2.5,
-    gain: 0.55
-  },
-  
-  aura: {
-    type: "blip",
-    freq: 520,
-    dur: 0.08,
-    gain: 0.28
-  },
-  
-  storm: {
-    type: "noiseBurst",
-    dur: 0.55,
-    filterType: "lowpass",
-    cutoff: 300,
-    q: 0.6,
-    gain: 0.3
-  },
-  
-  blink: {
-    type: "zap",
-    freqStart: 1600,
-    freqEnd: 400,
-    dur: 0.08,
-    gain: 0.4
-  },
-  
-  dash: {
-    type: "zap",
-    freqStart: 1600,
-    freqEnd: 400,
-    dur: 0.08,
-    gain: 0.4
-  },
-  
-  basic: {
+export const DEFAULT_SOUNDS = {
+  basic_attack: {
     type: "zap",
     freqStart: 1200,
     freqEnd: 380,
