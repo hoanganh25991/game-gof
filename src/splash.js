@@ -66,22 +66,14 @@ export function initSplash() {
             if (noteEl) noteEl.style.display = "none";
           } catch (e) {}
 
-          // Populate and reveal the start screen (keeps overlay visible) and wait for player to click Start.
+          // Show the start screen (content is pre-rendered in HTML for better LCP)
           const startScreen = document.getElementById("startScreen");
           
           if (startScreen) {
-            // Inject start screen content dynamically to avoid affecting LCP
-            startScreen.innerHTML = `
-              <h2 id="startTitle" data-i18n="start.title">Hành trình của Hoả Thần</h2>
-              <p id="startStory" data-i18n="start.story">Thế giới chìm trong u ám. Những bóng đêm tỉnh dậy, và chỉ một vị thần có thể gọi hoả sét trở lại. Hãy dẫn GoF — vị hoả thần — qua rừng hoang, làng mạc đổ nát và chiến trường, tiêu diệt lũ quái và khôi phục trật tự.</p>
-              <button id="btnStartGame" class="primary" data-i18n="btn.start">Bắt đầu</button>
-            `;
-            
             startScreen.style.display = "block";
             
-            // Ensure translated text is applied if i18n has loaded later
+            // Ensure translated text is applied if i18n has loaded
             try {
-              // applyTranslations is exported by src/i18n.js; if available on window, call it
               if (typeof window !== "undefined" && window.applyTranslations) {
                 window.applyTranslations(document);
               }

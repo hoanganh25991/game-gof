@@ -357,8 +357,12 @@
       <div class="flash-note" style="margin-top:10px;font-size:12px;opacity:0.6;color:var(--system-text)" data-i18n="flash.note">
         Loading modules…</div>
 
-      <!-- Start screen placeholder (content injected by JS after load to avoid affecting LCP) -->
-      <div id="startScreen" class="start-screen" style="display:none; margin-top:12px;"></div>
+      <!-- Start screen (pre-rendered in HTML for better LCP) -->
+      <div id="startScreen" class="start-screen" style="display:none; margin-top:12px;">
+        <h2 id="startTitle" data-i18n="start.title">Hành trình của Hoả Thần</h2>
+        <p id="startStory" data-i18n="start.story">Thế giới chìm trong u ám. Những bóng đêm tỉnh dậy, và chỉ một vị thần có thể gọi hoả sét trở lại. Hãy dẫn GoF — vị hoả thần — qua rừng hoang, làng mạc đổ nát và chiến trường, tiêu diệt lũ quái và khôi phục trật tự.</p>
+        <button id="btnStartGame" class="primary" data-i18n="btn.start">Bắt đầu</button>
+      </div>
     </div>
   </div>
 
@@ -597,21 +601,48 @@
     })();
   </script>
 
+  <!-- Update available modal -->
+  <div id="updateAvailableModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="updateAvailableTitle">
+    <div class="modal-box">
+      <h3 id="updateAvailableTitle">Update Available</h3>
+      <div class="modal-desc">A new version of the app is available. Would you like to reload and update now?</div>
+      <div class="modal-actions">
+        <button id="updateLater" class="secondary">Later</button>
+        <button id="updateNow" class="primary">Update Now</button>
+      </div>
+    </div>
+  </div>
+
   <!-- PWA Register service worker -->
   <script>
     try {
       if (window.location.hostname == "localhost") {
         console.log("Ignore serviceworker on localhost");
       } else if ("serviceWorker" in navigator) {
-        // Reload the page when a new controller takes over (ensures fresh assets)
+        // Show confirmation dialog when a new controller takes over
         navigator.serviceWorker.addEventListener?.("controllerchange", () => {
-          try {
-            // Optional UX hint:
-            // setCenterMsg && setCenterMsg("Updating…");
-            // setTimeout(() => clearCenterMsg && clearCenterMsg(), 800);
-          } catch (_) {}
-          // Full refresh to ensure updated shell/assets are applied
-          window.location.reload();
+          // Show update confirmation modal
+          const modal = document.getElementById("updateAvailableModal");
+          const updateNowBtn = document.getElementById("updateNow");
+          const updateLaterBtn = document.getElementById("updateLater");
+          
+          if (modal && updateNowBtn && updateLaterBtn) {
+            modal.classList.remove("hidden");
+            
+            // Handle "Update Now" button
+            updateNowBtn.onclick = () => {
+              modal.classList.add("hidden");
+              window.location.reload();
+            };
+            
+            // Handle "Later" button
+            updateLaterBtn.onclick = () => {
+              modal.classList.add("hidden");
+            };
+          } else {
+            // Fallback: if modal elements don't exist, reload anyway
+            window.location.reload();
+          }
         });
 
         window.addEventListener("load", () => {

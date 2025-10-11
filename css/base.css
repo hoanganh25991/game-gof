@@ -1,10 +1,67 @@
 /* css/base.css
    Core variables, resets and global utilities.
    Imported by css/style.css (the entry that aggregates components).
-   
-   NOTE: CSS variables are now injected by JavaScript via initializeTheme()
-   from config/theme.js. All color definitions are in THEME_COLORS object.
 */
+
+:root{
+  /* Primary theme palette (FIRE THEME - orange/red) */
+  --theme-dark: #1a0a05;         /* deep dark red-brown */
+  --theme-orange: #ff6b35;       /* primary fire orange */
+  --theme-light-orange: #ff8c42; /* lighter orange */
+  --theme-white: #ffffff;        /* clean white */
+  --theme-accent: #ffa552;       /* bright orange accent */
+  --theme-yellow: #ffd94a;       /* primary button yellow/gold */
+
+  /* Backwards-compatible aliases */
+  --white: #ffe6d9;
+  --orange: #ff6b35;
+  --dark-orange: #cc5529;
+  --light-orange: #ff8c42;
+
+  /* Gameplay / UI tokens */
+  --hp: #ff4444;   /* red for HP */
+  --mp: #4488ff;   /* blue for mana */
+  --xp: #ffaa44;   /* orange for XP */
+  --bg: #0a0503;
+  --enemy: #4a0e0e;       /* default enemy base color */
+  --enemy-dark: #2b0505;  /* default enemy dark variant */
+
+  /* Glass / overlay tokens */
+  --glass: #1A0A05B3;
+  --glass-strong: #1A0A05D9;
+  --accent: #ffa552;
+
+  /* System (settings / hero / flash) theme tokens */
+  --system-bg: linear-gradient(180deg, #28140AF2, #1E0F08F2);
+  --system-border: #FF6B354D;
+  --system-text: #ffe6d9;
+  --system-accent: #ffa552;
+
+  /* Common color values - for consistency */
+  --border-orange: #FF8C4259;
+  --border-orange-light: #FF8C424D;
+  --border-orange-subtle: #FF8C4226;
+  --border-white-subtle: #FFFFFF1F;
+  --border-white-faint: #FFFFFF0F;
+  
+  /* Background gradients */
+  --bg-radial-fire: radial-gradient(1200px 1200px at 70% 30%, #2a1510 0%, #1a0f0a 50%, #0a0503 100%);
+  --bg-dark-fire: #28140A99;
+  --bg-darker-fire: #1A0D08CC;
+  
+  /* Text colors */
+  --text-warm: #ffe6d9;
+  --text-warm-light: #ffd4b3;
+  
+  /* Shadow values */
+  --shadow-medium: 0 8px 30px #00000059;
+  --shadow-strong: 0 8px 30px #00000073;
+  
+  /* Glow effects */
+  --glow-orange: #FF8C4299;
+  --glow-orange-strong: #FF8C42CC;
+}
+
 
 *{ box-sizing: border-box; }
 
