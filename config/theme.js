@@ -94,6 +94,13 @@ export const THEME_COLORS = {
   stem: "#4a2a1a",
   darkFire: "#8b0000",
   tomato: "#ff6347",
+
+  // Map-specific enemy tints
+  mapAct1: "#ff8080",      // Act I - Fields of Awakening (light coral/pink)
+  mapAct2: "#ffb060",      // Act II - Volcanic Plains (warm orange)
+  mapAct3: "#ffe070",      // Act III - Inferno Peaks (golden yellow-orange)
+  mapAct4: "#a0ffd1",      // Act IV - Sky Citadel (cyan/teal)
+  mapAct5: "#9fd8ff",      // Act V - The Godforge (light azure blue)
 };
 
 /**
@@ -150,4 +157,3 @@ export const CSS_VAR = Object.keys(THEME_COLORS).reduce((acc, key) => {
   acc[key] = `var(--${toKebabCase(key)})`;
   return acc;
 }, {});
-

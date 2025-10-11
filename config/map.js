@@ -3,6 +3,7 @@
  * - Defines all map-related constants and data
  * - Endless mode settings, map emojis, and map definitions
  */
+import { THEME_COLORS } from "./theme.js";
 
 // Endless tuning beyond the defined Acts
 export const ENDLESS = {
@@ -25,7 +26,7 @@ export const MAPS = [
     index: 1,
     name: "Act I — Fields of Awakening",
     requiredLevel: 1,
-    enemyTint: 0xff8080,
+    enemyTint: THEME_COLORS.mapAct1,
     enemyHpMul: 1.0,
     enemyDmgMul: 1.0,
     enemySpeedMul: 1.0,
@@ -38,7 +39,7 @@ export const MAPS = [
     index: 2,
     name: "Act II — Volcanic Plains",
     requiredLevel: 5,
-    enemyTint: 0xffb060,
+    enemyTint: THEME_COLORS.mapAct2,
     enemyHpMul: 1.35,
     enemyDmgMul: 1.2,
     enemySpeedMul: 1.02,
@@ -51,7 +52,7 @@ export const MAPS = [
     index: 3,
     name: "Act III — Inferno Peaks",
     requiredLevel: 10,
-    enemyTint: 0xffe070,
+    enemyTint: THEME_COLORS.mapAct3,
     enemyHpMul: 1.8,
     enemyDmgMul: 1.45,
     enemySpeedMul: 1.05,
@@ -64,7 +65,7 @@ export const MAPS = [
     index: 4,
     name: "Act IV — Sky Citadel",
     requiredLevel: 20,
-    enemyTint: 0xa0ffd1,
+    enemyTint: THEME_COLORS.mapAct4,
     enemyHpMul: 2.4,
     enemyDmgMul: 1.8,
     enemySpeedMul: 1.08,
@@ -77,7 +78,7 @@ export const MAPS = [
     index: 5,
     name: "Act V — The Godforge",
     requiredLevel: 35,
-    enemyTint: 0x9fd8ff,
+    enemyTint: THEME_COLORS.mapAct5,
     enemyHpMul: 3.2,
     enemyDmgMul: 2.3,
     enemySpeedMul: 1.12,
