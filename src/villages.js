@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { THEME_COLORS, VILLAGE_POS, REST_RADIUS } from "../config/index.js";
-import { createHouseCluster } from "./village_utils.js";
+import { createHouseCluster } from "./villages_utils.js";
 
 /**
  * Villages System

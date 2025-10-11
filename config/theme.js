@@ -95,6 +95,42 @@ export const THEME_COLORS = {
   darkFire: "#8b0000",
   tomato: "#ff6347",
 
+  // Hero character colors
+  heroSkin: "#ffe8db",
+  heroSkinEmissive: "#5a2b10",
+  heroBeard: "#fff4e6",
+  heroBeardEmissive: "#6b3a12",
+  heroCrown: "#ffe8cf",
+  heroBodyEmissive: "#5a2a0a",
+  heroCloak: "#3e1f0a",
+  heroCloakEmissive: "#2a1506",
+  heroShoulderEmissive: "#3e1e0a",
+  heroBelt: "#ffd89f",
+  heroHair: "#3a2313",
+  heroHairEmissive: "#291509",
+  heroHandLight: "#ffb366",
+
+  // Enemy colors
+  enemyBodyEmissive: "#2a0a0a",
+  enemyEyeEmissive: "#550000",
+  enemyEye: "#ffffff",
+
+  // UI bar colors
+  hpBarBg: "#222222",
+  hpBarFill: "#ff4545",
+  overheadBarBg: "#111111",
+
+  // Structure colors
+  portalBase: "#0e1e38",
+  houseBase: "#5c2515",
+  sandstone: "#f4e8dc",
+  villaBase: "#5c3115",
+  villaPorchColumn: "#f4eee8",
+
+  // Tree foliage colors (fire theme)
+  cypressFoliage: "#8f4a3c",
+  oliveCanopy: "#8f6a4a",
+
   // Map-specific enemy tints
   mapAct1: "#ff8080",      // Act I - Fields of Awakening (light coral/pink)
   mapAct2: "#ffb060",      // Act II - Volcanic Plains (warm orange)

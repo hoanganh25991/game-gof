@@ -14,7 +14,7 @@ export function createHeroMesh() {
   const torsoGeo = new THREE.CapsuleGeometry(0.75, 1.25, 6, 14);
   const torsoMat = new THREE.MeshStandardMaterial({
     color: THEME_COLORS.themeLightOrange,
-    emissive: 0x5a2a0a,
+    emissive: THEME_COLORS.heroBodyEmissive,
     metalness: 0.2,
     roughness: 0.55,
   });
@@ -24,7 +24,7 @@ export function createHeroMesh() {
   // Head
   const head = new THREE.Mesh(
     new THREE.SphereGeometry(0.52, 20, 20),
-    new THREE.MeshStandardMaterial({ color: 0xffe8db, emissive: 0x5a2b10, roughness: 0.45 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroSkin, emissive: THEME_COLORS.heroSkinEmissive, roughness: 0.45 })
   );
   head.position.y = 1.75;
   body.add(head);
@@ -32,7 +32,7 @@ export function createHeroMesh() {
   // Beard (cone)
   const beard = new THREE.Mesh(
     new THREE.ConeGeometry(0.38, 0.7, 16),
-    new THREE.MeshStandardMaterial({ color: 0xfff4e6, emissive: 0x6b3a12, roughness: 0.4 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroBeard, emissive: THEME_COLORS.heroBeardEmissive, roughness: 0.4 })
   );
   beard.position.set(0, 1.35, 0.28);
   beard.rotation.x = Math.PI * 0.05;
@@ -41,14 +41,14 @@ export function createHeroMesh() {
   // Laurel crown (thin torus)
   const crown = new THREE.Mesh(
     new THREE.TorusGeometry(0.55, 0.06, 10, 28),
-    new THREE.MeshStandardMaterial({ color: 0xffe8cf, emissive: 0xffa02d, metalness: 0.4, roughness: 0.3 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroCrown, emissive: THEME_COLORS.themeAccent, metalness: 0.4, roughness: 0.3 })
   );
   crown.position.y = 1.78;
   crown.rotation.x = Math.PI / 2;
   body.add(crown);
 
   // Shoulder pads
-  const shoulderMat = new THREE.MeshStandardMaterial({ color: THEME_COLORS.darkOrange, emissive: 0x3e1e0a, metalness: 0.35, roughness: 0.45 });
+  const shoulderMat = new THREE.MeshStandardMaterial({ color: THEME_COLORS.darkOrange, emissive: THEME_COLORS.heroShoulderEmissive, metalness: 0.35, roughness: 0.45 });
   const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), shoulderMat);
   shoulderL.position.set(-0.7, 1.45, 0.1);
   const shoulderR = shoulderL.clone();
@@ -58,7 +58,7 @@ export function createHeroMesh() {
   // Cloak (simple plane)
   const cloak = new THREE.Mesh(
     new THREE.PlaneGeometry(1.6, 2.4, 1, 3),
-    new THREE.MeshStandardMaterial({ color: 0x3e1f0a, emissive: 0x2a1506, side: THREE.DoubleSide, roughness: 0.8 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroCloak, emissive: THEME_COLORS.heroCloakEmissive, side: THREE.DoubleSide, roughness: 0.8 })
   );
   cloak.position.set(0, 1.2, -0.45);
   cloak.rotation.x = Math.PI;
@@ -67,7 +67,7 @@ export function createHeroMesh() {
   // Right hand fire (no weapon)
   const arm = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.14, 0.6, 6, 10),
-    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: 0x5a2a0a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: THEME_COLORS.heroBodyEmissive, roughness: 0.55 })
   );
   arm.position.set(0.65, 1.3, 0.15);
   arm.rotation.z = -Math.PI * 0.25;
@@ -86,19 +86,19 @@ export function createHeroMesh() {
   // Left hand fire orb + light (for FP two-hands effect)
   const leftFireOrb = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.2, 0),
-    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeOrange, emissive: 0xffa02d, emissiveIntensity: 2.0, roughness: 0.15, metalness: 0.1 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeOrange, emissive: THEME_COLORS.themeAccent, emissiveIntensity: 2.0, roughness: 0.15, metalness: 0.1 })
   );
   leftHandAnchor.add(leftFireOrb);
-  const leftHandLight = new THREE.PointLight(0xffb366, 1.0, 18, 2);
+  const leftHandLight = new THREE.PointLight(THEME_COLORS.heroHandLight, 1.0, 18, 2);
   leftHandAnchor.add(leftHandLight);
 
   const fireOrb = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.2, 0),
-    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeOrange, emissive: 0xffa02d, emissiveIntensity: 2.2, roughness: 0.15, metalness: 0.1 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeOrange, emissive: THEME_COLORS.themeAccent, emissiveIntensity: 2.2, roughness: 0.15, metalness: 0.1 })
   );
   handAnchor.add(fireOrb);
 
-  const handLight = new THREE.PointLight(0xffb366, 1.3, 20, 2);
+  const handLight = new THREE.PointLight(THEME_COLORS.heroHandLight, 1.3, 20, 2);
   handAnchor.add(handLight);
   // expose for idle pulse control
   root.userData.handLight = handLight;
@@ -110,7 +110,7 @@ export function createHeroMesh() {
   // Left arm (symmetric)
   const armL = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.14, 0.6, 6, 10),
-    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: 0x5a2a0a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: THEME_COLORS.heroBodyEmissive, roughness: 0.55 })
   );
   armL.position.set(-0.65, 1.3, 0.15);
   armL.rotation.z = Math.PI * 0.25;
@@ -122,7 +122,7 @@ export function createHeroMesh() {
   // Biceps bulges
   const bicepR = new THREE.Mesh(
     new THREE.SphereGeometry(0.18, 14, 14),
-    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: 0x5a2a0a, roughness: 0.55 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: THEME_COLORS.heroBodyEmissive, roughness: 0.55 })
   );
   bicepR.position.set(0.55, 1.45, 0.12);
   const bicepL = bicepR.clone();
@@ -132,7 +132,7 @@ export function createHeroMesh() {
   // Tunic (waist cloth)
   const tunic = new THREE.Mesh(
     new THREE.CylinderGeometry(0.95, 0.9, 1.0, 28, 1, true),
-    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: 0x3e1f0a, metalness: 0.2, roughness: 0.7, side: THREE.DoubleSide })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: THEME_COLORS.heroCloak, metalness: 0.2, roughness: 0.7, side: THREE.DoubleSide })
   );
   tunic.position.set(0, 0.6, 0);
   body.add(tunic);
@@ -140,7 +140,7 @@ export function createHeroMesh() {
   // Belt
   const belt = new THREE.Mesh(
     new THREE.TorusGeometry(0.95, 0.06, 12, 32),
-    new THREE.MeshStandardMaterial({ color: 0xffd89f, emissive: 0xffa02d, metalness: 0.5, roughness: 0.2 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroBelt, emissive: THEME_COLORS.themeAccent, metalness: 0.5, roughness: 0.2 })
   );
   belt.position.y = 1.0;
   body.add(belt);
@@ -148,7 +148,7 @@ export function createHeroMesh() {
   // Hair cap
   const hairCap = new THREE.Mesh(
     new THREE.SphereGeometry(0.56, 20, 20, 0, Math.PI * 2, 0, Math.PI / 2),
-    new THREE.MeshStandardMaterial({ color: 0x3a2313, emissive: 0x291509, roughness: 0.65 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroHair, emissive: THEME_COLORS.heroHairEmissive, roughness: 0.65 })
   );
   hairCap.position.set(0, 0.18, 0); // relative to head
   head.add(hairCap);
@@ -156,7 +156,7 @@ export function createHeroMesh() {
   // Small ponytail
   const pony = new THREE.Mesh(
     new THREE.ConeGeometry(0.15, 0.35, 12),
-    new THREE.MeshStandardMaterial({ color: 0x3a2313, emissive: 0x291509 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroHair, emissive: THEME_COLORS.heroHairEmissive })
   );
   pony.position.set(0, -0.2, -0.25);
   pony.rotation.x = Math.PI * 0.9;
@@ -224,25 +224,25 @@ export function createHeroMesh() {
   return root;
 }
 
- // Enemy body with single eye detail
- export function createEnemyMesh(options = {}) {
-   const color = options.color !== undefined ? options.color : THEME_COLORS.enemyDark;
-   const eyeEmissive = options.eyeEmissive !== undefined ? options.eyeEmissive : 0x550000;
+// Enemy body with single eye detail
+export function createEnemyMesh(options = {}) {
+  const color = options.color !== undefined ? options.color : THEME_COLORS.enemyDark;
+  const eyeEmissive = options.eyeEmissive !== undefined ? options.eyeEmissive : THEME_COLORS.enemyEyeEmissive;
 
-   const geo = new THREE.CapsuleGeometry(0.6, 0.8, 4, 10);
-   const mat = new THREE.MeshStandardMaterial({ color: color, emissive: 0x2a0a0a, roughness: 0.7 });
-   const mesh = new THREE.Mesh(geo, mat);
-   mesh.castShadow = true;
+  const geo = new THREE.CapsuleGeometry(0.6, 0.8, 4, 10);
+  const mat = new THREE.MeshStandardMaterial({ color: color, emissive: THEME_COLORS.enemyBodyEmissive, roughness: 0.7 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.castShadow = true;
 
-   const eye = new THREE.Mesh(
-     new THREE.SphereGeometry(0.18, 12, 12),
-     new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: eyeEmissive })
-   );
-   eye.position.set(0, 1.2, 0.45);
-   mesh.add(eye);
+  const eye = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 12, 12),
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.enemyEye, emissive: eyeEmissive })
+  );
+  eye.position.set(0, 1.2, 0.45);
+  mesh.add(eye);
 
-   return mesh;
- }
+  return mesh;
+}
 
 // Billboard HP bar parts to attach to enemy mesh
 export function createBillboardHPBar() {
@@ -251,13 +251,13 @@ export function createBillboardHPBar() {
 
   const bg = new THREE.Mesh(
     new THREE.PlaneGeometry(1.4, 0.14),
-    new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.6 })
+    new THREE.MeshBasicMaterial({ color: THEME_COLORS.hpBarBg, transparent: true, opacity: 0.6 })
   );
   container.add(bg);
 
   const fill = new THREE.Mesh(
     new THREE.PlaneGeometry(1.36, 0.1),
-    new THREE.MeshBasicMaterial({ color: 0xff4545 })
+    new THREE.MeshBasicMaterial({ color: THEME_COLORS.hpBarFill })
   );
   fill.position.z = 0.001;
   container.add(fill);
@@ -313,7 +313,7 @@ export function createPortalMesh(color = THEME_COLORS.portal) {
   // Base pedestal
   const base = new THREE.Mesh(
     new THREE.CylinderGeometry(0.9, 1.1, 0.2, 24),
-    new THREE.MeshStandardMaterial({ color: 0x0e1e38, metalness: 0.3, roughness: 0.6 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.portalBase, metalness: 0.3, roughness: 0.6 })
   );
   base.position.y = -1.1;
 
@@ -338,14 +338,14 @@ export function createHouse() {
   const house = new THREE.Group();
   const base = new THREE.Mesh(
     new THREE.BoxGeometry(6, 3, 6),
-    new THREE.MeshStandardMaterial({ color: 0x5c2515 })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.houseBase })
   );
   base.position.y = 1.5;
   house.add(base);
 
   const roof = new THREE.Mesh(
     new THREE.ConeGeometry(4.5, 2.5, 4),
-    new THREE.MeshStandardMaterial({ color: 0x3e1f0a })
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroCloak })
   );
   roof.position.y = 4.1;
   roof.rotation.y = Math.PI / 4;
@@ -362,7 +362,7 @@ export function createHeroOverheadBars() {
   // Backboard
   const bg = new THREE.Mesh(
     new THREE.PlaneGeometry(1.8, 0.26),
-    new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.5 })
+    new THREE.MeshBasicMaterial({ color: THEME_COLORS.overheadBarBg, transparent: true, opacity: 0.5 })
   );
   container.add(bg);
 
@@ -392,7 +392,7 @@ export function createGreekColumn(options = {}) {
     height = 5,
     radius = 0.28,
     order = "doric", // "doric" | "ionic" | "corinthian" (visual differences are subtle here)
-    color = 0xf4e8dc, // Warm sandstone for fire theme
+    color = THEME_COLORS.sandstone, // Warm sandstone for fire theme
     roughness = 0.55,
     metalness = 0.04,
   } = options;
@@ -456,7 +456,7 @@ export function createGreekTemple(options = {}) {
     colSpacingZ = 2.6,
     columnHeight = 5.6,
     baseMargin = 0.9,
-    color = 0xf4e8dc, // Warm sandstone for fire theme
+    color = THEME_COLORS.sandstone, // Warm sandstone for fire theme
   } = options;
 
   const g = new THREE.Group();
@@ -529,8 +529,8 @@ export function createVilla(options = {}) {
     width = 12,
     depth = 8,
     height = 4,
-    colorBase = 0x5c3115,
-    colorRoof = 0x3e1f0a,
+    colorBase = THEME_COLORS.villaBase,
+    colorRoof = THEME_COLORS.heroCloak,
   } = options;
 
   const g = new THREE.Group();
@@ -562,7 +562,7 @@ export function createVilla(options = {}) {
 
   const colOffX = width * 0.22;
   const colZ = depth / 2 + porchDepth * 0.25;
-  const c1 = createGreekColumn({ height: height * 0.85, radius: 0.18, color: 0xf4eee8 });
+  const c1 = createGreekColumn({ height: height * 0.85, radius: 0.18, color: THEME_COLORS.villaPorchColumn });
   c1.position.set(-colOffX, 0.3, colZ);
   const c2 = c1.clone();
   c2.position.x = colOffX;
@@ -577,7 +577,7 @@ export function createCypressTree() {
   const trunkH = 1.6 + Math.random() * 0.8;
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(0.06, 0.08, trunkH, 6),
-    new THREE.MeshStandardMaterial({ color: 0x2a1a12 }) // Burnt wood for fire theme
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.trunk }) // Burnt wood for fire theme
   );
   trunk.position.y = trunkH / 2;
   g.add(trunk);
@@ -587,7 +587,7 @@ export function createCypressTree() {
     const h = 1.0 + (levels - i) * 0.5;
     const cone = new THREE.Mesh(
       new THREE.ConeGeometry(0.4 + (levels - i) * 0.18, h, 8),
-      new THREE.MeshStandardMaterial({ color: 0x8f4a3c }) // Burnt orange-red foliage for fire theme
+      new THREE.MeshStandardMaterial({ color: THEME_COLORS.cypressFoliage }) // Burnt orange-red foliage for fire theme
     );
     cone.position.y = trunkH + (i * h * 0.55);
     g.add(cone);
@@ -602,12 +602,12 @@ export function createOliveTree() {
   const trunkH = 1.3 + Math.random() * 0.7;
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(0.12, 0.16, trunkH, 8),
-    new THREE.MeshStandardMaterial({ color: 0x4a2a1a }) // Burnt brown trunk for fire theme
+    new THREE.MeshStandardMaterial({ color: THEME_COLORS.stem }) // Burnt brown trunk for fire theme
   );
   trunk.position.y = trunkH / 2;
   g.add(trunk);
 
-  const canopyMat = new THREE.MeshStandardMaterial({ color: 0x8f6a4a }); // Burnt orange canopy for fire theme
+  const canopyMat = new THREE.MeshStandardMaterial({ color: THEME_COLORS.oliveCanopy }); // Burnt orange canopy for fire theme
   const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), canopyMat);
   const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 12), canopyMat);
   const s3 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), canopyMat);
@@ -621,7 +621,7 @@ export function createOliveTree() {
 
 export function createGreekStatue(options = {}) {
   const {
-    color = 0xf4e8dc // Warm sandstone for fire theme
+    color = THEME_COLORS.sandstone // Warm sandstone for fire theme
   } = options;
 
   const mat = new THREE.MeshStandardMaterial({ color });
@@ -661,7 +661,7 @@ export function createObelisk(options = {}) {
   const {
     height = 6,
     baseSize = 1.2,
-    color = 0xf4e8dc // Warm sandstone for fire theme
+    color = THEME_COLORS.sandstone // Warm sandstone for fire theme
   } = options;
 
   const g = new THREE.Group();

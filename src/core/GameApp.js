@@ -40,7 +40,7 @@ import { ChunkManager, getOrInitWorldSeed } from "../chunk_manager.js";
 import { getStructureProtectionRadius } from "../structures.js";
 import { isMobile, MOBILE_OPTIMIZATIONS, applyMobileRendererHints } from "../mobile.js";
 import { createDynamicSpawner } from "../spawn.js";
-import { createVillageFence } from "../village_fence.js";
+import { createVillageFence } from "../villages_fence.js";
 import { createPerformanceTracker, initVfxGating } from "../perf.js";
 import { createIndicators } from "../ui/indicators.js";
 import { preloadEffects } from "../effects_loader.js";

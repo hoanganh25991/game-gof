@@ -3,7 +3,7 @@ import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
 import { WORLD, storageKey } from "../config/index.js";
 import { THEME_COLORS } from "../config/theme.js";
 import { createCypressTree, createOliveTree } from "./hero_mesh.js";
-import { createHouseCluster } from "./village_utils.js";
+import { createHouseCluster } from "./villages_utils.js";
 
 /**
  * EnvironmentManager - Class-based environment system
