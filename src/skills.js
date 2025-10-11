@@ -287,7 +287,7 @@ export class SkillsSystem {
     const up = getBasicUplift ? getBasicUplift() : { aoeRadius: 0, chainJumps: 0, dmgMul: 1 };
     const dmg = Math.max(1, Math.floor(baseDmg * (up.dmgMul || 1)));
 
-    this.effects.spawnFireball(from, to, {
+    this.effects.spawnProjectile(from, to, {
       color: COLOR.fire,
       size: 0.35,
       speed: 25,

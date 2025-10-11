@@ -331,7 +331,7 @@ export class EnemiesSystem {
         try { this.#effects.spawnStrike(this.#player.pos(), 0.9, COLOR.accent); } catch (_) {}
       } else if (en.attackEffect === "fire") {
         if (this.#shouldSpawnVfx && this.#shouldSpawnVfx("fire", from)) {
-          this.#effects.spawnFireball(from.clone(), to.clone(), {
+          this.#effects.spawnProjectile(from.clone(), to.clone(), {
             color: en.beamColor || COLOR.midFire,
             size: 0.3,
             speed: 20,
@@ -343,7 +343,7 @@ export class EnemiesSystem {
       } else {
         // default ranged
         if (this.#shouldSpawnVfx && this.#shouldSpawnVfx("largeBeam", from)) {
-          this.#effects.spawnFireball(from.clone(), to.clone(), {
+          this.#effects.spawnProjectile(from.clone(), to.clone(), {
             color: en.beamColor || COLOR.midFire,
             size: 0.25,
             speed: 22,

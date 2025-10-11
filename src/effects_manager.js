@@ -100,48 +100,6 @@ export class EffectsManager extends BaseEffects {
     return hasSkillEffect(skillId);
   }
 
-  // ===== INDICATOR HELPERS (UI/Feedback) =====
-  
-  spawnMovePing(point, color = COLOR.fire) {
-    const ring = createGroundRing(0.6, 0.85, color, 0.8);
-    ring.position.set(point.x, 0.02, point.z);
-    this.indicators.add(ring);
-    this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.6 });
-  }
-
-  spawnTargetPing(entity, color = COLOR.ember) {
-    if (!entity || !entity.alive) return;
-    const p = entity.pos();
-    const ring = createGroundRing(0.65, 0.9, color, 0.85);
-    ring.position.set(p.x, 0.02, p.z);
-    this.indicators.add(ring);
-    this.queue.push({ obj: ring, until: now() + 0.7 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.4 });
-  }
-
-  showNoTargetHint(player, radius) {
-    const ring = createGroundRing(Math.max(0.1, radius - 0.2), radius + 0.2, COLOR.ember, 0.35);
-    const p = player.pos();
-    ring.position.set(p.x, 0.02, p.z);
-    this.indicators.add(ring);
-    this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material });
-    this.spawnStrike(player.pos(), 1.2, COLOR.ember);
-  }
-
-  // ===== LEGACY COMPATIBILITY METHODS =====
-  // These maintain backward compatibility with existing code
-  
-  /**
-   * @deprecated Use spawnProjectile from base effects
-   */
-  spawnFireball(from, to, opts = {}) {
-    this.spawnProjectile(from, to, {
-      color: opts.color || COLOR.fire,
-      size: opts.size || 0.4,
-      speed: opts.speed || 20,
-      trail: opts.trail !== false,
-      onComplete: opts.onComplete
-    });
-  }
 
   /**
    * Fire stream with flickering flames (legacy method)
