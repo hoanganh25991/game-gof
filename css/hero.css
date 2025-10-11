@@ -346,7 +346,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .items-row {

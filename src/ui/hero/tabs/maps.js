@@ -30,7 +30,7 @@ export function renderMapsTab(panelEl, ctx = {}) {
   try {
     list.style.flex = "1 1 auto";
     list.style.minHeight = "0";
-    list.style.overflow = "auto";
+    list.style.overflowY = "auto";
     list.style.maxHeight = "none";
   } catch (_) {}
   wrap.appendChild(list);
