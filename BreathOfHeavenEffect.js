@@ -224,24 +224,6 @@ export class BreathOfHeavenEffect extends SkillEffect {
             }
         }
         
-        // TODO: Heal allies when ally system is implemented
-        // IMPORTANT: THIS CHECKED BY COLLISIONMANAGER
-        // Damage enemies within range
-        // if (this.skill.game.enemyManager) {
-        //     // Get player position for damage calculations
-        //     const damagePosition = this.effect.position.clone();
-            
-        //     const enemies = this.skill.game.enemyManager.getEnemiesNearPosition(
-        //         damagePosition,
-        //         this.skill.radius
-        //     );
-            
-        //     enemies.forEach(enemy => {
-        //         const damageAmount = this.skill.damage;
-        //         enemy.takeDamage(damageAmount);
-        //     });
-        // }
-        
         // Create a healing pulse effect
         this.createHealingPulse();
     }
