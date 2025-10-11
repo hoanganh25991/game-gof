@@ -5,22 +5,6 @@ import { createEnvironmentTree, createEnvironmentRock, createEnvironmentFlower }
 import { createStructureWithLabel, getStructureProtectionRadius, getStructureProtectionColor } from "./structures.js";
 
 /**
- * Persist or retrieve a stable world seed so generation is consistent across sessions.
- */
-export function getOrInitWorldSeed(key = STORAGE_KEYS.worldSeed) {
-  try {
-    const existing = localStorage.getItem(key);
-    if (existing) return parseInt(existing, 10);
-    const seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0;
-    localStorage.setItem(key, String(seed));
-    return seed;
-  } catch (_) {
-    // Fallback: deterministic but time-based
-    return (Date.now() & 0x7fffffff) >>> 0;
-  }
-}
-
-/**
  * ChunkManager
  * - Streams chunks around the player.
  * - Drops far chunks to keep memory safe.
@@ -138,7 +122,7 @@ export class ChunkManager {
     if (!rec) return;
     try {
       this.scene.remove(rec.group);
-    } catch (_) {}
+    } catch (_) { }
     // Remove structures from tracking
     this.structures = this.structures.filter(s => s.chunkKey !== key);
     // Dispose geometries/materials to free memory
@@ -177,14 +161,14 @@ export class ChunkManager {
           const m = obj.material;
           if (Array.isArray(m)) {
             m.forEach((mm) => {
-              try { mm.dispose?.(); } catch (_) {}
+              try { mm.dispose?.(); } catch (_) { }
             });
           } else if (m && typeof m.dispose === "function") {
             m.dispose();
           }
-        } catch (_) {}
+        } catch (_) { }
       });
-    } catch (_) {}
+    } catch (_) { }
   }
 
   _persistKey(ix, iz) {
@@ -197,7 +181,7 @@ export class ChunkManager {
       if (!localStorage.getItem(key)) {
         localStorage.setItem(key, JSON.stringify({ v: 1, generated: true, t: Date.now() }));
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   /**
@@ -261,7 +245,7 @@ export class ChunkManager {
 
         const which = rng();
         let structureType, params;
-        
+
         if (which < 0.2) {
           structureType = "temple";
           params = {
@@ -305,18 +289,18 @@ export class ChunkManager {
           if (label) {
             group.add(label);
           }
-          
+
           // Track structure for minimap (use world position)
           const worldPos = new THREE.Vector3(
             ctx.origin.x + p.x,
             0,
             ctx.origin.z + p.z
           );
-          
+
           // Get protection radius and color from centralized structure configuration
           const protectionRadius = getStructureProtectionRadius(structureType);
           const protectionColor = getStructureProtectionColor(structureType);
-          
+
           // Create protective circle visualization
           const circleGeo = new THREE.RingGeometry(protectionRadius - 0.2, protectionRadius, 32);
           const circleMat = new THREE.MeshBasicMaterial({
@@ -329,7 +313,7 @@ export class ChunkManager {
           circle.rotation.x = -Math.PI / 2;
           circle.position.set(p.x, 0.1, p.z);
           group.add(circle);
-          
+
           this.structures.push({
             type: structureType,
             position: worldPos,
@@ -341,5 +325,21 @@ export class ChunkManager {
         }
       }
     }
+  }
+}
+
+/**
+ * Persist or retrieve a stable world seed so generation is consistent across sessions.
+ */
+export function getOrInitWorldSeed(key = STORAGE_KEYS.worldSeed) {
+  try {
+    const existing = localStorage.getItem(key);
+    if (existing) return parseInt(existing, 10);
+    const seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0;
+    localStorage.setItem(key, String(seed));
+    return seed;
+  } catch (_) {
+    // Fallback: deterministic but time-based
+    return (Date.now() & 0x7fffffff) >>> 0;
   }
 }
