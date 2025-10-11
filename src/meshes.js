@@ -1,12 +1,55 @@
+/**
+ * Optimized Mesh System with LOD (Level of Detail)
+ * Reduces mesh complexity based on device tier to improve performance
+ */
+
 import * as THREE from "../vendor/three/build/three.module.js";
-import { GLTFLoader } from "../vendor/three/examples/jsm/loaders/GLTFLoader.js";
 import { THEME_COLORS } from "../config/index.js";
 import { HERO_MODEL_URL } from "../config/index.js";
 import { parseThreeColor } from "./utils.js";
+import { getCurrentTierOptimizations, DEVICE_TIERS } from "./device-tier.js";
 
 /**
- * Hero character mesh with optional GLTF model replacement
- * @extends THREE.Group
+ * Get optimized segment counts based on device tier
+ */
+function getOptimizedSegments(baseSegments, baseRings) {
+  const opts = getCurrentTierOptimizations();
+  const multiplier = opts.segmentMultiplier || 1.0;
+  
+  return {
+    segments: Math.max(3, Math.round(baseSegments * multiplier)),
+    rings: Math.max(3, Math.round(baseRings * multiplier))
+  };
+}
+
+/**
+ * Create material based on device tier complexity
+ */
+function createOptimizedMaterial(options = {}) {
+  const opts = getCurrentTierOptimizations();
+  const { color, emissive, metalness = 0.2, roughness = 0.5, ...rest } = options;
+  
+  // Use simpler Lambert material for medium/low devices
+  if (!opts.useMeshStandard) {
+    return new THREE.MeshLambertMaterial({
+      color,
+      emissive: emissive || 0x000000,
+      ...rest
+    });
+  }
+  
+  // Use MeshStandardMaterial for high-end devices
+  return new THREE.MeshStandardMaterial({
+    color,
+    emissive,
+    metalness,
+    roughness,
+    ...rest
+  });
+}
+
+/**
+ * Optimized Hero Mesh with LOD support
  */
 export class HeroMesh extends THREE.Group {
   constructor() {
@@ -16,9 +59,11 @@ export class HeroMesh extends THREE.Group {
   }
 
   _build() {
-    // Torso
-    const torsoGeo = new THREE.CapsuleGeometry(0.75, 1.25, 6, 14);
-    const torsoMat = new THREE.MeshStandardMaterial({
+    const seg = getOptimizedSegments(14, 6);
+    
+    // Torso - reduced from (6, 14) to device-appropriate
+    const torsoGeo = new THREE.CapsuleGeometry(0.75, 1.25, seg.rings, seg.segments);
+    const torsoMat = createOptimizedMaterial({
       color: THEME_COLORS.themeLightOrange,
       emissive: THEME_COLORS.heroBodyEmissive,
       metalness: 0.2,
@@ -27,166 +72,234 @@ export class HeroMesh extends THREE.Group {
     this.body = new THREE.Mesh(torsoGeo, torsoMat);
     this.body.castShadow = true;
 
-    // Head
+    // Head - reduced segments
+    const headSeg = getOptimizedSegments(20, 20);
     this.head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.52, 20, 20),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroSkin, emissive: THEME_COLORS.heroSkinEmissive, roughness: 0.45 })
+      new THREE.SphereGeometry(0.52, headSeg.segments, headSeg.rings),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.heroSkin, 
+        emissive: THEME_COLORS.heroSkinEmissive, 
+        roughness: 0.45 
+      })
     );
     this.head.position.y = 1.75;
     this.body.add(this.head);
 
-    // Beard (cone)
+    // Beard - reduced from 16 to device-appropriate
+    const beardSeg = getOptimizedSegments(16, 16);
     this.beard = new THREE.Mesh(
-      new THREE.ConeGeometry(0.38, 0.7, 16),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroBeard, emissive: THEME_COLORS.heroBeardEmissive, roughness: 0.4 })
+      new THREE.ConeGeometry(0.38, 0.7, beardSeg.segments),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.heroBeard, 
+        emissive: THEME_COLORS.heroBeardEmissive, 
+        roughness: 0.4 
+      })
     );
     this.beard.position.set(0, 1.35, 0.28);
     this.beard.rotation.x = Math.PI * 0.05;
     this.body.add(this.beard);
 
-    // Laurel crown (thin torus)
+    // Crown - reduced from (10, 28)
+    const crownSeg = getOptimizedSegments(28, 10);
     this.crown = new THREE.Mesh(
-      new THREE.TorusGeometry(0.55, 0.06, 10, 28),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroCrown, emissive: THEME_COLORS.themeAccent, metalness: 0.4, roughness: 0.3 })
+      new THREE.TorusGeometry(0.55, 0.06, crownSeg.rings, crownSeg.segments),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.heroCrown, 
+        emissive: THEME_COLORS.themeAccent, 
+        metalness: 0.4, 
+        roughness: 0.3 
+      })
     );
     this.crown.position.y = 1.78;
     this.crown.rotation.x = Math.PI / 2;
     this.body.add(this.crown);
 
-    // Shoulder pads
-    const shoulderMat = new THREE.MeshStandardMaterial({ color: THEME_COLORS.darkOrange, emissive: THEME_COLORS.heroShoulderEmissive, metalness: 0.35, roughness: 0.45 });
-    this.shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), shoulderMat);
+    // Shoulders - reduced from 16
+    const shoulderSeg = getOptimizedSegments(16, 16);
+    const shoulderMat = createOptimizedMaterial({ 
+      color: THEME_COLORS.darkOrange, 
+      emissive: THEME_COLORS.heroShoulderEmissive, 
+      metalness: 0.35, 
+      roughness: 0.45 
+    });
+    this.shoulderL = new THREE.Mesh(
+      new THREE.SphereGeometry(0.38, shoulderSeg.segments, shoulderSeg.rings), 
+      shoulderMat
+    );
     this.shoulderL.position.set(-0.7, 1.45, 0.1);
     this.shoulderR = this.shoulderL.clone();
     this.shoulderR.position.x = 0.7;
     this.body.add(this.shoulderL, this.shoulderR);
 
-    // Cloak (simple plane)
+    // Cloak - reduced segments
+    const cloakSeg = getOptimizedSegments(1, 3);
     this.cloak = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.6, 2.4, 1, 3),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroCloak, emissive: THEME_COLORS.heroCloakEmissive, side: THREE.DoubleSide, roughness: 0.8 })
+      new THREE.PlaneGeometry(1.6, 2.4, cloakSeg.segments, cloakSeg.rings),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.heroCloak, 
+        emissive: THEME_COLORS.heroCloakEmissive, 
+        side: THREE.DoubleSide, 
+        roughness: 0.8 
+      })
     );
     this.cloak.position.set(0, 1.2, -0.45);
     this.cloak.rotation.x = Math.PI;
     this.body.add(this.cloak);
 
-    // Right arm
+    // Arms - reduced from (6, 10)
+    const armSeg = getOptimizedSegments(10, 6);
+    const armMat = createOptimizedMaterial({ 
+      color: THEME_COLORS.themeLightOrange, 
+      emissive: THEME_COLORS.heroBodyEmissive, 
+      roughness: 0.55 
+    });
+    
     this.rightArm = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.14, 0.6, 6, 10),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: THEME_COLORS.heroBodyEmissive, roughness: 0.55 })
+      new THREE.CapsuleGeometry(0.14, 0.6, armSeg.rings, armSeg.segments),
+      armMat
     );
     this.rightArm.position.set(0.65, 1.3, 0.15);
     this.rightArm.rotation.z = -Math.PI * 0.25;
     this.add(this.rightArm);
 
-    // Right hand anchor
+    // Hand anchors
     this.handAnchor = new THREE.Object3D();
     this.handAnchor.position.set(0.85, 1.15, 0.25);
     this.add(this.handAnchor);
 
-    // Left hand anchor
     this.leftHandAnchor = new THREE.Object3D();
     this.leftHandAnchor.position.set(-0.85, 1.15, 0.25);
     this.add(this.leftHandAnchor);
 
-    // Left hand fire orb + light (for FP two-hands effect)
+    // Fire orbs - use simplified geometry for medium/low
+    const orbSeg = getOptimizedSegments(1, 0);
+    const orbGeo = new THREE.IcosahedronGeometry(0.2, orbSeg.segments);
+    
     this.leftFireOrb = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(0.2, 0),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeOrange, emissive: THEME_COLORS.themeAccent, emissiveIntensity: 2.0, roughness: 0.15, metalness: 0.1 })
+      orbGeo,
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.themeOrange, 
+        emissive: THEME_COLORS.themeAccent, 
+        emissiveIntensity: 2.0, 
+        roughness: 0.15, 
+        metalness: 0.1 
+      })
     );
     this.leftHandAnchor.add(this.leftFireOrb);
     this.leftHandLight = new THREE.PointLight(THEME_COLORS.heroHandLight, 1.0, 18, 2);
     this.leftHandAnchor.add(this.leftHandLight);
 
-    // Right hand fire orb + light
     this.fireOrb = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(0.2, 0),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeOrange, emissive: THEME_COLORS.themeAccent, emissiveIntensity: 2.2, roughness: 0.15, metalness: 0.1 })
+      orbGeo.clone(),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.themeOrange, 
+        emissive: THEME_COLORS.themeAccent, 
+        emissiveIntensity: 2.2, 
+        roughness: 0.15, 
+        metalness: 0.1 
+      })
     );
     this.handAnchor.add(this.fireOrb);
-
     this.handLight = new THREE.PointLight(THEME_COLORS.heroHandLight, 1.3, 20, 2);
     this.handAnchor.add(this.handLight);
 
-    // Left arm (symmetric)
+    // Left arm
     this.leftArm = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.14, 0.6, 6, 10),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: THEME_COLORS.heroBodyEmissive, roughness: 0.55 })
+      new THREE.CapsuleGeometry(0.14, 0.6, armSeg.rings, armSeg.segments),
+      armMat
     );
     this.leftArm.position.set(-0.65, 1.3, 0.15);
     this.leftArm.rotation.z = Math.PI * 0.25;
     this.add(this.leftArm);
 
-    // Biceps bulges
+    // Biceps - reduced segments
+    const bicepSeg = getOptimizedSegments(14, 14);
+    const bicepMat = createOptimizedMaterial({ 
+      color: THEME_COLORS.themeLightOrange, 
+      emissive: THEME_COLORS.heroBodyEmissive, 
+      roughness: 0.55 
+    });
     this.bicepR = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18, 14, 14),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: THEME_COLORS.heroBodyEmissive, roughness: 0.55 })
+      new THREE.SphereGeometry(0.18, bicepSeg.segments, bicepSeg.rings),
+      bicepMat
     );
     this.bicepR.position.set(0.55, 1.45, 0.12);
     this.bicepL = this.bicepR.clone();
     this.bicepL.position.x = -0.55;
     this.add(this.bicepR, this.bicepL);
 
-    // Tunic (waist cloth)
+    // Tunic - reduced from 28
+    const tunicSeg = getOptimizedSegments(28, 1);
     this.tunic = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.95, 0.9, 1.0, 28, 1, true),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.themeLightOrange, emissive: THEME_COLORS.heroCloak, metalness: 0.2, roughness: 0.7, side: THREE.DoubleSide })
+      new THREE.CylinderGeometry(0.95, 0.9, 1.0, tunicSeg.segments, tunicSeg.rings, true),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.themeLightOrange, 
+        emissive: THEME_COLORS.heroCloak, 
+        metalness: 0.2, 
+        roughness: 0.7, 
+        side: THREE.DoubleSide 
+      })
     );
     this.tunic.position.set(0, 0.6, 0);
     this.body.add(this.tunic);
 
-    // Belt
+    // Belt - reduced from (12, 32)
+    const beltSeg = getOptimizedSegments(32, 12);
     this.belt = new THREE.Mesh(
-      new THREE.TorusGeometry(0.95, 0.06, 12, 32),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroBelt, emissive: THEME_COLORS.themeAccent, metalness: 0.5, roughness: 0.2 })
+      new THREE.TorusGeometry(0.95, 0.06, beltSeg.rings, beltSeg.segments),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.heroBelt, 
+        emissive: THEME_COLORS.themeAccent, 
+        metalness: 0.5, 
+        roughness: 0.2 
+      })
     );
     this.belt.position.y = 1.0;
     this.body.add(this.belt);
 
-    // Hair cap
+    // Hair cap - reduced segments
+    const hairSeg = getOptimizedSegments(20, 20);
     this.hairCap = new THREE.Mesh(
-      new THREE.SphereGeometry(0.56, 20, 20, 0, Math.PI * 2, 0, Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroHair, emissive: THEME_COLORS.heroHairEmissive, roughness: 0.65 })
+      new THREE.SphereGeometry(0.56, hairSeg.segments, hairSeg.rings, 0, Math.PI * 2, 0, Math.PI / 2),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.heroHair, 
+        emissive: THEME_COLORS.heroHairEmissive, 
+        roughness: 0.65 
+      })
     );
     this.hairCap.position.set(0, 0.18, 0);
     this.head.add(this.hairCap);
 
-    // Small ponytail
+    // Ponytail - reduced from 12
+    const ponySeg = getOptimizedSegments(12, 12);
     this.pony = new THREE.Mesh(
-      new THREE.ConeGeometry(0.15, 0.35, 12),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroHair, emissive: THEME_COLORS.heroHairEmissive })
+      new THREE.ConeGeometry(0.15, 0.35, ponySeg.segments),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.heroHair, 
+        emissive: THEME_COLORS.heroHairEmissive 
+      })
     );
     this.pony.position.set(0, -0.2, -0.25);
     this.pony.rotation.x = Math.PI * 0.9;
     this.head.add(this.pony);
 
-    // Parts to hide when entering first-person
+    // Parts to hide in first-person
     this.fpHideParts = [
-      this.body,
-      this.head,
-      this.cloak,
-      this.tunic,
-      this.belt,
-      this.shoulderL,
-      this.shoulderR,
-      this.bicepR,
-      this.bicepL,
-      this.beard,
-      this.crown,
-      this.hairCap,
-      this.pony
+      this.body, this.head, this.cloak, this.tunic, this.belt,
+      this.shoulderL, this.shoulderR, this.bicepR, this.bicepL,
+      this.beard, this.crown, this.hairCap, this.pony
     ];
 
-    // Assemble placeholder into root
     this.add(this.body);
 
-    // Optional: load external GoF GLTF model
+    // Load GLTF if available
     if (HERO_MODEL_URL) {
       this._loadGLTFModel();
     }
   }
 
-  _loadGLTFModel() {
+  async _loadGLTFModel() {
+    const { GLTFLoader } = await import("../vendor/three/examples/jsm/loaders/GLTFLoader.js");
     const loader = new GLTFLoader();
     loader.load(
       HERO_MODEL_URL,
@@ -199,7 +312,6 @@ export class HeroMesh extends THREE.Group {
               o.receiveShadow = true;
             }
           });
-          // Normalize model height to ~2.2 world units
           const box = new THREE.Box3().setFromObject(model);
           const size = new THREE.Vector3();
           box.getSize(size);
@@ -208,36 +320,43 @@ export class HeroMesh extends THREE.Group {
           model.scale.setScalar(s);
           model.position.set(0, 0, 0);
           this.add(model);
-          // Hide placeholder body
           this.body.visible = false;
         }
       },
       undefined,
-      (err) => {
-        console.warn("Failed to load HERO_MODEL_URL:", HERO_MODEL_URL, err);
-      }
+      (err) => console.warn("Failed to load HERO_MODEL_URL:", HERO_MODEL_URL, err)
     );
   }
 }
 
 /**
- * Enemy mesh with single eye detail
- * @extends THREE.Mesh
+ * Optimized Enemy Mesh with reduced complexity
  */
 export class EnemyMesh extends THREE.Mesh {
   constructor(options = {}) {
     const color = options.color !== undefined ? options.color : THEME_COLORS.enemyDark;
     const eyeEmissive = options.eyeEmissive !== undefined ? options.eyeEmissive : THEME_COLORS.enemyEyeEmissive;
 
-    const geo = new THREE.CapsuleGeometry(0.6, 0.8, 4, 10);
-    const mat = new THREE.MeshStandardMaterial({ color: color, emissive: THEME_COLORS.enemyBodyEmissive, roughness: 0.7 });
+    // Reduced from (4, 10)
+    const seg = getOptimizedSegments(10, 4);
+    const geo = new THREE.CapsuleGeometry(0.6, 0.8, seg.rings, seg.segments);
+    const mat = createOptimizedMaterial({ 
+      color: color, 
+      emissive: THEME_COLORS.enemyBodyEmissive, 
+      roughness: 0.7 
+    });
     
     super(geo, mat);
     this.castShadow = true;
 
+    // Eye - reduced from (12, 12)
+    const eyeSeg = getOptimizedSegments(12, 12);
     this.eye = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18, 12, 12),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.enemyEye, emissive: eyeEmissive })
+      new THREE.SphereGeometry(0.18, eyeSeg.segments, eyeSeg.rings),
+      createOptimizedMaterial({ 
+        color: THEME_COLORS.enemyEye, 
+        emissive: eyeEmissive 
+      })
     );
     this.eye.position.set(0, 1.2, 0.45);
     this.add(this.eye);
@@ -245,8 +364,7 @@ export class EnemyMesh extends THREE.Mesh {
 }
 
 /**
- * Billboard HP bar for enemies
- * @extends THREE.Group
+ * Optimized Billboard HP Bar
  */
 export class BillboardHPBar extends THREE.Group {
   constructor() {
@@ -269,18 +387,18 @@ export class BillboardHPBar extends THREE.Group {
 }
 
 /**
- * Portal mesh with animated components
- * @extends THREE.Group
+ * Optimized Portal Mesh
  */
 export class PortalMesh extends THREE.Group {
   constructor(color = THEME_COLORS.portal) {
     super();
     const { hex, alpha } = parseThreeColor(color);
 
-    // Outer ring (vertical gate)
+    // Reduced from (16, 40)
+    const ringSeg = getOptimizedSegments(40, 16);
     this.ring = new THREE.Mesh(
-      new THREE.TorusGeometry(1.2, 0.15, 16, 40),
-      new THREE.MeshStandardMaterial({
+      new THREE.TorusGeometry(1.2, 0.15, ringSeg.rings, ringSeg.segments),
+      createOptimizedMaterial({
         color: hex,
         emissive: hex,
         emissiveIntensity: 1.1,
@@ -291,9 +409,10 @@ export class PortalMesh extends THREE.Group {
       })
     );
 
-    // Inner swirl (rotating disc to feel like a gate)
+    // Reduced from 48
+    const swirlSeg = getOptimizedSegments(48, 48);
     this.swirl = new THREE.Mesh(
-      new THREE.CircleGeometry(1.0, 48),
+      new THREE.CircleGeometry(1.0, swirlSeg.segments),
       new THREE.MeshBasicMaterial({
         color: hex,
         transparent: true,
@@ -305,9 +424,8 @@ export class PortalMesh extends THREE.Group {
     );
     this.swirl.position.z = 0.02;
 
-    // Soft glow backing
     this.glow = new THREE.Mesh(
-      new THREE.CircleGeometry(1.25, 48),
+      new THREE.CircleGeometry(1.25, swirlSeg.segments),
       new THREE.MeshBasicMaterial({
         color: hex,
         transparent: true,
@@ -319,19 +437,16 @@ export class PortalMesh extends THREE.Group {
     );
     this.glow.position.z = -0.02;
 
-    // Base pedestal
+    // Reduced from 24
+    const baseSeg = getOptimizedSegments(24, 24);
     const base = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.9, 1.1, 0.2, 24),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.portalBase, metalness: 0.3, roughness: 0.6 })
+      new THREE.CylinderGeometry(0.9, 1.1, 0.2, baseSeg.segments),
+      createOptimizedMaterial({ color: THEME_COLORS.portalBase, metalness: 0.3, roughness: 0.6 })
     );
     base.position.y = -1.1;
 
-    this.add(this.ring);
-    this.add(this.glow);
-    this.add(this.swirl);
-    this.add(base);
+    this.add(this.ring, this.glow, this.swirl, base);
 
-    // Decorative point light for aura
     const light = new THREE.PointLight(hex, 0.9, 12, 2);
     light.position.set(0, 0.4, 0);
     this.add(light);
@@ -339,8 +454,7 @@ export class PortalMesh extends THREE.Group {
 }
 
 /**
- * Simple house structure
- * @extends THREE.Group
+ * Optimized House
  */
 export class House extends THREE.Group {
   constructor() {
@@ -348,14 +462,16 @@ export class House extends THREE.Group {
 
     const base = new THREE.Mesh(
       new THREE.BoxGeometry(6, 3, 6),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.houseBase })
+      createOptimizedMaterial({ color: THEME_COLORS.houseBase })
     );
     base.position.y = 1.5;
     this.add(base);
 
+    // Reduced from 4 sides
+    const roofSeg = getOptimizedSegments(4, 4);
     const roof = new THREE.Mesh(
-      new THREE.ConeGeometry(4.5, 2.5, 4),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.heroCloak })
+      new THREE.ConeGeometry(4.5, 2.5, roofSeg.segments),
+      createOptimizedMaterial({ color: THEME_COLORS.heroCloak })
     );
     roof.position.y = 4.1;
     roof.rotation.y = Math.PI / 4;
@@ -364,22 +480,19 @@ export class House extends THREE.Group {
 }
 
 /**
- * Hero overhead HP/MP dual bars (billboard)
- * @extends THREE.Group
+ * Optimized Hero Overhead Bars
  */
 export class HeroOverheadBars extends THREE.Group {
   constructor() {
     super();
     this.position.set(0, 2.6, 0);
 
-    // Backboard
     const bg = new THREE.Mesh(
       new THREE.PlaneGeometry(1.8, 0.26),
       new THREE.MeshBasicMaterial({ color: THEME_COLORS.overheadBarBg, transparent: true, opacity: 0.5 })
     );
     this.add(bg);
 
-    // HP (top)
     this.hpFill = new THREE.Mesh(
       new THREE.PlaneGeometry(1.74, 0.1),
       new THREE.MeshBasicMaterial({ color: THEME_COLORS.hp })
@@ -387,7 +500,6 @@ export class HeroOverheadBars extends THREE.Group {
     this.hpFill.position.set(0, 0.06, 0.001);
     this.add(this.hpFill);
 
-    // MP (bottom)
     this.mpFill = new THREE.Mesh(
       new THREE.PlaneGeometry(1.74, 0.1),
       new THREE.MeshBasicMaterial({ color: THEME_COLORS.mp })
@@ -397,12 +509,8 @@ export class HeroOverheadBars extends THREE.Group {
   }
 }
 
-// ====== Greek-inspired structures and varied nature props ======
+// Greek structures with optimized geometry
 
-/**
- * Greek column structure
- * @extends THREE.Group
- */
 export class GreekColumn extends THREE.Group {
   constructor(options = {}) {
     super();
@@ -410,15 +518,13 @@ export class GreekColumn extends THREE.Group {
     const {
       height = 5,
       radius = 0.28,
-      order = "doric", // "doric" | "ionic" | "corinthian"
       color = THEME_COLORS.sandstone,
       roughness = 0.55,
       metalness = 0.04,
     } = options;
 
-    const mat = new THREE.MeshStandardMaterial({ color, roughness, metalness });
+    const mat = createOptimizedMaterial({ color, roughness, metalness });
 
-    // Stylobate/plinth
     const plinthH = Math.max(0.14, height * 0.03);
     const plinth = new THREE.Mesh(
       new THREE.BoxGeometry(radius * 2.2, plinthH, radius * 2.2),
@@ -427,19 +533,21 @@ export class GreekColumn extends THREE.Group {
     plinth.position.y = plinthH / 2;
     this.add(plinth);
 
-    // Shaft
+    // Reduced from 20
+    const shaftSeg = getOptimizedSegments(20, 1);
     const shaftH = height * 0.8;
     const shaft = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius * 0.9, radius * 0.98, shaftH, 20, 1),
+      new THREE.CylinderGeometry(radius * 0.9, radius * 0.98, shaftH, shaftSeg.segments, shaftSeg.rings),
       mat
     );
     shaft.position.y = plinthH + shaftH / 2;
     this.add(shaft);
 
-    // Capital
+    // Reduced capitals
+    const capSeg = getOptimizedSegments(18, 1);
     const capH = Math.max(0.12, height * 0.06);
     const echinus = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius * 1.15, radius * 1.1, capH * 0.55, 18, 1),
+      new THREE.CylinderGeometry(radius * 1.15, radius * 1.1, capH * 0.55, capSeg.segments, capSeg.rings),
       mat
     );
     echinus.position.y = plinthH + shaftH + (capH * 0.275);
@@ -451,24 +559,9 @@ export class GreekColumn extends THREE.Group {
     );
     abacus.position.y = plinthH + shaftH + capH * 0.8;
     this.add(abacus);
-
-    // Simple hint for different orders (tiny top ornament)
-    if (order === "ionic" || order === "corinthian") {
-      const ornament = new THREE.Mesh(
-        new THREE.TorusGeometry(radius * 0.55, capH * 0.12, 6, 16),
-        mat
-      );
-      ornament.position.y = abacus.position.y + capH * 0.35;
-      ornament.rotation.x = Math.PI / 2;
-      this.add(ornament);
-    }
   }
 }
 
-/**
- * Greek temple structure
- * @extends THREE.Group
- */
 export class GreekTemple extends THREE.Group {
   constructor(options = {}) {
     super();
@@ -483,11 +576,10 @@ export class GreekTemple extends THREE.Group {
       color = THEME_COLORS.sandstone,
     } = options;
 
-    const mat = new THREE.MeshStandardMaterial({ color });
+    const mat = createOptimizedMaterial({ color });
     const width = (cols - 1) * colSpacingX;
     const depth = (rows - 1) * colSpacingZ;
 
-    // Stylobate (base platform)
     const baseH = 0.5;
     const base = new THREE.Mesh(
       new THREE.BoxGeometry(width + baseMargin * 2.2, baseH, depth + baseMargin * 2.2),
@@ -496,9 +588,8 @@ export class GreekTemple extends THREE.Group {
     base.position.y = baseH / 2;
     this.add(base);
 
-    // Perimeter columns
     const addCol = (x, z) => {
-      const c = new GreekColumn({ height: columnHeight, radius: 0.3 + Math.random() * 0.04 });
+      const c = new GreekColumn({ height: columnHeight, radius: 0.3 });
       c.position.set(x, baseH, z);
       this.add(c);
     };
@@ -517,7 +608,6 @@ export class GreekTemple extends THREE.Group {
       addCol(x0 + width, z);
     }
 
-    // Entablature (flat beam)
     const beamH = 0.35;
     const beam = new THREE.Mesh(
       new THREE.BoxGeometry(width + baseMargin * 1.6, beamH, depth + baseMargin * 1.6),
@@ -526,7 +616,6 @@ export class GreekTemple extends THREE.Group {
     beam.position.y = baseH + columnHeight + beamH / 2;
     this.add(beam);
 
-    // Simple flat roof slab
     const roofH = 0.28;
     const roof = new THREE.Mesh(
       new THREE.BoxGeometry(width + baseMargin * 2.0, roofH, depth + baseMargin * 2.0),
@@ -535,7 +624,6 @@ export class GreekTemple extends THREE.Group {
     roof.position.y = beam.position.y + beamH / 2 + roofH / 2;
     this.add(roof);
 
-    // Front steps hint
     const steps = new THREE.Mesh(
       new THREE.BoxGeometry((width + baseMargin * 2.2) * 0.7, baseH * 0.4, baseMargin * 1.2),
       mat
@@ -545,10 +633,6 @@ export class GreekTemple extends THREE.Group {
   }
 }
 
-/**
- * Villa structure with porch
- * @extends THREE.Group
- */
 export class Villa extends THREE.Group {
   constructor(options = {}) {
     super();
@@ -563,25 +647,25 @@ export class Villa extends THREE.Group {
 
     const base = new THREE.Mesh(
       new THREE.BoxGeometry(width, height, depth),
-      new THREE.MeshStandardMaterial({ color: colorBase })
+      createOptimizedMaterial({ color: colorBase })
     );
     base.position.y = height / 2;
     this.add(base);
 
-    // Pyramid-like roof
+    // Reduced from 4 sides
+    const roofSeg = getOptimizedSegments(4, 4);
     const roof = new THREE.Mesh(
-      new THREE.ConeGeometry(Math.max(width, depth) * 0.6, height * 0.9, 4),
-      new THREE.MeshStandardMaterial({ color: colorRoof })
+      new THREE.ConeGeometry(Math.max(width, depth) * 0.6, height * 0.9, roofSeg.segments),
+      createOptimizedMaterial({ color: colorRoof })
     );
     roof.position.y = height + (height * 0.45);
     roof.rotation.y = Math.PI / 4;
     this.add(roof);
 
-    // Small porch with columns
     const porchDepth = Math.min(3.2, depth * 0.45);
     const porch = new THREE.Mesh(
       new THREE.BoxGeometry(width * 0.6, 0.3, porchDepth),
-      new THREE.MeshStandardMaterial({ color: colorBase, roughness: 0.8 })
+      createOptimizedMaterial({ color: colorBase, roughness: 0.8 })
     );
     porch.position.set(0, 0.2, depth / 2 + porchDepth * 0.5 - 0.15);
     this.add(porch);
@@ -596,28 +680,26 @@ export class Villa extends THREE.Group {
   }
 }
 
-/**
- * Cypress tree with fire theme
- * @extends THREE.Group
- */
 export class CypressTree extends THREE.Group {
   constructor() {
     super();
 
     const trunkH = 1.6 + Math.random() * 0.8;
+    const trunkSeg = getOptimizedSegments(6, 6);
     const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.06, 0.08, trunkH, 6),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.trunk })
+      new THREE.CylinderGeometry(0.06, 0.08, trunkH, trunkSeg.segments),
+      createOptimizedMaterial({ color: THEME_COLORS.trunk })
     );
     trunk.position.y = trunkH / 2;
     this.add(trunk);
 
     const levels = 3 + Math.floor(Math.random() * 2);
+    const coneSeg = getOptimizedSegments(8, 8);
     for (let i = 0; i < levels; i++) {
       const h = 1.0 + (levels - i) * 0.5;
       const cone = new THREE.Mesh(
-        new THREE.ConeGeometry(0.4 + (levels - i) * 0.18, h, 8),
-        new THREE.MeshStandardMaterial({ color: THEME_COLORS.cypressFoliage })
+        new THREE.ConeGeometry(0.4 + (levels - i) * 0.18, h, coneSeg.segments),
+        createOptimizedMaterial({ color: THEME_COLORS.cypressFoliage })
       );
       cone.position.y = trunkH + (i * h * 0.55);
       this.add(cone);
@@ -625,26 +707,24 @@ export class CypressTree extends THREE.Group {
   }
 }
 
-/**
- * Olive tree with fire theme
- * @extends THREE.Group
- */
 export class OliveTree extends THREE.Group {
   constructor() {
     super();
 
     const trunkH = 1.3 + Math.random() * 0.7;
+    const trunkSeg = getOptimizedSegments(8, 8);
     const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.12, 0.16, trunkH, 8),
-      new THREE.MeshStandardMaterial({ color: THEME_COLORS.stem })
+      new THREE.CylinderGeometry(0.12, 0.16, trunkH, trunkSeg.segments),
+      createOptimizedMaterial({ color: THEME_COLORS.stem })
     );
     trunk.position.y = trunkH / 2;
     this.add(trunk);
 
-    const canopyMat = new THREE.MeshStandardMaterial({ color: THEME_COLORS.oliveCanopy });
-    const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), canopyMat);
-    const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 12), canopyMat);
-    const s3 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), canopyMat);
+    const canopyMat = createOptimizedMaterial({ color: THEME_COLORS.oliveCanopy });
+    const canopySeg = getOptimizedSegments(12, 12);
+    const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.8, canopySeg.segments, canopySeg.rings), canopyMat);
+    const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.6, canopySeg.segments, canopySeg.rings), canopyMat);
+    const s3 = new THREE.Mesh(new THREE.SphereGeometry(0.55, canopySeg.segments, canopySeg.rings), canopyMat);
     s1.position.set(0.0, trunkH + 0.2, 0.0);
     s2.position.set(-0.45, trunkH + 0.1, 0.2);
     s3.position.set(0.4, trunkH + 0.0, -0.25);
@@ -652,19 +732,12 @@ export class OliveTree extends THREE.Group {
   }
 }
 
-/**
- * Greek statue
- * @extends THREE.Group
- */
 export class GreekStatue extends THREE.Group {
   constructor(options = {}) {
     super();
 
-    const {
-      color = THEME_COLORS.sandstone
-    } = options;
-
-    const mat = new THREE.MeshStandardMaterial({ color });
+    const { color = THEME_COLORS.sandstone } = options;
+    const mat = createOptimizedMaterial({ color });
 
     const plinth = new THREE.Mesh(
       new THREE.BoxGeometry(1.2, 0.4, 1.2),
@@ -673,19 +746,21 @@ export class GreekStatue extends THREE.Group {
     plinth.position.y = 0.2;
     this.add(plinth);
 
+    const bodySeg = getOptimizedSegments(16, 16);
     const body = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.35, 0.45, 1.6, 16),
+      new THREE.CylinderGeometry(0.35, 0.45, 1.6, bodySeg.segments),
       mat
     );
     body.position.y = 0.2 + 0.8;
     this.add(body);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 14), mat);
+    const headSeg = getOptimizedSegments(14, 14);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, headSeg.segments, headSeg.rings), mat);
     head.position.y = body.position.y + 0.95;
     this.add(head);
 
-    // Arms (simple hints)
-    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.8, 10), mat);
+    const armSeg = getOptimizedSegments(10, 10);
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.8, armSeg.segments), mat);
     armL.position.set(-0.45, body.position.y + 0.3, 0);
     armL.rotation.z = Math.PI / 6;
     const armR = armL.clone();
@@ -695,10 +770,6 @@ export class GreekStatue extends THREE.Group {
   }
 }
 
-/**
- * Obelisk structure
- * @extends THREE.Group
- */
 export class Obelisk extends THREE.Group {
   constructor(options = {}) {
     super();
@@ -709,7 +780,7 @@ export class Obelisk extends THREE.Group {
       color = THEME_COLORS.sandstone
     } = options;
 
-    const mat = new THREE.MeshStandardMaterial({ color });
+    const mat = createOptimizedMaterial({ color });
 
     const base = new THREE.Mesh(
       new THREE.BoxGeometry(baseSize, 0.35, baseSize),
@@ -718,15 +789,17 @@ export class Obelisk extends THREE.Group {
     base.position.y = 0.175;
     this.add(base);
 
+    const shaftSeg = getOptimizedSegments(4, 4);
     const shaft = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.35, 0.6, height, 4),
+      new THREE.CylinderGeometry(0.35, 0.6, height, shaftSeg.segments),
       mat
     );
     shaft.position.y = 0.35 + height / 2;
     this.add(shaft);
 
+    const tipSeg = getOptimizedSegments(4, 4);
     const tip = new THREE.Mesh(
-      new THREE.ConeGeometry(0.35, 0.6, 4),
+      new THREE.ConeGeometry(0.35, 0.6, tipSeg.segments),
       mat
     );
     tip.position.y = 0.35 + height + 0.3;
@@ -734,9 +807,7 @@ export class Obelisk extends THREE.Group {
   }
 }
 
-// ====== Backward compatibility - factory functions ======
-// Keep these for existing code that uses the old API
-
+// Backward compatibility - factory functions
 export function createHeroMesh() {
   return new HeroMesh();
 }

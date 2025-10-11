@@ -1,4 +1,5 @@
 // Platform and performance configuration for mobile devices
+import { getDeviceTier, getCurrentTierOptimizations, DEVICE_TIERS } from './device-tier.js';
 
 // Detect mobile/touch devices conservatively
 export const isMobile = (() => {
@@ -12,22 +13,33 @@ export const isMobile = (() => {
   }
 })();
 
-// Mobile-specific performance settings - Aggressive CPU-to-GPU optimizations
+// Get device tier and optimizations
+const deviceTier = getDeviceTier();
+const tierOpts = getCurrentTierOptimizations();
+
+console.info(`[Mobile] Device tier: ${deviceTier}`);
+
+// Mobile-specific performance settings based on device tier
 export const MOBILE_OPTIMIZATIONS = {
-  maxPixelRatio: 1.5,           // Cap pixel ratio to reduce GPU load
-  enemyCountMultiplier: 0.3,    // Reduce enemy count by 70%
-  vfxDistanceCull: 60,          // Aggressive VFX culling
-  hudUpdateMs: 300,             // Slower HUD updates
-  minimapUpdateMs: 400,         // Slower minimap updates
-  aiStrideMultiplier: 3,        // Much more AI throttling
-  frameBudgetMs: 6.0,           // Tight frame budget for 60fps
-  envDensityReduction: 0.4,     // Reduce environment density
-  disableShadows: true,         // Disable shadows (CPU/GPU intensive)
-  reduceDrawCalls: true,        // Merge geometries where possible
-  cullDistance: 100,            // Freeze enemies beyond this distance
-  skipSlowUpdates: true,        // Skip slow debuff indicators
-  simplifyMaterials: true,      // Use simpler materials
-  disableRain: true,            // Rain is very expensive
+  maxPixelRatio: tierOpts.maxPixelRatio,
+  enemyCountMultiplier: tierOpts.maxEnemies,
+  vfxDistanceCull: tierOpts.vfxDistanceCull,
+  hudUpdateMs: deviceTier === DEVICE_TIERS.LOW ? 300 : 200,
+  minimapUpdateMs: deviceTier === DEVICE_TIERS.LOW ? 400 : 300,
+  aiStrideMultiplier: tierOpts.aiStrideMultiplier,
+  frameBudgetMs: tierOpts.frameBudgetMs,
+  envDensityReduction: 1.0 - tierOpts.meshQuality,
+  disableShadows: !tierOpts.shadowsEnabled,
+  reduceDrawCalls: tierOpts.batchDrawCalls || false,
+  cullDistance: tierOpts.maxDrawDistance || 100,
+  skipSlowUpdates: deviceTier === DEVICE_TIERS.LOW,
+  simplifyMaterials: !tierOpts.useMeshStandard,
+  disableRain: deviceTier === DEVICE_TIERS.LOW,
+  
+  // Additional tier-specific optimizations
+  deviceTier: deviceTier,
+  meshQuality: tierOpts.meshQuality,
+  segmentMultiplier: tierOpts.segmentMultiplier,
 };
 
 /**
