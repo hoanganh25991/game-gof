@@ -7,7 +7,7 @@ import { parseThreeColor } from "./utils.js";
 
 // Creates the GoF character mesh (placeholder geometry with optional GLTF replacement if ?model=URL).
 // Note: This function does NOT add the mesh to the scene; caller should add it.
-export function createGoTMesh() {
+export function createHeroMesh() {
   const root = new THREE.Group();
 
   // Torso

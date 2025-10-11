@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { createHouse } from "./meshes.js";
+import { createHouse } from "./hero_mesh.js";
 import { THEME_COLORS } from "../config/theme.js";
 
 /**

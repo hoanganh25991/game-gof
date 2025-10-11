@@ -13,7 +13,7 @@ import { Player, Enemy, getNearestEnemy, handWorldPos } from "../entities.js";
 import { EffectsManager, createGroundRing } from "../effects_manager.js";
 import { SkillsSystem } from "../skills.js";
 import { createRaycast } from "../raycast.js";
-import { createHouse, createHeroOverheadBars } from "../meshes.js";
+import { createHouse, createHeroOverheadBars } from "../hero_mesh.js";
 import { initEnvironment } from "../environment.js";
 import { distance2D, dir2D, now, clamp01 } from "../utils.js";
 import { initPortals } from "../portals.js";

@@ -7,7 +7,7 @@ import {
   createGreekColumn,
   createGreekStatue,
   createObelisk,
-} from "./meshes.js";
+} from "./hero_mesh.js";
 
 /**
  * Get protection radius for a structure type
