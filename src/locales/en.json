@@ -171,6 +171,7 @@
   },
   "skills": {
     "names": {
+      "basic_attack": "Basic Attack",
       "flame_chain": "Flame Chain",
       "inferno_blast": "Inferno Blast",
       "burning_aura": "Burning Aura",
@@ -191,6 +192,7 @@
       "pyroclasm": "Pyroclasm"
     },
     "shorts": {
+      "basic_attack": "Basic",
       "flame_chain": "Chain",
       "inferno_blast": "Blast",
       "burning_aura": "Burn",

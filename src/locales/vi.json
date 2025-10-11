@@ -171,6 +171,7 @@
   },
   "skills": {
     "names": {
+      "basic_attack": "Đánh Thường",
       "flame_chain": "Chuỗi Lửa",
       "inferno_blast": "Vụ Nổ Địa Ngục",
       "burning_aura": "Hào Quang Thiêu Đốt",
@@ -191,6 +192,7 @@
       "pyroclasm": "Núi Lửa Phun Trào"
     },
     "shorts": {
+      "basic_attack": "Thường",
       "flame_chain": "Chuỗi",
       "inferno_blast": "Nổ",
       "burning_aura": "Thiêu",

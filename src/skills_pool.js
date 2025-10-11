@@ -238,6 +238,17 @@ export const SKILLS_POOL = [
 ];
 
 /**
+ * Basic Attack definition (not a skill, but shares icon/name structure)
+ */
+export const BASIC_ATTACK = Object.freeze({
+  id: "basic_attack",
+  name: "Basic Attack",
+  short: "Basic",
+  icon: "🔥",
+  type: "basic"
+});
+
+/**
  * Default starting loadout (4 skill IDs)
  */
 export const DEFAULT_LOADOUT = Object.freeze(

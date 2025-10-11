@@ -1,4 +1,5 @@
 import { getSkill } from "../skill_api.js";
+import { BASIC_ATTACK } from "../skills_pool.js";
 import { t } from "../i18n.js";
 
 /**
@@ -43,13 +44,18 @@ export function updateSkillBarLabels() {
       }
     }
 
-    // Update central basic button icon (larger visual) - not from skills_pool
+    // Update central basic button icon (larger visual) - from BASIC_ATTACK definition
     try {
       const basicBtn = document.getElementById("btnBasic");
       if (basicBtn) {
         const icon = basicBtn.querySelector(".icon");
-        if (icon) icon.textContent = "🔥";
-        basicBtn.title = basicBtn.title || "Basic Attack";
+        if (icon) icon.textContent = BASIC_ATTACK.icon;
+        
+        // Set title with i18n support
+        const nameKey = `skills.names.${BASIC_ATTACK.id}`;
+        const tName = tt(nameKey);
+        const isTranslated = tName && tName !== nameKey;
+        basicBtn.title = isTranslated ? tName : BASIC_ATTACK.name;
       }
     } catch (_) {
       // ignore

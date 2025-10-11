@@ -39,6 +39,13 @@
   text-shadow: 0 1px 0 rgba(0,0,0,0.6);
 }
 
+/* Cooldown color theme variables */
+:root {
+  --cooldown-high: rgba(70, 100, 150, 0.55);    /* >50% remaining - calm blue */
+  --cooldown-mid: rgba(90, 150, 220, 0.55);     /* 20-50% remaining - brighter blue */
+  --cooldown-low: rgba(150, 220, 255, 0.65);    /* <20% remaining - urgent cyan */
+}
+
 /* Shared cooldown base styles */
 .skill .cooldown,
 .skill-btn .cooldown{
@@ -50,9 +57,25 @@
   color: var(--text-warm);
   font-weight: 800;
   font-size: 12px;
-  background: none; /* set by JS using conic-gradient */
+  background: none;
   pointer-events: none;
   text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+
+/* Cooldown state classes - applied by JS based on remaining time percentage */
+.skill .cooldown.cd-high,
+.skill-btn .cooldown.cd-high {
+  /* High cooldown (>50% remaining) - set via inline style with --cooldown-high */
+}
+
+.skill .cooldown.cd-mid,
+.skill-btn .cooldown.cd-mid {
+  /* Medium cooldown (20-50% remaining) - set via inline style with --cooldown-mid */
+}
+
+.skill .cooldown.cd-low,
+.skill-btn .cooldown.cd-low {
+  /* Low cooldown (<20% remaining) - set via inline style with --cooldown-low */
 }
 
 .skill .cooldown{
