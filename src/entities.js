@@ -2,7 +2,7 @@ import * as THREE from "../vendor/three/build/three.module.js";
 import { COLOR, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "./constants.js";
 import { createGoTMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
 import { distance2D, now, parseThreeColor } from "./utils.js";
-import { getSkillUpgradeManager } from "./skill_upgrades.js";
+import { getSkillUpgradeManager } from "./skills_upgrade.js";
 
 export class Entity {
   constructor(mesh, radius = 1) {

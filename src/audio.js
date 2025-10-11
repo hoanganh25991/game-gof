@@ -50,7 +50,7 @@ export const audio = (() => {
     if (!ctx) ensureCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
+      ctx.resume().catch(() => { });
     }
   }
 
@@ -64,14 +64,14 @@ export const audio = (() => {
   // Attach autoplay-safe resume on first user gesture
   function startOnFirstUserGesture(el) {
     if (!el) el = document;
-    try { attachPageVisibilityHandlers(); } catch (_) {}
+    try { attachPageVisibilityHandlers(); } catch (_) { }
     const h = () => {
-      try { init(); } catch (_) {}
+      try { init(); } catch (_) { }
       try {
         el.removeEventListener("click", h, true);
         el.removeEventListener("touchstart", h, true);
         el.removeEventListener("keydown", h, true);
-      } catch (_) {}
+      } catch (_) { }
     };
     el.addEventListener("click", h, true);
     el.addEventListener("touchstart", h, true);
@@ -116,10 +116,10 @@ export const audio = (() => {
     try {
       collection.add(node);
       node.onended = () => {
-        try { collection.delete(node); } catch(_) {}
+        try { collection.delete(node); } catch (_) { }
       };
       node.stop(stopAt);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function tooManySfx() {
@@ -152,7 +152,7 @@ export const audio = (() => {
     g.connect(sfxGain);
 
     const stopAt = t0 + dur + 0.1;
-    try { osc.start(t0); } catch(_) {}
+    try { osc.start(t0); } catch (_) { }
     withVoiceCleanup(osc, stopAt, state.activeSfx);
   }
 
@@ -181,7 +181,7 @@ export const audio = (() => {
     g.connect(sfxGain);
 
     const stopAt = t0 + dur + 0.12;
-    try { src.start(t0); } catch(_) {}
+    try { src.start(t0); } catch (_) { }
     withVoiceCleanup(src, stopAt, state.activeSfx);
   }
 
@@ -203,7 +203,7 @@ export const audio = (() => {
     g.connect(sfxGain);
 
     const stopAt = t0 + dur + 0.1;
-    try { osc.start(t0); } catch(_) {}
+    try { osc.start(t0); } catch (_) { }
     withVoiceCleanup(osc, stopAt, state.activeSfx);
   }
 
@@ -255,6 +255,183 @@ export const audio = (() => {
         // no-op
         return;
     }
+  }
+
+  // ============================================================================
+  // Skills Sound System - Dynamic sound playback based on skill ID
+  // ============================================================================
+  
+  // Cache for loaded audio buffers (MP3 files)
+  const audioBufferCache = new Map();
+
+  /**
+   * Load an audio file and decode it into an AudioBuffer
+   * @param {string} url - URL to the audio file
+   * @returns {Promise<AudioBuffer>}
+   */
+  async function loadAudioBuffer(url) {
+    if (audioBufferCache.has(url)) {
+      return audioBufferCache.get(url);
+    }
+    
+    try {
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      audioBufferCache.set(url, audioBuffer);
+      return audioBuffer;
+    } catch (error) {
+      console.warn(`[audio] Failed to load audio: ${url}`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Play an audio buffer (MP3 file)
+   * @param {AudioBuffer} buffer
+   * @param {number} gain - Volume (0-1)
+   */
+  function playAudioBuffer(buffer, gain = 0.7) {
+    if (!buffer || !ctx) return;
+    
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    
+    const g = ctx.createGain();
+    g.gain.value = gain;
+    
+    source.connect(g);
+    g.connect(sfxGain);
+    
+    try { source.start(0); } catch (_) { }
+  }
+
+  /**
+   * Play a procedural sound based on configuration object
+   * @param {object} config - Sound configuration from SKILL_SOUNDS
+   * @param {object} opts - Optional overrides
+   */
+  function playProceduralSound(config, opts = {}) {
+    const merged = { ...config, ...opts };
+    
+    switch (merged.type) {
+      case "zap":
+        playZap({
+          freqStart: merged.freqStart,
+          freqEnd: merged.freqEnd,
+          dur: merged.dur,
+          color: merged.color || "bandpass",
+          q: merged.q || 8,
+          gain: merged.gain || 0.7
+        });
+        break;
+        
+      case "noiseBurst":
+        playNoiseBurst({
+          dur: merged.dur,
+          type: merged.filterType || "lowpass",
+          cutoff: merged.cutoff,
+          q: merged.q,
+          gain: merged.gain
+        });
+        break;
+        
+      case "blip":
+        playBlip({
+          freq: merged.freq,
+          dur: merged.dur,
+          gain: merged.gain
+        });
+        break;
+        
+      case "strike":
+        playStrike();
+        break;
+        
+      case "boom":
+        playBoom();
+        break;
+        
+      default:
+        console.warn(`[audio] Unknown procedural sound type: ${merged.type}`);
+    }
+  }
+
+  /**
+   * Play a sound for a skill based on its ID and configuration
+   * @param {string} skillId - The skill ID (e.g., "flame_chain", "inferno_blast")
+   * @param {object} soundConfig - Sound configuration from SKILL_SOUNDS
+   * @param {object} opts - Optional overrides for procedural sounds
+   */
+  async function playSkillSound(skillId, soundConfig, opts = {}) {
+    if (!enabled) return;
+    ensureCtx(); resume();
+    if (!ctx) return;
+    
+    if (!soundConfig) {
+      // Fallback to generic cast sound
+      sfx("cast", opts);
+      return;
+    }
+    
+    // Handle string (MP3 URL)
+    if (typeof soundConfig === "string") {
+      const buffer = await loadAudioBuffer(soundConfig);
+      if (buffer) {
+        playAudioBuffer(buffer, opts.gain || 0.7);
+      }
+      return;
+    }
+    
+    // Handle array (multiple sounds)
+    if (Array.isArray(soundConfig)) {
+      for (const config of soundConfig) {
+        if (typeof config === "string") {
+          const buffer = await loadAudioBuffer(config);
+          if (buffer) {
+            playAudioBuffer(buffer, opts.gain || 0.7);
+          }
+        } else {
+          playProceduralSound(config, opts);
+        }
+      }
+      return;
+    }
+    
+    // Handle object (procedural sound)
+    if (typeof soundConfig === "object") {
+      playProceduralSound(soundConfig, opts);
+      return;
+    }
+  }
+
+  /**
+   * Preload audio files for skills that use MP3s
+   * @param {Array} soundConfigs - Array of sound configurations
+   */
+  async function preloadSkillSounds(soundConfigs) {
+    const promises = [];
+    
+    for (const soundConfig of soundConfigs) {
+      if (typeof soundConfig === "string") {
+        promises.push(loadAudioBuffer(soundConfig));
+      } else if (Array.isArray(soundConfig)) {
+        for (const config of soundConfig) {
+          if (typeof config === "string") {
+            promises.push(loadAudioBuffer(config));
+          }
+        }
+      }
+    }
+    
+    await Promise.all(promises);
+  }
+
+  /**
+   * Clear the audio buffer cache
+   */
+  function clearAudioCache() {
+    audioBufferCache.clear();
   }
 
   // Gentle, relaxing generative music (focus)
@@ -309,12 +486,12 @@ export const audio = (() => {
       g.gain.linearRampToValueAtTime(gain * 0.7, start + dur - r);
       g.gain.linearRampToValueAtTime(0.0001, start + dur);
 
-      try { osc.start(start); det.start(start); } catch(_) {}
+      try { osc.start(start); det.start(start); } catch (_) { }
       const stopAt = start + dur + 0.05;
       try {
         osc.stop(stopAt);
         det.stop(stopAt);
-      } catch(_) {}
+      } catch (_) { }
 
       // Clean-up tracking
       state.musicVoices.add(osc);
@@ -356,7 +533,7 @@ export const audio = (() => {
       state.musicTimer = null;
     }
     // stop previous stream if any
-    try { stopStreamMusic(); } catch (_) {}
+    try { stopStreamMusic(); } catch (_) { }
 
     const loop = opts.loop !== undefined ? !!opts.loop : true;
     const vol = typeof opts.volume === "number" ? Math.max(0, Math.min(1, opts.volume)) : 0.3;
@@ -398,11 +575,11 @@ export const audio = (() => {
   function stopStreamMusic() {
     try {
       if (state.streamEl) {
-        try { state.streamEl.pause(); } catch (_) {}
-        try { state.streamEl.src = ""; } catch (_) {}
+        try { state.streamEl.pause(); } catch (_) { }
+        try { state.streamEl.src = ""; } catch (_) { }
       }
       if (state.streamNode) {
-        try { state.streamNode.disconnect(); } catch (_) {}
+        try { state.streamNode.disconnect(); } catch (_) { }
       }
     } finally {
       state.streamEl = null;
@@ -419,7 +596,7 @@ export const audio = (() => {
     }
     // Stop all music voices
     for (const node of state.musicVoices) {
-      try { node.stop(); } catch (_) {}
+      try { node.stop(); } catch (_) { }
     }
     state.musicVoices.clear();
   }
@@ -438,7 +615,7 @@ export const audio = (() => {
     if (musicGain) musicGain.gain.value = vol;
     // If streaming without WebAudio connection, set element volume directly
     if (state.streamEl && !state.streamUsingWebAudio) {
-      try { state.streamEl.volume = vol; } catch(_) {}
+      try { state.streamEl.volume = vol; } catch (_) { }
     }
   }
 
@@ -447,20 +624,20 @@ export const audio = (() => {
     try {
       ensureCtx();
       if (ctx && ctx.state !== "suspended") ctx.suspend();
-    } catch (_) {}
+    } catch (_) { }
     // Pause streaming element to stop network/decoding while in background
-    try { if (state.streamEl) state.streamEl.pause(); } catch (_) {}
+    try { if (state.streamEl) state.streamEl.pause(); } catch (_) { }
   }
 
   function resumeFromForeground() {
-    try { ensureCtx(); resume(); } catch (_) {}
+    try { ensureCtx(); resume(); } catch (_) { }
     // Resume streamed element if active
     try {
       if (state.streamEl) {
         const p = state.streamEl.play();
-        if (p && typeof p.catch === "function") p.catch(() => {});
+        if (p && typeof p.catch === "function") p.catch(() => { });
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   // Query if any background music is currently active (stream or generative)
@@ -468,7 +645,7 @@ export const audio = (() => {
     try {
       if (state.musicTimer) return true;
       if (state.streamEl) return !state.streamEl.paused;
-    } catch (_) {}
+    } catch (_) { }
     return false;
   }
 
@@ -487,13 +664,13 @@ export const audio = (() => {
         if (same) {
           try {
             if (typeof opts.volume === "number") setMusicVolume(opts.volume);
-          } catch (_) {}
+          } catch (_) { }
           try {
             if (opts.loop !== undefined) state.streamEl.loop = !!opts.loop;
-          } catch (_) {}
+          } catch (_) { }
           try {
-            if (state.streamEl.paused) state.streamEl.play().catch(() => {});
-          } catch (_) {}
+            if (state.streamEl.paused) state.streamEl.play().catch(() => { });
+          } catch (_) { }
         } else {
           startStreamMusic(url, opts);
         }
@@ -503,8 +680,8 @@ export const audio = (() => {
     } else {
       if (state.streamEl) {
         try {
-          if (state.streamEl.paused) state.streamEl.play().catch(() => {});
-        } catch (_) {}
+          if (state.streamEl.paused) state.streamEl.play().catch(() => { });
+        } catch (_) { }
       } else if (!state.musicTimer) {
         startMusic();
       }
@@ -529,28 +706,32 @@ export const audio = (() => {
         },
         true
       );
-    } catch (_) {}
+    } catch (_) { }
 
     // Optionally handle page lifecycle events (e.g., bfcache)
-    try { window.addEventListener("pagehide", onHide, true); } catch (_) {}
-    try { window.addEventListener("pageshow", onShow, true); } catch (_) {}
+    try { window.addEventListener("pagehide", onHide, true); } catch (_) { }
+    try { window.addEventListener("pageshow", onShow, true); } catch (_) { }
   }
 
   return {
     init,
-    startOnFirstUserGesture,
     sfx,
-    startMusic,
     stopMusic,
-    startStreamMusic,
-    stopStreamMusic,
     setEnabled,
+    startMusic,
     setSfxVolume,
+    isMusicActive,
     setMusicVolume,
+    stopStreamMusic,
+    startStreamMusic,
     pauseForBackground,
     resumeFromForeground,
-    isMusicActive,
     ensureBackgroundMusic,
+    startOnFirstUserGesture,
     attachPageVisibilityHandlers,
+    // Skills sound system
+    playSkillSound,
+    preloadSkillSounds,
+    clearAudioCache,
   };
 })();

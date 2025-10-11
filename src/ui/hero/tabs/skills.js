@@ -1,4 +1,4 @@
-import { getSkillUpgradeManager } from "../../../skill_upgrades.js";
+import { getSkillUpgradeManager } from "../../../skills_upgrade.js";
 
 /**
  * Render the Skills tab (loadout slots + skill pool + assign bar).

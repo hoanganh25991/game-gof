@@ -1,4 +1,4 @@
-import { getSkill } from "../skill_api.js";
+import { getSkill } from "../skills_api.js";
 import { BASIC_ATTACK } from "../skills_pool.js";
 import { t } from "../i18n.js";
 

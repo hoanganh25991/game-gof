@@ -8,7 +8,6 @@
  * Responsibilities:
  *  - Maintain current loadout (array of 4 skill ids)
  *  - Maintain runtime mapping keys -> skill objects (shallow copies)
- *  - Allow main.js (or any controller) to apply upgrade bonuses when setting the runtime skills
  *
  * Public API:
  *  - getSkill(key) -> runtime skill object or null

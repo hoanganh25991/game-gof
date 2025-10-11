@@ -5,7 +5,7 @@
 
 import * as THREE from "../../vendor/three/build/three.module.js";
 import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey, CSS_READY } from "../constants.js";
-import { setLoadoutAndApply, getSkill, setSkill } from "../skill_api.js";
+import { setLoadoutAndApply, getSkill, setSkill } from "../skills_api.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "../world.js";
 import { UIManager } from "../ui/hud/index.js";
 import { Player, Enemy, getNearestEnemy, handWorldPos } from "../entities.js";
@@ -34,10 +34,10 @@ import { promptBasicUpliftIfNeeded } from "../uplift.js";
 import { setupDesktopControls } from "../ui/deskop-controls.js";
 import * as payments from '../payments.js';
 import { initPaymentsBootstrap } from "../payments_boot.js";
-import { getSkillUpgradeManager } from "../skill_upgrades.js";
+import { getSkillUpgradeManager } from "../skills_upgrade.js";
 import { ChunkManager, getOrInitWorldSeed } from "../chunk_manager.js";
 import { getStructureProtectionRadius } from "../structures.js";
-import { isMobile, MOBILE_OPTIMIZATIONS, applyMobileRendererHints } from "../config/mobile.js";
+import { isMobile, MOBILE_OPTIMIZATIONS, applyMobileRendererHints } from "../mobile.js";
 import { createDynamicSpawner } from "../spawn.js";
 import { createVillageFence } from "../village_fence.js";
 import { createPerformanceTracker, initVfxGating } from "../perf.js";
