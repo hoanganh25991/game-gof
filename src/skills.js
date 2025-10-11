@@ -3,7 +3,7 @@ import { audio } from "./audio.js";
 import { COLOR, FX, REST_RADIUS, SCALING, VILLAGE_POS, WORLD } from "../config/index.js";
 import { handWorldPos } from "./entities.js";
 import { getSkill } from "./skills_api.js";
-import { SKILL_FX } from "./skills_fx.js";
+import { SKILL_FX } from "../config/skills_fx.js";
 import { getBasicUplift } from "./uplift.js";
 import { distance2D, now } from "./utils.js";
 import { executeSkillEffect } from "./effects_loader.js";

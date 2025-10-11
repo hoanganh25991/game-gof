@@ -1,5 +1,5 @@
 import * as THREE from "../../vendor/three/build/three.module.js";
-import { SKILL_FX } from "../skills_fx.js";
+import { SKILL_FX } from "../../config/skills_fx.js";
 
 /**
  * Flame Nova Effect

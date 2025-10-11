@@ -1,5 +1,5 @@
 import * as THREE from "../../vendor/three/build/three.module.js";
-import { SKILL_FX } from "../skills_fx.js";
+import { SKILL_FX } from "../../config/skills_fx.js";
 import { now } from "../utils.js";
 import { FX } from "../../config/index.js";
 

@@ -40,6 +40,12 @@ The `config/constants.js` file has been refactored into a modular structure for 
 **Purpose**: Visual effects timing and configuration
 - `FX` - Global VFX timing controls (timeScale, fade, spin, etc.)
 
+### effects-colors.js
+**Purpose**: Centralized color palette for visual effects
+- `EFFECTS_COLORS` - Predefined color palette for fire, lava, materials, structures
+- `toThreeColor()` - Helper to convert color formats to THREE.js compatible values
+- **Note**: Individual effects currently use hardcoded colors (300+ instances). This module provides a centralized palette for future refactoring.
+
 ### index.js
 **Purpose**: Central re-export point
 - Re-exports all constants from all modules
@@ -105,6 +111,14 @@ The original `config/constants.js` file now re-exports all constants from the ne
 6. **JavaScript-Driven Theming**: Colors defined in JS can be easily modified programmatically
 7. **Single Source of Truth**: All theme colors defined in one place (THEME_COLORS)
 8. **Dynamic Theming**: Update colors at runtime with `updateThemeColor()`
+9. **Centralized VFX Colors**: Effects color palette for consistent visual styling
+
+## Known Limitations
+
+### Hardcoded Colors in Effects
+There are **300+ hardcoded color values** in the effects system (primarily in `src/effects/*.js` files). These are currently direct hex values (e.g., `0xff6347`, `#ffd700`) embedded in effect implementations.
+
+**Future Improvement**: Refactor individual effect files to use `EFFECTS_COLORS` palette instead of hardcoded values. The `config/effects-colors.js` module provides a centralized palette ready for this migration.
 
 ## Theme System Details
 
