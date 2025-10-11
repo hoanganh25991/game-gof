@@ -77,6 +77,10 @@
 }
 
 @media (max-height: 500px) {
+  .skill-btn .key{
+    visibility: hidden;
+  }
+
   #hud {
     transform: scale(0.7);
     transform-origin: top left;
