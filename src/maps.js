@@ -34,12 +34,9 @@ export function applyMapEnemyCss(modsOrTint) {
   } catch (_) {}
 }
 
-export function createMapManager() {
-  const LS_CUR = STORAGE_KEYS.mapCurrentIndex;
-  const LS_MAX = STORAGE_KEYS.mapUnlockedMax;
-
-  // Endless tuning beyond the defined Acts
-  const ENDLESS = {
+export class MapManager {
+  // Static constants
+  static ENDLESS = {
     hpGrowthPerDepth: 1.18,
     dmgGrowthPerDepth: 1.16,
     speedGrowthPerDepth: 1.03,
@@ -47,14 +44,14 @@ export function createMapManager() {
   };
 
   // Deterministic icon set for maps (emoji). Order matters for stable mapping.
-  const MAP_EMOJIS = [
+  static MAP_EMOJIS = [
     "🌩️","🌾","⛰️","🏰","⚒️","🌪️","🗺️","🔥","🌊","❄️",
     "🌿","🌀","⚡","☄️","🌋","🏜️","🏞️","🛡️","🧭","🔮",
     "🌫️","⛏️","🌧️","🌥️","🌠"
   ];
 
   // Definitions: tune per-map enemy tint and multipliers
-  const maps = [
+  static MAPS = [
     {
       index: 1,
       name: "Act I — Fields of Awakening",
@@ -122,23 +119,18 @@ export function createMapManager() {
     },
   ];
 
-  // Allow endless indices (no upper clamp)
-  function clampIndex(i) {
+  constructor() {
+    this.currentIndex = this.clampIndex(this.loadInt(STORAGE_KEYS.mapCurrentIndex, 1));
+    this.unlockedMax = this.clampIndex(this.loadInt(STORAGE_KEYS.mapUnlockedMax, 1));
+  }
+
+  // Helper methods
+  clampIndex(i) {
     const idx = Math.max(1, Math.floor(i || 1));
     return idx;
   }
 
-  function emojiForIndex(i) {
-    const idx = clampIndex(i);
-    return MAP_EMOJIS[(idx - 1) % MAP_EMOJIS.length];
-  }
-
-  function depthForIndex(i) {
-    const idx = clampIndex(i);
-    return idx > maps.length ? (idx - maps.length) : 0;
-  }
-
-  function loadInt(key, def = 1) {
+  loadInt(key, def = 1) {
     try {
       const v = parseInt(localStorage.getItem(key) || "", 10);
       return Number.isFinite(v) ? v : def;
@@ -147,40 +139,48 @@ export function createMapManager() {
     }
   }
 
-  function saveInt(key, v) {
+  saveInt(key, v) {
     try {
       localStorage.setItem(key, String(Math.floor(v)));
     } catch {}
   }
 
-  let currentIndex = clampIndex(loadInt(LS_CUR, 1));
-  let unlockedMax = clampIndex(loadInt(LS_MAX, 1));
-
-  function getCurrentIndex() {
-    return currentIndex;
+  depthForIndex(i) {
+    const idx = this.clampIndex(i);
+    return idx > MapManager.MAPS.length ? (idx - MapManager.MAPS.length) : 0;
   }
 
-  function getUnlockedMax() {
-    return unlockedMax;
+  // Public API methods
+  getCurrentIndex() {
+    return this.currentIndex;
   }
 
-  function listMaps() {
-    return maps.map((m) => ({
+  getUnlockedMax() {
+    return this.unlockedMax;
+  }
+
+  emojiForIndex(i) {
+    const idx = this.clampIndex(i);
+    return MapManager.MAP_EMOJIS[(idx - 1) % MapManager.MAP_EMOJIS.length];
+  }
+
+  listMaps() {
+    return MapManager.MAPS.map((m) => ({
       ...m,
-      unlocked: m.index <= unlockedMax,
-      current: m.index === currentIndex,
-      emoji: emojiForIndex(m.index),
+      unlocked: m.index <= this.unlockedMax,
+      current: m.index === this.currentIndex,
+      emoji: this.emojiForIndex(m.index),
     }));
   }
 
-  function getCurrent() {
-    const cur = maps.find((m) => m.index === currentIndex);
+  getCurrent() {
+    const cur = MapManager.MAPS.find((m) => m.index === this.currentIndex);
     if (cur) return cur;
     // Synthesize an endless map descriptor
-    const depth = depthForIndex(currentIndex);
-    const base = maps[maps.length - 1];
+    const depth = this.depthForIndex(this.currentIndex);
+    const base = MapManager.MAPS[MapManager.MAPS.length - 1];
     return {
-      index: currentIndex,
+      index: this.currentIndex,
       name: `Endless +${depth}`,
       requiredLevel: base.requiredLevel + depth * 5,
       enemyTint: base.enemyTint,
@@ -188,20 +188,20 @@ export function createMapManager() {
       enemyDmgMul: base.enemyDmgMul,
       desc: `Endless Depth ${depth}. Enemies grow stronger with each depth.`,
       strongEnemies: base.strongEnemies,
-      emoji: emojiForIndex(currentIndex),
+      emoji: this.emojiForIndex(this.currentIndex),
       imgHint: base.imgHint,
       _endlessDepth: depth,
     };
   }
 
-  function getModifiers() {
-    const cur = getCurrent();
+  getModifiers() {
+    const cur = this.getCurrent();
     const depth = cur._endlessDepth ? cur._endlessDepth : 0;
     const pow = (v, p) => Math.pow(v, Math.max(0, p));
-    const enemyHpMul = (cur.enemyHpMul || 1) * pow(ENDLESS.hpGrowthPerDepth, depth);
-    const enemyDmgMul = (cur.enemyDmgMul || 1) * pow(ENDLESS.dmgGrowthPerDepth, depth);
-    const enemySpeedMul = pow(ENDLESS.speedGrowthPerDepth, depth);
-    const enemyCountMul = pow(ENDLESS.countGrowthPerDepth, depth);
+    const enemyHpMul = (cur.enemyHpMul || 1) * pow(MapManager.ENDLESS.hpGrowthPerDepth, depth);
+    const enemyDmgMul = (cur.enemyDmgMul || 1) * pow(MapManager.ENDLESS.dmgGrowthPerDepth, depth);
+    const enemySpeedMul = pow(MapManager.ENDLESS.speedGrowthPerDepth, depth);
+    const enemyCountMul = pow(MapManager.ENDLESS.countGrowthPerDepth, depth);
 
     // Deterministic enemy color variant per map index (darker on higher maps/endless depth)
     const baseTint = (typeof cur.enemyTint === "number" ? (cur.enemyTint >>> 0) : 0xff6b35) >>> 0;
@@ -251,14 +251,14 @@ export function createMapManager() {
 
     // Darkness factor by act index and endless depth
     // Acts: up to ~25% darker by last defined map; Endless: +4% per depth up to +40%
-    const actSpan = Math.max(1, maps.length - 1);
-    const actIdx = Math.max(1, Math.min(currentIndex, maps.length));
+    const actSpan = Math.max(1, MapManager.MAPS.length - 1);
+    const actIdx = Math.max(1, Math.min(this.currentIndex, MapManager.MAPS.length));
     const actDark = actSpan > 0 ? (actIdx - 1) / actSpan * 0.25 : 0.0;
     const depthDark = Math.min(0.4, Math.max(0, depth) * 0.04);
     const darkness = Math.max(0, Math.min(0.65, actDark + depthDark));
 
     // Small deterministic hue shift per map for variety (wraps every 360/37 maps)
-    const hueShift = ((currentIndex * 37) % 360) / 360 * 0.02; // up to +0.02
+    const hueShift = ((this.currentIndex * 37) % 360) / 360 * 0.02; // up to +0.02
 
     const [h0, s0, l0] = _rgbToHslInt(baseTint);
     const h = (h0 + hueShift) % 1;
@@ -279,55 +279,48 @@ export function createMapManager() {
     };
   }
 
-  function canSelect(index) {
-    const idx = clampIndex(index);
-    return idx <= unlockedMax;
+  canSelect(index) {
+    const idx = this.clampIndex(index);
+    return idx <= this.unlockedMax;
   }
 
-  function setCurrent(index) {
-    const idx = clampIndex(index);
-    if (!canSelect(idx)) return false;
-    currentIndex = idx;
-    saveInt(LS_CUR, currentIndex);
+  setCurrent(index) {
+    const idx = this.clampIndex(index);
+    if (!this.canSelect(idx)) return false;
+    this.currentIndex = idx;
+    this.saveInt(STORAGE_KEYS.mapCurrentIndex, this.currentIndex);
     // Apply per-map enemy CSS theme so THEME_COLORS.enemy/enemyDark update live
-    try { applyMapEnemyCss(getModifiers()); } catch (_) {}
+    try { applyMapEnemyCss(this.getModifiers()); } catch (_) {}
     return true;
   }
 
-  function unlockByLevel(heroLevel) {
+  unlockByLevel(heroLevel) {
     // Unlock all defined maps whose requiredLevel is met
-    let maxIdx = unlockedMax;
-    for (const m of maps) {
+    let maxIdx = this.unlockedMax;
+    for (const m of MapManager.MAPS) {
       if (heroLevel >= m.requiredLevel) {
         maxIdx = Math.max(maxIdx, m.index);
       }
     }
     // Additionally unlock endless depths gradually (every 5 hero levels adds +1 depth)
-    const extraDepth = Math.max(0, Math.floor((heroLevel - (maps[maps.length - 1]?.requiredLevel || 1)) / 5));
-    const endlessMaxIndex = maps.length + extraDepth;
+    const extraDepth = Math.max(0, Math.floor((heroLevel - (MapManager.MAPS[MapManager.MAPS.length - 1]?.requiredLevel || 1)) / 5));
+    const endlessMaxIndex = MapManager.MAPS.length + extraDepth;
     maxIdx = Math.max(maxIdx, endlessMaxIndex);
 
-    if (maxIdx !== unlockedMax) {
-      unlockedMax = maxIdx;
-      saveInt(LS_MAX, unlockedMax);
-      if (currentIndex > unlockedMax) {
-        currentIndex = unlockedMax;
-        saveInt(LS_CUR, currentIndex);
+    if (maxIdx !== this.unlockedMax) {
+      this.unlockedMax = maxIdx;
+      this.saveInt(STORAGE_KEYS.mapUnlockedMax, this.unlockedMax);
+      if (this.currentIndex > this.unlockedMax) {
+        this.currentIndex = this.unlockedMax;
+        this.saveInt(STORAGE_KEYS.mapCurrentIndex, this.currentIndex);
       }
       return true;
     }
     return false;
   }
+}
 
-  return {
-    listMaps,
-    getCurrent,
-    getCurrentIndex,
-    getUnlockedMax,
-    getModifiers,
-    canSelect,
-    setCurrent,
-    unlockByLevel,
-    emojiForIndex,
-  };
+// Factory function for backward compatibility
+export function createMapManager() {
+  return new MapManager();
 }
