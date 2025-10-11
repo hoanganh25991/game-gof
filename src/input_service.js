@@ -15,51 +15,75 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { distance2D, now } from "./utils.js";
 
-export function createInputService({
-  renderer,
-  raycast,
-  camera,
-  portals,
-  player,
-  enemies,
-  effects,
-  skills,
-  WORLD,
-  setCenterMsg,
-  clearCenterMsg,
-}) {
-  // ---- Internal State ----
-  const state = {
-    holdA: false,
-    moveKeys: { up: false, down: false, left: false, right: false },
-    lastMouseGroundPoint: new THREE.Vector3(),
-    touch: null, // optional adapter from touch.js
-    // movement release handling
-    prevKeyActive: false,
-    prevJoyActive: false,
-    lastDir: { x: 0, y: 0 }, // last movement direction (normalized)
-    stopUntil: 0,            // time until which we keep short glide
-    lastMoveSource: null,    // 'joy' | 'keys' | 'order' (explicit click/tap)
-  };
+export class InputService {
+  constructor({
+    renderer,
+    raycast,
+    camera,
+    portals,
+    player,
+    enemies,
+    effects,
+    skills,
+    WORLD,
+    setCenterMsg,
+    clearCenterMsg,
+  }) {
+    // Store dependencies
+    this.renderer = renderer;
+    this.raycast = raycast;
+    this.camera = camera;
+    this.portals = portals;
+    this.player = player;
+    this.enemies = enemies;
+    this.effects = effects;
+    this.skills = skills;
+    this.WORLD = WORLD;
+    this.setCenterMsg = setCenterMsg;
+    this.clearCenterMsg = clearCenterMsg;
 
-  // ---- Helpers ----
-  function effectiveRange() {
-    return WORLD.attackRange * (WORLD.attackRangeMult || 1);
+    // Initialize internal state
+    this._state = {
+      holdA: false,
+      moveKeys: { up: false, down: false, left: false, right: false },
+      lastMouseGroundPoint: new THREE.Vector3(),
+      touch: null, // optional adapter from touch.js
+      // movement release handling
+      prevKeyActive: false,
+      prevJoyActive: false,
+      lastDir: { x: 0, y: 0 }, // last movement direction (normalized)
+      stopUntil: 0,            // time until which we keep short glide
+      lastMoveSource: null,    // 'joy' | 'keys' | 'order' (explicit click/tap)
+    };
+
+    // Bind event handlers to maintain proper context
+    this.onKeyDownCapture = this.onKeyDownCapture.bind(this);
+    this.onKeyUpCapture = this.onKeyUpCapture.bind(this);
+    this.onMouseMoveCapture = this.onMouseMoveCapture.bind(this);
+    this.onMouseDownCapture = this.onMouseDownCapture.bind(this);
+    this.onContextMenuCapture = this.onContextMenuCapture.bind(this);
   }
 
-  function getKeyMoveDir() {
-    const x = (state.moveKeys.right ? 1 : 0) + (state.moveKeys.left ? -1 : 0);
-    const y = (state.moveKeys.down ? 1 : 0) + (state.moveKeys.up ? -1 : 0);
+  // ---- Helper Methods ----
+  effectiveRange() {
+    return this.WORLD.attackRange * (this.WORLD.attackRangeMult || 1);
+  }
+
+  getKeyMoveDir() {
+    const { moveKeys } = this._state;
+    const x = (moveKeys.right ? 1 : 0) + (moveKeys.left ? -1 : 0);
+    const y = (moveKeys.down ? 1 : 0) + (moveKeys.up ? -1 : 0);
     const len = Math.hypot(x, y);
     if (len === 0) return { active: false, x: 0, y: 0 };
     return { active: true, x: x / len, y: y / len };
   }
 
-  function attemptAutoBasic() {
+  attemptAutoBasic() {
+    const { player, enemies, effects, skills } = this;
     if (!player.alive || player.frozen) return;
     try {
-      const effRange = effectiveRange();
-      const nearest = getNearestEnemy(player.pos(), effRange, enemies);
+      const effRange = this.effectiveRange();
+      const nearest = this.getNearestEnemy(player.pos(), effRange, enemies);
       if (nearest) {
         player.target = nearest;
         player.moveTarget = null;
@@ -73,10 +97,10 @@ export function createInputService({
       }
       // Always try basic attack (will fire in facing direction if no target)
       skills.tryBasicAttack(player, nearest);
-    } catch (e) {}
+    } catch (e) { }
   }
 
-  function getNearestEnemy(origin, maxDist, list) {
+  getNearestEnemy(origin, maxDist, list) {
     let best = null;
     let bestD = Infinity;
     for (const en of list) {
@@ -89,24 +113,24 @@ export function createInputService({
     return best;
   }
 
-  function cancelAim() { /* no-op: aiming removed */ }
+  cancelAim() { /* no-op: aiming removed */ }
 
   // Do not intercept events on system UI or form controls (e.g., Settings select dropdown)
-  function shouldIgnoreForUI(e) {
+  shouldIgnoreForUI(e) {
     try {
       const t = e.target;
       if (!t || !t.tagName) return false;
       const tag = String(t.tagName).toUpperCase();
       if (tag === "SELECT" || tag === "OPTION" || tag === "INPUT" || tag === "TEXTAREA" || tag === "LABEL" || tag === "BUTTON") return true;
       if (t.closest && (t.closest(".system-screen") || t.closest("#settingsPanel"))) return true;
-    } catch (_) {}
+    } catch (_) { }
     return false;
   }
 
   // Check if the event occurred over the renderer canvas (even if covered by overlays)
-  function isEventOverRenderer(e) {
+  isEventOverRenderer(e) {
     try {
-      const el = renderer?.domElement;
+      const el = this.renderer?.domElement;
       if (!el) return false;
       const path = typeof e.composedPath === "function" ? e.composedPath() : [];
       if (Array.isArray(path) && path.includes(el)) return true;
@@ -116,8 +140,9 @@ export function createInputService({
     } catch (_) { return false; }
   }
 
-  // ---- Adapters (Capture-phase) ----
-  function onKeyDownCapture(e) {
+  // ---- Event Handlers (Capture-phase) ----
+  onKeyDownCapture(e) {
+    const { _state: state, player, portals, skills, setCenterMsg, clearCenterMsg } = this;
     const kraw = e.key || "";
     const k = kraw.toLowerCase();
 
@@ -140,7 +165,7 @@ export function createInputService({
         if (state.lastMouseGroundPoint && Number.isFinite(state.lastMouseGroundPoint.x)) {
           point = state.lastMouseGroundPoint.clone();
         } else {
-          const nearest = getNearestEnemy(player.pos(), 9999, enemies);
+          const nearest = this.getNearestEnemy(player.pos(), 9999, this.enemies);
           if (nearest) {
             point = nearest.pos().clone();
           } else {
@@ -148,12 +173,12 @@ export function createInputService({
             point = player.pos().clone().add(forward.multiplyScalar(10));
           }
         }
-        try { skills.castSkill("Q"); } catch (_) {}
-        try { skills.castSkill("W", point); } catch (_) {}
+        try { skills.castSkill("Q"); } catch (_) { }
+        try { skills.castSkill("W", point); } catch (_) { }
         // Only turn aura on; avoid toggling it off if already active
-        if (!player.staticField?.active) { try { skills.castSkill("E"); } catch (_) {} }
-        try { skills.castSkill("R"); } catch (_) {}
-      } catch (_) {}
+        if (!player.staticField?.active) { try { skills.castSkill("E"); } catch (_) { } }
+        try { skills.castSkill("R"); } catch (_) { }
+      } catch (_) { }
       return;
     }
 
@@ -161,20 +186,20 @@ export function createInputService({
       e.preventDefault(); e.stopImmediatePropagation();
       state.holdA = true;
       // Defensive: cancel any existing aim UI
-      cancelAim();
+      this.cancelAim();
       // Attempt immediate basic
-      attemptAutoBasic();
+      this.attemptAutoBasic();
       return;
     }
 
     // Skill keys, stop propagation so legacy handlers don't conflict
-    if (k === "q") { e.preventDefault(); e.stopImmediatePropagation(); try { skills.castSkill("Q"); } catch(_) {} return; }
-    if (k === "e") { e.preventDefault(); e.stopImmediatePropagation(); try { skills.castSkill("E"); } catch(_) {} return; }
-    if (k === "r") { e.preventDefault(); e.stopImmediatePropagation(); try { skills.castSkill("R"); } catch(_) {} return; }
+    if (k === "q") { e.preventDefault(); e.stopImmediatePropagation(); try { skills.castSkill("Q"); } catch (_) { } return; }
+    if (k === "e") { e.preventDefault(); e.stopImmediatePropagation(); try { skills.castSkill("E"); } catch (_) { } return; }
+    if (k === "r") { e.preventDefault(); e.stopImmediatePropagation(); try { skills.castSkill("R"); } catch (_) { } return; }
 
     if (k === "w") {
       e.preventDefault(); e.stopImmediatePropagation();
-      try { skills.castSkill("W"); } catch(_) {}
+      try { skills.castSkill("W"); } catch (_) { }
       return;
     }
 
@@ -185,24 +210,24 @@ export function createInputService({
         if (modal && !modal.classList.contains("hidden")) {
           return; // do not preventDefault/stopPropagation so modal can capture it
         }
-      } catch (_) {}
+      } catch (_) { }
       // Default behavior: prevent and close open screens
       e.preventDefault(); e.stopImmediatePropagation();
-      cancelAim();
+      this.cancelAim();
       try {
         const settingsPanel = document.getElementById("settingsPanel");
         if (settingsPanel && !settingsPanel.classList.contains("hidden")) {
           settingsPanel.classList.add("hidden");
           return;
         }
-      } catch (_) {}
+      } catch (_) { }
       try {
         const heroScreen = document.getElementById("heroScreen");
         if (heroScreen && !heroScreen.classList.contains("hidden")) {
           heroScreen.classList.add("hidden");
           return;
         }
-      } catch (_) {}
+      } catch (_) { }
       return;
     }
 
@@ -212,7 +237,7 @@ export function createInputService({
       player.moveTarget = null;
       player.attackMove = false;
       player.target = null;
-      cancelAim();
+      this.cancelAim();
       player.holdUntil = now() + 0.4;
       return;
     }
@@ -224,7 +249,8 @@ export function createInputService({
     }
   }
 
-  function onKeyUpCapture(e) {
+  onKeyUpCapture(e) {
+    const { _state: state } = this;
     const kraw = e.key || "";
     const k = kraw.toLowerCase();
     if (k === "a") {
@@ -237,28 +263,30 @@ export function createInputService({
     if (kraw === "ArrowRight") state.moveKeys.right = false;
   }
 
-  function onMouseMoveCapture(e) {
-    if (!isEventOverRenderer(e)) return;
-    try { raycast.updateMouseNDC(e); } catch (_) {}
-    const p = raycast.raycastGround?.();
+  onMouseMoveCapture(e) {
+    if (!this.isEventOverRenderer(e)) return;
+    try { this.raycast.updateMouseNDC(e); } catch (_) { }
+    const p = this.raycast.raycastGround?.();
     if (p) {
-      state.lastMouseGroundPoint.copy(p);
+      this._state.lastMouseGroundPoint.copy(p);
     }
     // Aiming removed
     // Capture only updates state; do not stopPropagation to allow hover elsewhere
   }
 
-  function onMouseDownCapture(e) {
+  onMouseDownCapture(e) {
     // Allow native UI controls (e.g., select dropdown) to work
-    if (shouldIgnoreForUI(e)) return;
-    if (!isEventOverRenderer(e)) return;
+    if (this.shouldIgnoreForUI(e)) return;
+    if (!this.isEventOverRenderer(e)) return;
     // Right-click or left-click selection/aim confirm – we will handle here, and stop propagation
-    try { raycast.updateMouseNDC(e); } catch (_) {}
+    try { this.raycast.updateMouseNDC(e); } catch (_) { }
+
+    const { _state: state, player, portals, raycast, camera, effects, skills } = this;
 
     // Frozen/click through to portal UI
     if (player.frozen) {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      try { portals.handleFrozenPortalClick(raycast, camera, player, () => {}); } catch (_) {}
+      try { portals.handleFrozenPortalClick(raycast, camera, player, () => { }); } catch (_) { }
       return;
     }
 
@@ -284,7 +312,7 @@ export function createInputService({
             effects.spawnMovePing(p);
           }
         }
-      } catch (_) {}
+      } catch (_) { }
       return;
     }
 
@@ -299,21 +327,21 @@ export function createInputService({
             player.target = obj.enemy;
             player.moveTarget = null;
             try {
-              const effRange = effectiveRange();
+              const effRange = this.effectiveRange();
               const d = distance2D(player.pos(), obj.enemy.pos());
               player.attackMove = d > effRange * 0.95;
             } catch (_) {
               player.attackMove = false;
             }
             effects.spawnTargetPing(obj.enemy);
-            try { skills.tryBasicAttack(player, obj.enemy); } catch (_) {}
+            try { skills.tryBasicAttack(player, obj.enemy); } catch (_) { }
           }
         } else {
           // Left click on ground: try to basic-attack nearest enemy to the clicked point within effective range
           const g = raycast.raycastGround?.();
           if (g && !player.frozen) {
-            const eff = effectiveRange();
-            const en = getNearestEnemy(g, eff, enemies);
+            const eff = this.effectiveRange();
+            const en = this.getNearestEnemy(g, eff, this.enemies);
             if (en && en.alive) {
               player.target = en;
               player.moveTarget = null;
@@ -324,26 +352,27 @@ export function createInputService({
                 player.attackMove = false;
               }
               effects.spawnTargetPing(en);
-              try { skills.tryBasicAttack(player, en); } catch (_) {}
+              try { skills.tryBasicAttack(player, en); } catch (_) { }
             }
           }
         }
-      } catch (_) {}
+      } catch (_) { }
       return;
     }
   }
 
-  function onContextMenuCapture(e) {
+  onContextMenuCapture(e) {
     // Allow native UI controls (e.g., select dropdown) to work
-    if (shouldIgnoreForUI(e)) return;
-    if (!isEventOverRenderer(e)) return;
+    if (this.shouldIgnoreForUI(e)) return;
+    if (!this.isEventOverRenderer(e)) return;
     try {
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      const { _state: state, player, portals, raycast, camera, effects } = this;
       if (player.frozen) {
-        try { portals.handleFrozenPortalClick(raycast, camera, player, () => {}); } catch (_) {}
+        try { portals.handleFrozenPortalClick(raycast, camera, player, () => { }); } catch (_) { }
         return;
       }
-      try { raycast.updateMouseNDC(e); } catch (_) {}
+      try { raycast.updateMouseNDC(e); } catch (_) { }
       // Treat contextmenu as a right-click action fallback (some browsers/devices)
       try {
         const obj = raycast.raycastEnemyOrGround?.();
@@ -361,43 +390,45 @@ export function createInputService({
             effects.spawnMovePing(p);
           }
         }
-      } catch (_) {}
-    } catch (_) {}
+      } catch (_) { }
+    } catch (_) { }
   }
 
-  // ---- Public API ----
-  function attachCaptureListeners() {
+  // ---- Public API Methods ----
+  attachCaptureListeners() {
     // Keyboard (capture)
-    window.addEventListener("keydown", onKeyDownCapture, true);
-    window.addEventListener("keyup", onKeyUpCapture, true);
+    window.addEventListener("keydown", this.onKeyDownCapture, true);
+    window.addEventListener("keyup", this.onKeyUpCapture, true);
     // Mouse at window level (capture) so overlays cannot block; we gate by isEventOverRenderer
-    window.addEventListener("mousemove", onMouseMoveCapture, true);
-    window.addEventListener("mousedown", onMouseDownCapture, true);
+    window.addEventListener("mousemove", this.onMouseMoveCapture, true);
+    window.addEventListener("mousedown", this.onMouseDownCapture, true);
     // Prevent native context menu only over the renderer
-    window.addEventListener("contextmenu", onContextMenuCapture, true);
+    window.addEventListener("contextmenu", this.onContextMenuCapture, true);
   }
 
-  function detachListeners() {
-    window.removeEventListener("keydown", onKeyDownCapture, true);
-    window.removeEventListener("keyup", onKeyUpCapture, true);
-    window.removeEventListener("mousemove", onMouseMoveCapture, true);
-    window.removeEventListener("mousedown", onMouseDownCapture, true);
-    window.removeEventListener("contextmenu", onContextMenuCapture, true);
+  detachListeners() {
+    window.removeEventListener("keydown", this.onKeyDownCapture, true);
+    window.removeEventListener("keyup", this.onKeyUpCapture, true);
+    window.removeEventListener("mousemove", this.onMouseMoveCapture, true);
+    window.removeEventListener("mousedown", this.onMouseDownCapture, true);
+    window.removeEventListener("contextmenu", this.onContextMenuCapture, true);
   }
 
-  function setTouchAdapter(touch) {
-    state.touch = touch;
+  setTouchAdapter(touch) {
+    this._state.touch = touch;
   }
 
-  function update(t, dt) {
+  update(t, dt) {
+    const { _state: state, player, skills } = this;
+
     // Continuous A-hold
-    if (state.holdA) attemptAutoBasic();
+    if (state.holdA) this.attemptAutoBasic();
 
     // Touch holds
     if (state.touch && typeof state.touch.getHoldState === "function") {
       const hold = state.touch.getHoldState();
       if (hold) {
-        if (hold.basic) attemptAutoBasic();
+        if (hold.basic) this.attemptAutoBasic();
 
         // Unified continuous casting for skills:
         // - If a held skill is AOE, touch.getHoldState() provides { aoeKey, aoePoint }.
@@ -407,9 +438,9 @@ export function createInputService({
           if (!hold["skill" + k]) continue;
           if (hold.aoeKey === k) {
             const pos = hold.aoePoint || state.lastMouseGroundPoint || player.pos().clone().add(new THREE.Vector3(0, 0, 10));
-            try { skills.castSkill(k, pos); } catch (_) {}
+            try { skills.castSkill(k, pos); } catch (_) { }
           } else {
-            try { skills.castSkill(k); } catch (_) {}
+            try { skills.castSkill(k); } catch (_) { }
           }
         }
       }
@@ -437,7 +468,7 @@ export function createInputService({
       }
     }
 
-    const km = getKeyMoveDir();
+    const km = this.getKeyMoveDir();
     const keyActive = km.active && !player.frozen;
     if (keyActive) {
       const ahead = 26;
@@ -486,13 +517,9 @@ export function createInputService({
     state.prevJoyActive = joyActive;
     state.prevKeyActive = keyActive;
   }
+}
 
-  return {
-    attachCaptureListeners,
-    detachListeners,
-    setTouchAdapter,
-    update,
-    // Expose for debugging
-    _state: state,
-  };
+// Legacy factory function for backward compatibility
+export function createInputService(config) {
+  return new InputService(config);
 }
