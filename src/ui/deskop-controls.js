@@ -89,6 +89,11 @@ export function setupDesktopControls(){
   // Initial sync
   syncLabels();
 
+  // Listen for skillbar label updates (dispatched by updateSkillBarLabels in icons.js)
+  window.addEventListener("skillbar-labels-updated", () => {
+    syncLabels();
+  });
+
   // Observe skillWheel for changes (updateSkillBarLabels writes into those nodes).
   const skillWheel = document.getElementById("skillWheel");
   if (skillWheel) {

@@ -60,6 +60,11 @@ export function updateSkillBarLabels() {
     } catch (_) {
       // ignore
     }
+
+    // Dispatch event to notify desktop controls that labels have been updated
+    try {
+      window.dispatchEvent(new CustomEvent("skillbar-labels-updated"));
+    } catch (_) {}
   } catch (err) {
     console.warn("updateSkillBarLabels error", err);
   }

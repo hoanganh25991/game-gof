@@ -60,9 +60,25 @@
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+/* Ensure icon is visible and centered in square skills */
+#bottomMiddle .bm-skills .square-skill .icon {
+  position: relative;
+  z-index: 1;
+}
+
+/* Position key label in top-left corner */
+#bottomMiddle .bm-skills .square-skill .key {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  font-size: 10px;
+  z-index: 2;
 }
 
 /* Small responsive tweaks */

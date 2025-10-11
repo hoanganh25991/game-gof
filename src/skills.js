@@ -6,6 +6,7 @@ import { getSkill } from "./skill_api.js";
 import { SKILL_FX } from "./skills_fx.js";
 import { getBasicUplift } from "./uplift.js";
 import { distance2D, now } from "./utils.js";
+import { executeSkillEffect } from "./effects_loader.js";
 
 /**
  * SkillsSystem centralizes cooldowns, basic attack, Q/W/E/R skills,
@@ -373,7 +374,7 @@ export class SkillsSystem {
    * Internal helper: Execute skill effects without resource checks
    * Shared by castSkill and previewSkill for consistency
    */
-  async _executeSkillLogic(def, point = null) {
+  _executeSkillLogic(def, point = null) {
     // Auto-select point if none provided for ground-targeted skills
     if (!point && (def.type === "aoe" || def.type === "blink" || def.type === "dash")) {
       const effRange = Math.max(WORLD.attackRange * (WORLD.attackRangeMult || 1), (def.radius || 0) + 10);
@@ -454,11 +455,9 @@ export class SkillsSystem {
       to: toPos,
     };
 
-    // Execute skill effect
+    // Execute skill effect (effects are preloaded during game init, so this is synchronous)
     try {
-      await import("./effects_loader.js").then(loader => {
-        loader.executeSkillEffect(def.id, this.effects, skillEffectParams);
-      });
+      executeSkillEffect(def.id, this.effects, skillEffectParams);
     } catch (err) {
       console.warn("[Skills] Custom effect failed, using fallback:", err);
       // Fallback to basic effects

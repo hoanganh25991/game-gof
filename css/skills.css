@@ -26,6 +26,15 @@
   text-shadow: 0 1px 0 rgba(0,0,0,0.6);
 }
 
+/* Shared icon styles for both .skill and .skill-btn */
+.skill .icon,
+.skill-btn .icon{
+  font-size: 26px;
+  line-height: 1;
+  pointer-events: none;
+  display: block;
+}
+
 /* Shared name styles for both .skill and .skill-btn */
 .skill .name,
 .skill-btn .name{
@@ -142,13 +151,6 @@
   will-change: transform;
   text-align: center;
   overflow: visible;
-}
-
-/* Icon inside button */
-.skill-btn .icon{
-  font-size: 26px;
-  line-height: 1;
-  pointer-events: none;
 }
 
 /* Bigger central Basic Attack button placed at the corner (acts as circle center) */
