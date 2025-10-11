@@ -1,3 +1,5 @@
+import { t } from '../i18n.js';
+
 /**
  * BuffManager
  * Manages all player buffs including:
@@ -137,7 +139,7 @@ export class BuffManager {
     try { this.#player._villageBaseMpRegen = this.#player.mpRegen || 0; } catch (_) {}
     try { this.#player.mpRegen = (this.#player.mpRegen || 0) * this.#VILLAGE_REGEN_MULT; } catch (_) {}
     
-    try { this.#setCenterMsg?.('HP regeneration increased'); } catch (_) {}
+    try { this.#setCenterMsg?.(t('buffs.village')); } catch (_) {}
     try { this.#showBuffIndicator('village', '💚'); } catch (_) {}
     
     setTimeout(() => { try { this.#clearCenterMsg?.(); } catch (_) {} }, 1400);
@@ -169,7 +171,7 @@ export class BuffManager {
     try { this.#player._villaBaseMpRegen = this.#player.mpRegen || 0; } catch (_) {}
     try { this.#player.mpRegen = (this.#player.mpRegen || 0) * this.#VILLA_REGEN_MULT; } catch (_) {}
     
-    try { this.#setCenterMsg?.('HP regeneration increased (villa)'); } catch (_) {}
+    try { this.#setCenterMsg?.(t('buffs.villa')); } catch (_) {}
     try { this.#showBuffIndicator('villa', '❤️'); } catch (_) {}
     
     setTimeout(() => { try { this.#clearCenterMsg?.(); } catch (_) {} }, 1400);
@@ -203,17 +205,17 @@ export class BuffManager {
     if (buffType === 'damage') {
       try { this.#player._templeBaseDamage = this.#player.attackDamage || 0; } catch (_) {}
       try { this.#player.attackDamage = Math.floor((this.#player.attackDamage || 0) * this.#TEMPLE_DAMAGE_MULT); } catch (_) {}
-      try { this.#setCenterMsg?.('Divine power increases your damage!'); } catch (_) {}
+      try { this.#setCenterMsg?.(t('buffs.temple.damage')); } catch (_) {}
       try { this.#showBuffIndicator('temple', '⚔️'); } catch (_) {}
     } else if (buffType === 'attackSpeed') {
       try { this.#player._templeBaseAttackSpeed = this.#player.attackSpeed || 1; } catch (_) {}
       try { this.#player.attackSpeed = (this.#player.attackSpeed || 1) * this.#TEMPLE_ATTACK_SPEED_MULT; } catch (_) {}
-      try { this.#setCenterMsg?.('Divine blessing increases your attack speed!'); } catch (_) {}
+      try { this.#setCenterMsg?.(t('buffs.temple.attackSpeed')); } catch (_) {}
       try { this.#showBuffIndicator('temple', '⚡'); } catch (_) {}
     } else if (buffType === 'defense') {
       try { this.#player._templeBaseDefense = this.#player.defense || 0; } catch (_) {}
       try { this.#player.defense = Math.floor((this.#player.defense || 0) + 10); } catch (_) {}
-      try { this.#setCenterMsg?.('Divine protection increases your defense!'); } catch (_) {}
+      try { this.#setCenterMsg?.(t('buffs.temple.defense')); } catch (_) {}
       try { this.#showBuffIndicator('temple', '🛡️'); } catch (_) {}
     }
     

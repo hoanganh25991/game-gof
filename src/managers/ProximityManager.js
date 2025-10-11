@@ -1,3 +1,5 @@
+import { t } from '../i18n.js';
+
 /**
  * ProximityManager
  * Manages proximity detection for structures (temples, villas, columns, statues, obelisks)
@@ -30,34 +32,6 @@ export class ProximityManager {
   #STRUCTURE_MESSAGE_COOLDOWN = 3000; // 3 seconds between messages
   #PROXIMITY_DISTANCE = 15; // Distance for structure message triggers
 
-  // Structure-specific messages
-  #STRUCTURE_MESSAGES = {
-    temple: [
-      'Ancient power emanates from {name}',
-      'You feel a divine presence at {name}',
-      'Sacred energy surrounds {name}'
-    ],
-    villa: [
-      '{name} stands as a testament to ancient architecture',
-      'You admire the craftsmanship of {name}',
-      '{name} exudes an aura of sophistication'
-    ],
-    column: [
-      '{name} reaches toward the heavens',
-      'Ancient strength flows through {name}',
-      '{name} stands as a pillar of history'
-    ],
-    statue: [
-      '{name} captures a moment of eternal glory',
-      'You gaze upon the majestic {name}',
-      '{name} tells stories of ancient heroes'
-    ],
-    obelisk: [
-      '{name} pierces the sky with mystical energy',
-      'Ancient knowledge is encoded in {name}',
-      '{name} channels power from the cosmos'
-    ]
-  };
 
   constructor({ 
     player, 
@@ -82,8 +56,9 @@ export class ProximityManager {
    * @private
    */
   #getStructureProximityMessage(structureType, structureName) {
-    const messages = this.#STRUCTURE_MESSAGES[structureType] || [`You discover {name}`];
-    const template = messages[Math.floor(Math.random() * messages.length)];
+    const messages = t(`structures.${structureType}`);
+    const messagesArray = Array.isArray(messages) ? messages : [`You discover {name}`];
+    const template = messagesArray[Math.floor(Math.random() * messagesArray.length)];
     return template.replace('{name}', structureName);
   }
 

@@ -251,5 +251,45 @@
     "loadMore": "Tải thêm",
     "depthDesc": "Độ sâu +${depth}. Mỗi bước làm kẻ địch mạnh hơn: HP, sát thương, tốc độ và mật độ tăng.",
     "elites": "Kẻ tinh nhuệ:"
+  },
+  "buffs": {
+    "village": "Tăng tốc độ hồi HP",
+    "villa": "Tăng tốc độ hồi HP (biệt thự)",
+    "temple": {
+      "damage": "Sức mạnh thiêng liêng tăng sát thương của bạn!",
+      "attackSpeed": "Phước lành thiêng liêng tăng tốc độ tấn công của bạn!",
+      "defense": "Phù hộ thiêng liêng tăng phòng thủ của bạn!"
+    }
+  },
+  "structures": {
+    "temple": [
+      "Sức mạnh cổ đại tỏa ra từ {name}",
+      "Bạn cảm nhận được sự hiện diện thiêng liêng tại {name}",
+      "Năng lượng thiêng liêng bao quanh {name}"
+    ],
+    "villa": [
+      "{name} là minh chứng cho kiến trúc cổ đại",
+      "Bạn chiêm ngưỡng tài năng thủ công của {name}",
+      "{name} toát lên vẻ tinh tế sang trọng"
+    ],
+    "column": [
+      "{name} vươn lên trời cao",
+      "Sức mạnh cổ đại chảy qua {name}",
+      "{name} đứng vững như trụ cột lịch sử"
+    ],
+    "statue": [
+      "{name} ghi lại khoảnh khắc vinh quang vĩnh cửu",
+      "Bạn ngắm nhìn {name} hùng vĩ",
+      "{name} kể những câu chuyện về anh hùng cổ đại"
+    ],
+    "obelisk": [
+      "{name} xuyên thủng bầu trời với năng lượng huyền bí",
+      "Tri thức cổ đại được mã hóa trong {name}",
+      "{name} dẫn truyền sức mạnh từ vũ trụ"
+    ]
+  },
+  "notifications": {
+    "skillUnlocked": "🔓 Kỹ Năng Mới Mở Khóa!",
+    "skillPoint": "⭐ +1 Điểm Kỹ Năng"
   }
 }

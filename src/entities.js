@@ -3,6 +3,7 @@ import { THEME_COLORS, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "../confi
 import { createHeroMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
 import { distance2D, now, parseThreeColor } from "./utils.js";
 import { getSkillUpgradeManager } from "./skills_upgrade.js";
+import { t } from "./i18n.js";
 
 export class Entity {
   constructor(mesh, radius = 1) {
@@ -184,14 +185,14 @@ export class Player extends Entity {
         upgradeManager.awardSkillPoints(1);
         
         // Show skill point notification
-        this._showNotification("⭐ +1 Skill Point", "#ffd700");
+        this._showNotification(t('notifications.skillPoint'), "#ffd700");
         
         const newlyUnlocked = upgradeManager.checkUnlocksForLevel(this.level);
         if (newlyUnlocked.length > 0) {
           console.log(`Unlocked new skills at level ${this.level}:`, newlyUnlocked);
           // Show unlock notification for each new skill
           newlyUnlocked.forEach(skillId => {
-            this._showNotification(`🔓 New Skill Unlocked!`, "#ff8c00", 2500);
+            this._showNotification(t('notifications.skillUnlocked'), "#ff8c00", 2500);
           });
         }
       } catch (e) {

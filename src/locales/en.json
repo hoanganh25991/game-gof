@@ -251,5 +251,45 @@
     "loadMore": "Load more",
     "depthDesc": "Depth +${depth}. Each step strengthens foes: more HP, damage, speed and density.",
     "elites": "Elites:"
+  },
+  "buffs": {
+    "village": "HP regeneration increased",
+    "villa": "HP regeneration increased (villa)",
+    "temple": {
+      "damage": "Divine power increases your damage!",
+      "attackSpeed": "Divine blessing increases your attack speed!",
+      "defense": "Divine protection increases your defense!"
+    }
+  },
+  "structures": {
+    "temple": [
+      "Ancient power emanates from {name}",
+      "You feel a divine presence at {name}",
+      "Sacred energy surrounds {name}"
+    ],
+    "villa": [
+      "{name} stands as a testament to ancient architecture",
+      "You admire the craftsmanship of {name}",
+      "{name} exudes an aura of sophistication"
+    ],
+    "column": [
+      "{name} reaches toward the heavens",
+      "Ancient strength flows through {name}",
+      "{name} stands as a pillar of history"
+    ],
+    "statue": [
+      "{name} captures a moment of eternal glory",
+      "You gaze upon the majestic {name}",
+      "{name} tells stories of ancient heroes"
+    ],
+    "obelisk": [
+      "{name} pierces the sky with mystical energy",
+      "Ancient knowledge is encoded in {name}",
+      "{name} channels power from the cosmos"
+    ]
+  },
+  "notifications": {
+    "skillUnlocked": "🔓 New Skill Unlocked!",
+    "skillPoint": "⭐ +1 Skill Point"
   }
 }
