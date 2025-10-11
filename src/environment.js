@@ -187,81 +187,8 @@ export async function initEnvironment(scene, options = {}) {
     );
   }
 
-  // Cache of objects that sway to avoid traversing full scene graph every frame
-  const swayObjs = [];
   // Water placeholder (declared early so update() can reference it safely)
   let water = null;
-
-  // ----------------
-  // Primitive props
-  // ----------------
-  function createTree() {
-    const g = new THREE.Group();
-
-    const h = 1.6 + Math.random() * 1.2;
-    const trunkGeo = new THREE.CylinderGeometry(0.12 * (0.85 + Math.random() * 0.6), 0.12 * (0.85 + Math.random() * 0.6), h * 0.45, 6);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: ENV_COLORS.trunk });
-    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-    trunk.position.y = h * 0.225;
-    trunk.castShadow = true;
-    g.add(trunk);
-
-    const foliageGeo = new THREE.ConeGeometry(h * 0.6, h * 0.9, 8);
-    // shift foliage color toward burnt orange/red to match fire theme
-    const hueBase = 0.05 + (Math.random() - 0.5) * 0.04;
-    const foliageMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color().setHSL(hueBase, 0.65 + Math.random() * 0.15, 0.25 + Math.random() * 0.08)
-    });
-    const foliage = new THREE.Mesh(foliageGeo, foliageMat);
-    foliage.position.y = h * 0.9;
-    foliage.castShadow = true;
-    g.add(foliage);
-
-    // small sway params used by update() to animate subtle motion
-    g.userData.swayPhase = Math.random() * Math.PI * 2;
-    g.userData.swayAmp = 0.004 + Math.random() * 0.01;
-    // register for per-frame sway updates
-    swayObjs.push(g);
-
-    g.scale.setScalar(0.9 + Math.random() * 0.8);
-    return g;
-  }
-
-  function createRock() {
-    const s = 0.6 + Math.random() * 1.4;
-    const geo = new THREE.DodecahedronGeometry(s, 0);
-    const mat = new THREE.MeshStandardMaterial({ color: ENV_COLORS.rock });
-    const m = new THREE.Mesh(geo, mat);
-    m.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-    m.castShadow = true;
-    return m;
-  }
-
-  function createFlower() {
-    const g = new THREE.Group();
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.24), new THREE.MeshStandardMaterial({ color: ENV_COLORS.stem }));
-    stem.position.y = 0.12;
-    g.add(stem);
-    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshStandardMaterial({ color: ENV_COLORS.midFire, emissive: ENV_COLORS.fire }));
-    petal.position.y = 0.28;
-    g.add(petal);
-    g.scale.setScalar(0.9 + Math.random() * 0.6);
-    return g;
-  }
-
-  // Forest cluster generator - denser cluster of trees
-  function createForest(center = new THREE.Vector3(0,0,0), radius = 8, count = 30) {
-    const fg = new THREE.Group();
-    for (let i=0;i<count;i++) {
-      const t = createTree();
-      const a = Math.random()*Math.PI*2;
-      const r = Math.random()*radius;
-      t.position.set(center.x + Math.cos(a)*r, 0, center.z + Math.sin(a)*r);
-      t.rotateY(Math.random()*Math.PI*2);
-      fg.add(t);
-    }
-    return fg;
-  }
 
   // Scatter props via InstancedMesh batching (reduce draw calls significantly)
   // Trees: trunk + foliage instanced
@@ -478,8 +405,6 @@ export async function initEnvironment(scene, options = {}) {
     }
   }
 
-  // (structures were moved to src/environment/structures.js - handled above)
-
   // ----------------
   // Water pool (optional)
   // ----------------
@@ -646,6 +571,5 @@ export async function initEnvironment(scene, options = {}) {
     toggleRain,
     setRainCount,
     setRainLevel,
-    addVillage: (center, n, r) => generateVillage(center, n, r),
   };
 }
