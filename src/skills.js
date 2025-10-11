@@ -18,7 +18,7 @@ export class SkillsSystem {
   /**
    * @param {import("./entities.js").Player} player
    * @param {import("./entities.js").Enemy[]} enemies
-   * @param {import("./effects.js").EffectsManager} effects
+   * @param {import("./effects_manager.js").EffectsManager} effects
    * @param {{Q: HTMLElement, W: HTMLElement, E: HTMLElement, R: HTMLElement}} cdUI
    * @param {any} villages optional villages system to enforce village safety rules
    */

@@ -9,7 +9,7 @@ import { setLoadoutAndApply, getSkill, setSkill } from "../skill_api.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "../world.js";
 import { UIManager } from "../ui/hud/index.js";
 import { Player, Enemy, getNearestEnemy, handWorldPos } from "../entities.js";
-import { EffectsManager, createGroundRing } from "../effects.js";
+import { EffectsManager, createGroundRing } from "../effects_manager.js";
 import { SkillsSystem } from "../skills.js";
 import { createRaycast } from "../raycast.js";
 import { createHouse, createHeroOverheadBars } from "../meshes.js";
