@@ -5,6 +5,7 @@
  * - Provides a simple API to integrate with UI and enemy spawning
  */
 import { STORAGE_KEYS } from "../config/index.js";
+import { ENDLESS, MAP_EMOJIS, MAPS } from "../config/map.js";
 
 export function applyMapEnemyCss(modsOrTint) {
   try {
@@ -35,90 +36,6 @@ export function applyMapEnemyCss(modsOrTint) {
 }
 
 export class MapManager {
-  // Static constants
-  static ENDLESS = {
-    hpGrowthPerDepth: 1.18,
-    dmgGrowthPerDepth: 1.16,
-    speedGrowthPerDepth: 1.03,
-    countGrowthPerDepth: 1.04,
-  };
-
-  // Deterministic icon set for maps (emoji). Order matters for stable mapping.
-  static MAP_EMOJIS = [
-    "🌩️","🌾","⛰️","🏰","⚒️","🌪️","🗺️","🔥","🌊","❄️",
-    "🌿","🌀","⚡","☄️","🌋","🏜️","🏞️","🛡️","🧭","🔮",
-    "🌫️","⛏️","🌧️","🌥️","🌠"
-  ];
-
-  // Definitions: tune per-map enemy tint and multipliers
-  static MAPS = [
-    {
-      index: 1,
-      name: "Act I — Fields of Awakening",
-      requiredLevel: 1,
-      enemyTint: 0xff8080,
-      enemyHpMul: 1.0,
-      enemyDmgMul: 1.0,
-      enemySpeedMul: 1.0,
-      enemyCountMul: 1.0,
-      desc: "A scorched grove outside the origin village. Fallen scouts and burning beasts swarm the ashen woods.",
-      strongEnemies: ["Ravagers (fast melee)", "Embercasters (ranged fire)"],
-      imgHint: "Square art: dark forest clearing under a smoke-filled sky; faint ruins; red-tinted foes.",
-    },
-    {
-      index: 2,
-      name: "Act II — Volcanic Plains",
-      requiredLevel: 5,
-      enemyTint: 0xffb060,
-      enemyHpMul: 1.35,
-      enemyDmgMul: 1.2,
-      enemySpeedMul: 1.02,
-      enemyCountMul: 1.1,
-      desc: "Open grasslands where flames never die. Raiding packs and fire-touched archers roam freely.",
-      strongEnemies: ["Flame Hounds (pack hunters)", "Ballistarii (armored archers)"],
-      imgHint: "Square art: windswept plains with distant volcanic peaks; orange-tinted foes.",
-    },
-    {
-      index: 3,
-      name: "Act III — Inferno Peaks",
-      requiredLevel: 10,
-      enemyTint: 0xffe070,
-      enemyHpMul: 1.8,
-      enemyDmgMul: 1.45,
-      enemySpeedMul: 1.05,
-      enemyCountMul: 1.25,
-      desc: "Knife-edged ridgelines where the heat rises like a beast. Altitude and fire converge to test your mettle.",
-      strongEnemies: ["Harpy Matrons (dive assaults)", "Fire Shamans (support casters)"],
-      imgHint: "Square art: volcanic mountain ridge with lava flows; golden-tinted foes, smoke-filled sky.",
-    },
-    {
-      index: 4,
-      name: "Act IV — Sky Citadel",
-      requiredLevel: 20,
-      enemyTint: 0xa0ffd1,
-      enemyHpMul: 2.4,
-      enemyDmgMul: 1.8,
-      enemySpeedMul: 1.08,
-      enemyCountMul: 1.45,
-      desc: "A floating bastion crackling with bound sigils. Only the resolute can breach its shining walls.",
-      strongEnemies: ["Sentinel Constructs (shielded)", "Zealous Templars (coordinated strikes)"],
-      imgHint: "Square art: floating fortress with crackling runes; teal-tinted foes.",
-    },
-    {
-      index: 5,
-      name: "Act V — The Godforge",
-      requiredLevel: 35,
-      enemyTint: 0x9fd8ff,
-      enemyHpMul: 3.2,
-      enemyDmgMul: 2.3,
-      enemySpeedMul: 1.12,
-      enemyCountMul: 1.7,
-      desc: "An eldritch foundry where power is hammered into being. Sparks of divinity burn those who trespass.",
-      strongEnemies: ["Forge Colossus (heavy slam)", "Aether Smiths (channeling blasts)"],
-      imgHint: "Square art: colossal heavenly forge, molten channels, pale-blue aura; azure-tinted foes.",
-    },
-  ];
-
   constructor() {
     this.currentIndex = this.clampIndex(this.loadInt(STORAGE_KEYS.mapCurrentIndex, 1));
     this.unlockedMax = this.clampIndex(this.loadInt(STORAGE_KEYS.mapUnlockedMax, 1));
@@ -147,7 +64,7 @@ export class MapManager {
 
   depthForIndex(i) {
     const idx = this.clampIndex(i);
-    return idx > MapManager.MAPS.length ? (idx - MapManager.MAPS.length) : 0;
+    return idx > MAPS.length ? (idx - MAPS.length) : 0;
   }
 
   // Public API methods
@@ -161,11 +78,11 @@ export class MapManager {
 
   emojiForIndex(i) {
     const idx = this.clampIndex(i);
-    return MapManager.MAP_EMOJIS[(idx - 1) % MapManager.MAP_EMOJIS.length];
+    return MAP_EMOJIS[(idx - 1) % MAP_EMOJIS.length];
   }
 
   listMaps() {
-    return MapManager.MAPS.map((m) => ({
+    return MAPS.map((m) => ({
       ...m,
       unlocked: m.index <= this.unlockedMax,
       current: m.index === this.currentIndex,
@@ -174,11 +91,11 @@ export class MapManager {
   }
 
   getCurrent() {
-    const cur = MapManager.MAPS.find((m) => m.index === this.currentIndex);
+    const cur = MAPS.find((m) => m.index === this.currentIndex);
     if (cur) return cur;
     // Synthesize an endless map descriptor
     const depth = this.depthForIndex(this.currentIndex);
-    const base = MapManager.MAPS[MapManager.MAPS.length - 1];
+    const base = MAPS[MAPS.length - 1];
     return {
       index: this.currentIndex,
       name: `Endless +${depth}`,
@@ -198,10 +115,10 @@ export class MapManager {
     const cur = this.getCurrent();
     const depth = cur._endlessDepth ? cur._endlessDepth : 0;
     const pow = (v, p) => Math.pow(v, Math.max(0, p));
-    const enemyHpMul = (cur.enemyHpMul || 1) * pow(MapManager.ENDLESS.hpGrowthPerDepth, depth);
-    const enemyDmgMul = (cur.enemyDmgMul || 1) * pow(MapManager.ENDLESS.dmgGrowthPerDepth, depth);
-    const enemySpeedMul = pow(MapManager.ENDLESS.speedGrowthPerDepth, depth);
-    const enemyCountMul = pow(MapManager.ENDLESS.countGrowthPerDepth, depth);
+    const enemyHpMul = (cur.enemyHpMul || 1) * pow(ENDLESS.hpGrowthPerDepth, depth);
+    const enemyDmgMul = (cur.enemyDmgMul || 1) * pow(ENDLESS.dmgGrowthPerDepth, depth);
+    const enemySpeedMul = pow(ENDLESS.speedGrowthPerDepth, depth);
+    const enemyCountMul = pow(ENDLESS.countGrowthPerDepth, depth);
 
     // Deterministic enemy color variant per map index (darker on higher maps/endless depth)
     const baseTint = (typeof cur.enemyTint === "number" ? (cur.enemyTint >>> 0) : 0xff6b35) >>> 0;
@@ -251,8 +168,8 @@ export class MapManager {
 
     // Darkness factor by act index and endless depth
     // Acts: up to ~25% darker by last defined map; Endless: +4% per depth up to +40%
-    const actSpan = Math.max(1, MapManager.MAPS.length - 1);
-    const actIdx = Math.max(1, Math.min(this.currentIndex, MapManager.MAPS.length));
+    const actSpan = Math.max(1, MAPS.length - 1);
+    const actIdx = Math.max(1, Math.min(this.currentIndex, MAPS.length));
     const actDark = actSpan > 0 ? (actIdx - 1) / actSpan * 0.25 : 0.0;
     const depthDark = Math.min(0.4, Math.max(0, depth) * 0.04);
     const darkness = Math.max(0, Math.min(0.65, actDark + depthDark));
@@ -297,14 +214,14 @@ export class MapManager {
   unlockByLevel(heroLevel) {
     // Unlock all defined maps whose requiredLevel is met
     let maxIdx = this.unlockedMax;
-    for (const m of MapManager.MAPS) {
+    for (const m of MAPS) {
       if (heroLevel >= m.requiredLevel) {
         maxIdx = Math.max(maxIdx, m.index);
       }
     }
     // Additionally unlock endless depths gradually (every 5 hero levels adds +1 depth)
-    const extraDepth = Math.max(0, Math.floor((heroLevel - (MapManager.MAPS[MapManager.MAPS.length - 1]?.requiredLevel || 1)) / 5));
-    const endlessMaxIndex = MapManager.MAPS.length + extraDepth;
+    const extraDepth = Math.max(0, Math.floor((heroLevel - (MAPS[MAPS.length - 1]?.requiredLevel || 1)) / 5));
+    const endlessMaxIndex = MAPS.length + extraDepth;
     maxIdx = Math.max(maxIdx, endlessMaxIndex);
 
     if (maxIdx !== this.unlockedMax) {
