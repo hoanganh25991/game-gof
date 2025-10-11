@@ -225,8 +225,15 @@ class FlameChainEffect {
       const from = center.clone().add(new THREE.Vector3(0, 1.6, 0));
       const to = center.clone().add(new THREE.Vector3(0, 1.6, range));
 
-      // Fire beam
-      this.baseEffects.spawnFireStreamAuto(from, to, this.colors.beam, 0.1);
+      // Fire beam - auto-scale arc parameters
+      const dir = to.clone().sub(from);
+      const length = dir.length() || 1;
+      const segments = Math.max(8, Math.min(18, Math.round(8 + length * 0.5)));
+      const amplitude = Math.min(1.0, 0.25 + length * 0.02);
+      const passes = 3; // Multiple passes for fire effect
+      for (let i = 0; i < passes; i++) {
+        this.baseEffects.spawnArc(from, to, this.colors.beam, 0.1, segments, amplitude);
+      }
 
       // Impact at end
       const impactPoint = to.clone().setY(0);
@@ -266,15 +273,21 @@ class FlameChainEffect {
         // Core pass is brighter and thicker
         if (p === 0) {
           try {
-            this.baseEffects.spawnFireStreamAuto(
-              s,
-              e,
-              this.colors.core || this.colors.beam,
-              0.16
-            );
+            // Auto-scale arc parameters for core pass
+            const dir = e.clone().sub(s);
+            const length = dir.length() || 1;
+            const segments = Math.max(8, Math.min(18, Math.round(8 + length * 0.5)));
+            const amplitude = Math.min(1.0, 0.25 + length * 0.02);
+            const passes = 3;
+            for (let i = 0; i < passes; i++) {
+              this.baseEffects.spawnArc(s, e, this.colors.core || this.colors.beam, 0.16, segments, amplitude);
+            }
           } catch (_) {}
           try {
-            this.baseEffects.spawnArcNoisePath(s, e, this.colors.arc, 0.12, 3);
+            // Add noise arcs for visual complexity
+            for (let i = 0; i < 3; i++) {
+              this.baseEffects.spawnArc(s, e, this.colors.arc, 0.12, 6, 0.2);
+            }
           } catch (_) {}
         } else {
           // Outer passes add glow and a secondary color
@@ -283,10 +296,21 @@ class FlameChainEffect {
               ? this.colors.chain || this.colors.beam
               : this.colors.beam || this.colors.arc;
           try {
-            this.baseEffects.spawnFireStreamAuto(s, e, col, 0.12);
+            // Auto-scale arc parameters for outer passes
+            const dir = e.clone().sub(s);
+            const length = dir.length() || 1;
+            const segments = Math.max(8, Math.min(18, Math.round(8 + length * 0.5)));
+            const amplitude = Math.min(1.0, 0.25 + length * 0.02);
+            const passes = 2;
+            for (let i = 0; i < passes; i++) {
+              this.baseEffects.spawnArc(s, e, col, 0.12, segments, amplitude);
+            }
           } catch (_) {}
           try {
-            this.baseEffects.spawnArcNoisePath(s, e, this.colors.arc, 0.08, 2);
+            // Add noise arcs for visual complexity
+            for (let i = 0; i < 2; i++) {
+              this.baseEffects.spawnArc(s, e, this.colors.arc, 0.08, 6, 0.2);
+            }
           } catch (_) {}
         }
       }
@@ -353,7 +377,7 @@ class FlameChainEffect {
       this.baseEffects.spawnHitDecal(position, this.colors.chain);
 
       // Ring pulse
-      this.baseEffects.spawnRingPulse(
+      this.baseEffects.spawnRing(
         position,
         1.2,
         this.colors.chain,

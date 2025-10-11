@@ -3,65 +3,26 @@ import { COLOR, FX } from "./constants.js";
 import { now, parseThreeColor } from "./utils.js";
 
 /**
- * Base Effects Module
- * 
- * Provides generic, reusable visual effect primitives that are not tied to any specific skill.
- * These are the building blocks for all visual effects in the game.
- */
-
-// Normalize color inputs from various formats ("#66ffc2", 0x66ffc2, 6750146)
-export function normalizeColor(c, fallback = COLOR.fire) {
-  try {
-    if (typeof c === "number" && Number.isFinite(c)) return c >>> 0;
-    if (typeof c === "string") {
-      return parseThreeColor(c).hex >>> 0;
-    }
-  } catch (_) {}
-  try {
-    if (typeof fallback === "string") return parseThreeColor(fallback).hex >>> 0;
-    if (typeof fallback === "number") return fallback >>> 0;
-  } catch (_) {}
-  return 0xff6b35;
-}
-
-// Standalone ring factory (used by UI modules and effects)
-export function createGroundRing(innerR, outerR, color, opacity = 0.6) {
-  const ring = new THREE.Mesh(
-    new THREE.RingGeometry(innerR, outerR, 48),
-    new THREE.MeshBasicMaterial({
-      color: normalizeColor(color),
-      transparent: true,
-      opacity,
-      side: THREE.FrontSide,
-      depthWrite: false,
-    })
-  );
-  ring.rotation.x = -Math.PI / 2;
-  ring.position.y = 0.02;
-  return ring;
-}
-
-/**
  * Base effect primitives - generic building blocks
  */
 export class BaseEffects {
   constructor(scene, quality = "high") {
     this.scene = scene;
     this.quality = quality;
-    
+
     this.transient = new THREE.Group();
     scene.add(this.transient);
-    
+
     this.indicators = new THREE.Group();
     scene.add(this.indicators);
-    
+
     // Reusable temp vectors to avoid allocations
     this._tmpVecA = new THREE.Vector3();
     this._tmpVecB = new THREE.Vector3();
     this._tmpVecC = new THREE.Vector3();
     this._tmpVecD = new THREE.Vector3();
     this._tmpVecE = new THREE.Vector3();
-    
+
     // Internal timed queue for cleanup and animations
     this.queue = []; // items: { obj, until, fade?, mat?, scaleRate? }
   }
@@ -87,10 +48,10 @@ export class BaseEffects {
     const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
     const normal = this._tmpVecC.set(-dir.z, 0, dir.x).normalize();
     const up = this._tmpVecD.set(0, 1, 0);
-    
+
     const points = [];
     const seg = Math.max(4, Math.round(segments * (this.quality === "low" ? 0.5 : (this.quality === "medium" ? 0.75 : 1))));
-    
+
     for (let i = 0; i <= seg; i++) {
       const t = i / segments;
       const pTmp = this._tmpVecE.copy(from).lerp(this._tmpVecB.copy(to), t);
@@ -102,11 +63,11 @@ export class BaseEffects {
       pTmp.add(j1).add(j2);
       points.push(pTmp.clone());
     }
-    
+
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({ 
-      color: normalizeColor(color), 
-      transparent: true, 
+    const material = new THREE.LineBasicMaterial({
+      color: normalizeColor(color),
+      transparent: true,
       opacity: 0.8,
       linewidth: 2
     });
@@ -125,33 +86,33 @@ export class BaseEffects {
       COLOR.accent,
       COLOR.fire,
     ];
-    
+
     const pillarPasses = Math.max(1, Math.round((this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4)) * intensity));
-    
+
     // Vertical pillars
     for (let i = 0; i < pillarPasses; i++) {
       const from = point.clone().add(new THREE.Vector3(
-        (Math.random() - 0.5) * 0.3 * i, 
-        0.1, 
+        (Math.random() - 0.5) * 0.3 * i,
+        0.1,
         (Math.random() - 0.5) * 0.3 * i
       ));
       const to = point.clone().add(new THREE.Vector3(
-        (Math.random() - 0.5) * 0.5 * i, 
-        4 + Math.random() * 2 * intensity, 
+        (Math.random() - 0.5) * 0.5 * i,
+        4 + Math.random() * 2 * intensity,
         (Math.random() - 0.5) * 0.5 * i
       ));
       const pillarColor = colors[Math.min(i, colors.length - 1)];
       this.spawnBeam(from, to, pillarColor, 0.15);
     }
-    
+
     // Radial bursts
     const burstCount = Math.max(1, Math.round((this.quality === "low" ? 3 : (this.quality === "medium" ? 6 : 8)) * intensity));
     for (let i = 0; i < burstCount; i++) {
       const ang = (i / burstCount) * Math.PI * 2 + Math.random() * 0.5;
       const r = radius * (0.5 + Math.random() * 0.5);
       const p2 = point.clone().add(new THREE.Vector3(
-        Math.cos(ang) * r, 
-        0.8 + Math.random() * 1.5, 
+        Math.cos(ang) * r,
+        0.8 + Math.random() * 1.5,
         Math.sin(ang) * r
       ));
       const burstColor = Math.random() > 0.5 ? COLOR.accent : color;
@@ -168,7 +129,7 @@ export class BaseEffects {
       ring.position.set(center.x, 0.02, center.z);
       this.indicators.add(ring);
       this.queue.push({ obj: ring, until: now() + duration * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.0 });
-    } catch (_) {}
+    } catch (_) { }
   }
 
   /**
@@ -192,33 +153,33 @@ export class BaseEffects {
     const size = opts.size || 0.4;
     const speed = opts.speed || 20;
     const trail = opts.trail !== false;
-    
+
     const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
     const distance = dir.length();
     const travelTime = distance / speed;
-    
+
     // Create projectile sphere
     const projectileGeo = new THREE.SphereGeometry(size, 12, 12);
-    const projectileMat = new THREE.MeshBasicMaterial({ 
-      color: normalizeColor(color), 
-      transparent: true, 
-      opacity: 0.95 
+    const projectileMat = new THREE.MeshBasicMaterial({
+      color: normalizeColor(color),
+      transparent: true,
+      opacity: 0.95
     });
     const projectile = new THREE.Mesh(projectileGeo, projectileMat);
     projectile.position.copy(from);
-    
+
     // Add outer glow layer
     const glowGeo = new THREE.SphereGeometry(size * 1.4, 12, 12);
-    const glowMat = new THREE.MeshBasicMaterial({ 
-      color: COLOR.accent, 
-      transparent: true, 
-      opacity: 0.4 
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: COLOR.accent,
+      transparent: true,
+      opacity: 0.4
     });
     const glow = new THREE.Mesh(glowGeo, glowMat);
     projectile.add(glow);
-    
+
     this.transient.add(projectile);
-    
+
     const startTime = now();
     this.queue.push({
       obj: projectile,
@@ -265,7 +226,7 @@ export class BaseEffects {
 
       this.transient.add(g);
       this.queue.push({ obj: g, until: now() + duration * FX.timeScale, fade: true, mats });
-    } catch (_) {}
+    } catch (_) { }
   }
 
   /**
@@ -273,11 +234,11 @@ export class BaseEffects {
    */
   spawnShield(entity, color = COLOR.fire, duration = 6, radius = 1.7) {
     try {
-      const mat = new THREE.MeshBasicMaterial({ 
-        color: normalizeColor(color), 
-        transparent: true, 
-        opacity: 0.22, 
-        wireframe: true 
+      const mat = new THREE.MeshBasicMaterial({
+        color: normalizeColor(color),
+        transparent: true,
+        opacity: 0.22,
+        wireframe: true
       });
       const bubble = new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 16), mat);
       const p = entity.pos();
@@ -294,7 +255,7 @@ export class BaseEffects {
         pulseRate: 3.5,
         baseScale: 1
       });
-    } catch (_) {}
+    } catch (_) { }
   }
 
   /**
@@ -332,7 +293,7 @@ export class BaseEffects {
         orbitRate: rate,
         orbitYOffset: 1.2
       });
-    } catch (_) {}
+    } catch (_) { }
   }
 
   // ===== INDICATOR HELPERS (UI/Feedback) =====
@@ -362,19 +323,143 @@ export class BaseEffects {
   }
 
   /**
+  * Hit decal on ground
+  */
+  spawnHitDecal(center, color = COLOR.ember) {
+    const ring = createGroundRing(0.2, 0.55, color, 0.5);
+    ring.position.set(center.x, 0.02, center.z);
+    this.indicators.add(ring);
+    this.queue.push({ obj: ring, until: now() + 0.22 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.3 });
+  }
+
+  /**
+   * Strike/explosion effect
+   */
+  spawnStrike(point, radius = 2, color = COLOR.fire) {
+    this.spawnImpact(point, radius, color, 1.5);
+
+    // Add extra embers for legacy compatibility
+    const emberCount = this.quality === "low" ? 4 : (this.quality === "medium" ? 8 : 12);
+    for (let i = 0; i < emberCount; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const r = Math.random() * radius * 0.5;
+      const emberStart = point.clone().add(new THREE.Vector3(
+        Math.cos(ang) * r,
+        0.1,
+        Math.sin(ang) * r
+      ));
+      const emberEnd = emberStart.clone().add(new THREE.Vector3(
+        (Math.random() - 0.5) * 1.5,
+        2 + Math.random() * 3,
+        (Math.random() - 0.5) * 1.5
+      ));
+      const emberColor = Math.random() > 0.6 ? COLOR.yellow : (Math.random() > 0.5 ? COLOR.accent : COLOR.ember);
+      this.spawnBeam(emberStart, emberEnd, emberColor, 0.1 + Math.random() * 0.1);
+    }
+  }
+
+  // ===== HAND/PLAYER EFFECTS =====
+  spawnHandFlash(player, left = false) {
+    const p = left ? leftHandWorldPos(player) : handWorldPos(player);
+    this.spawnSphere(p, 0.28, COLOR.fire, 0.12, 0.9);
+  }
+
+  spawnHandFlashColored(player, color = COLOR.fire, left = false) {
+    const p = left ? leftHandWorldPos(player) : handWorldPos(player);
+    this.spawnSphere(p, 0.28, color, 0.14, 0.95);
+  }
+
+  spawnHandCrackle(player, left = false, strength = 1) {
+    if (!player) return;
+    const origin = left ? leftHandWorldPos(player) : handWorldPos(player);
+    const qMul = this.quality === "low" ? 0.4 : (this.quality === "medium" ? 0.6 : 1);
+    const count = Math.max(1, Math.round((2 + Math.random() * 2 * strength) * qMul));
+    for (let i = 0; i < count; i++) {
+      const dir = new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.2), (Math.random() - 0.5)).normalize();
+      const len = 0.35 + Math.random() * 0.5 * strength;
+      const to = origin.clone().add(dir.multiplyScalar(len));
+      this.spawnBeam(origin.clone(), to, COLOR.fire, 0.06);
+    }
+  }
+
+  spawnHandLink(player, life = 0.08) {
+    if (!player) return;
+    const a = handWorldPos(player);
+    const b = leftHandWorldPos(player);
+
+    // Auto-scale arc parameters based on distance
+    const dir = b.clone().sub(a);
+    const length = dir.length() || 1;
+    const segments = Math.max(8, Math.min(18, Math.round(8 + length * 0.5)));
+    const amplitude = Math.min(1.0, 0.25 + length * 0.02);
+
+    // Create multiple passes for fire effect
+    const passes = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
+    for (let i = 0; i < passes; i++) {
+      this.spawnArc(a, b, COLOR.fire, life, segments, amplitude);
+    }
+  }
+
+  // ===== DAMAGE POPUP =====
+
+  spawnDamagePopup(worldPos, amount, color = "#ffe1e1") {
+    const q = this.quality || "high";
+    if (q === "low" && Math.random() > 0.3) return;
+    if (q === "medium" && Math.random() > 0.6) return;
+    if (!worldPos) return;
+
+    const text = String(Math.floor(Number(amount) || amount));
+    const w = 160;
+    const h = 64;
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d");
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = "bold 36px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = "rgba(0,0,0,0.6)";
+    ctx.strokeText(text, w / 2, h / 2);
+    ctx.fillStyle = `${color}`;
+    ctx.fillText(text, w / 2, h / 2);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.needsUpdate = true;
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true });
+    const spr = new THREE.Sprite(mat);
+
+    const scaleBase = 0.8;
+    const scale = scaleBase + Math.min(2.0, text.length * 0.08);
+    spr.scale.set(scale * (w / 128), scale * (h / 64), 1);
+    spr.position.set(worldPos.x, worldPos.y + 2.4, worldPos.z);
+
+    this.transient.add(spr);
+    this.queue.push({
+      obj: spr,
+      until: now() + 1.0 * FX.popupDurationScale,
+      fade: true,
+      mat: mat,
+      velY: 0.9,
+      map: tex,
+    });
+  }
+  /**
    * Update all active effects
    */
   update(t, dt) {
     // Adaptive VFX throttling based on FPS
     let fps = 60;
-    try { 
-      fps = (window.__perfMetrics && window.__perfMetrics.fps) 
-        ? window.__perfMetrics.fps 
-        : (1000 / Math.max(0.001, (window.__perfMetrics && window.__perfMetrics.avgMs) || 16.7)); 
-    } catch (_) {}
-    
+    try {
+      fps = (window.__perfMetrics && window.__perfMetrics.fps)
+        ? window.__perfMetrics.fps
+        : (1000 / Math.max(0.001, (window.__perfMetrics && window.__perfMetrics.avgMs) || 16.7));
+    } catch (_) { }
+
     const __fadeBoost = fps < 20 ? 2.4 : (fps < 28 ? 1.8 : (fps < 40 ? 1.25 : 1));
-    
+
     try {
       const maxAllowed = fps < 20 ? 28 : (fps < 28 ? 42 : (fps < 40 ? 80 : 120));
       if (this.queue.length > maxAllowed) {
@@ -385,7 +470,7 @@ export class BaseEffects {
           if (e) e.until = Math.min(e.until || (t + 0.3), t + 0.12);
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     for (let i = this.queue.length - 1; i >= 0; i--) {
       const e = this.queue[i];
@@ -394,13 +479,13 @@ export class BaseEffects {
       if (e.projectile && e.obj && e.obj.position) {
         const elapsed = t - e.startTime;
         const progress = Math.min(1, elapsed / e.travelTime);
-        
+
         const newPos = this._tmpVecA.copy(e.from).lerp(this._tmpVecB.copy(e.to), progress);
         e.obj.position.copy(newPos);
-        
+
         const wobble = Math.sin(t * 15) * 0.1;
         e.obj.position.y += wobble;
-        
+
         if (e.trail && this.quality !== "low" && Math.random() > 0.6) {
           const trailPos = e.obj.position.clone();
           const trailEnd = trailPos.clone().add(new THREE.Vector3(
@@ -410,9 +495,9 @@ export class BaseEffects {
           ));
           this.spawnBeam(trailPos, trailEnd, e.trailColor || COLOR.fire, 0.08);
         }
-        
+
         if (progress >= 1 && e.onComplete) {
-          try { e.onComplete(e.to); } catch (_) {}
+          try { e.onComplete(e.to); } catch (_) { }
         }
       }
 
@@ -426,7 +511,7 @@ export class BaseEffects {
         e.obj.position.x += e.velocity.x * dt;
         e.obj.position.y += e.velocity.y * dt;
         e.obj.position.z += e.velocity.z * dt;
-        
+
         if (e.gravity) {
           e.velocity.y += e.gravity * dt;
         }
@@ -450,7 +535,7 @@ export class BaseEffects {
       // Follow an entity
       if (e.follow && e.obj && typeof e.follow.pos === "function") {
         const p = e.follow.pos();
-        try { e.obj.position.set(p.x, (e.followYOffset ?? e.obj.position.y), p.z); } catch (_) {}
+        try { e.obj.position.set(p.x, (e.followYOffset ?? e.obj.position.y), p.z); } catch (_) { }
       }
 
       // Pulsing scale
@@ -459,12 +544,12 @@ export class BaseEffects {
         const rate = (e.pulseRate || 3) * FX.pulseRateScale;
         const amp = e.pulseAmp || 0.05;
         const s2 = base * (1 + Math.sin(t * rate) * amp);
-        try { e.obj.scale.set(s2, s2, s2); } catch (_) {}
+        try { e.obj.scale.set(s2, s2, s2); } catch (_) { }
       }
 
       // Spin rotation
       if (e.spinRate && e.obj && e.obj.rotation) {
-        try { e.obj.rotation.y += (e.spinRate || 0) * dt * FX.spinRateScale; } catch (_) {}
+        try { e.obj.rotation.y += (e.spinRate || 0) * dt * FX.spinRateScale; } catch (_) { }
       }
 
       // Orbiting orbs
@@ -478,7 +563,7 @@ export class BaseEffects {
           const child = e.orbitChildren[i];
           if (!child) continue;
           const ang = base + (i * Math.PI * 2) / Math.max(1, cnt);
-          try { child.position.set(Math.cos(ang) * r, y, Math.sin(ang) * r); } catch (_) {}
+          try { child.position.set(Math.cos(ang) * r, y, Math.sin(ang) * r); } catch (_) { }
         }
       }
 
@@ -498,17 +583,17 @@ export class BaseEffects {
       if (t >= e.until) {
         this.transient.remove(e.obj);
         this.indicators.remove(e.obj);
-        
+
         const disposeMat = (m) => {
-          try { if (m && m.map) m.map.dispose?.(); } catch (_) {}
-          try { m && m.dispose?.(); } catch (_) {}
+          try { if (m && m.map) m.map.dispose?.(); } catch (_) { }
+          try { m && m.dispose?.(); } catch (_) { }
         };
         const disposeObj = (o) => {
-          try { o.geometry && o.geometry.dispose?.(); } catch (_) {}
+          try { o.geometry && o.geometry.dispose?.(); } catch (_) { }
           try {
             if (Array.isArray(o.material)) o.material.forEach(disposeMat);
             else disposeMat(o.material);
-          } catch (_) {}
+          } catch (_) { }
         };
         try {
           if (e.obj && typeof e.obj.traverse === "function") {
@@ -516,9 +601,48 @@ export class BaseEffects {
           } else {
             disposeObj(e.obj);
           }
-        } catch (_) {}
+        } catch (_) { }
         this.queue.splice(i, 1);
       }
     }
   }
+}
+
+/**
+ * Base Effects Module
+ * 
+ * Provides generic, reusable visual effect primitives that are not tied to any specific skill.
+ * These are the building blocks for all visual effects in the game.
+ */
+
+// Normalize color inputs from various formats ("#66ffc2", 0x66ffc2, 6750146)
+export function normalizeColor(c, fallback = COLOR.fire) {
+  try {
+    if (typeof c === "number" && Number.isFinite(c)) return c >>> 0;
+    if (typeof c === "string") {
+      return parseThreeColor(c).hex >>> 0;
+    }
+  } catch (_) { }
+  try {
+    if (typeof fallback === "string") return parseThreeColor(fallback).hex >>> 0;
+    if (typeof fallback === "number") return fallback >>> 0;
+  } catch (_) { }
+  return 0xff6b35;
+}
+
+// Standalone ring factory (used by UI modules and effects)
+export function createGroundRing(innerR, outerR, color, opacity = 0.6) {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(innerR, outerR, 48),
+    new THREE.MeshBasicMaterial({
+      color: normalizeColor(color),
+      transparent: true,
+      opacity,
+      side: THREE.FrontSide,
+      depthWrite: false,
+    })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.02;
+  return ring;
 }

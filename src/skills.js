@@ -81,23 +81,6 @@ export class SkillsSystem {
     this._pendingShake = Math.max(this._pendingShake || 0, v || 0);
   }
 
-  // Burst arcs around a center point to enrich visuals (color-tinted)
-  _burstArcs(center, radius, def, count = 3) {
-    try {
-      const fx = this._fx(def);
-      const base = __vA.copy(center).add(__vB.set(0, 0.8, 0)).clone();
-      for (let i = 0; i < Math.max(1, count); i++) {
-        const ang = Math.random() * Math.PI * 2;
-        const r = Math.random() * Math.max(4, radius);
-        const to = __vA
-          .copy(center)
-          .add(__vC.set(Math.cos(ang) * r, 0.4 + Math.random() * 0.8, Math.sin(ang) * r))
-          .clone();
-        this.effects.spawnArcNoisePath(base, to, fx.arc, 0.08, 2);
-      }
-    } catch (_) { }
-  }
-
   // Prefer enemies in front of player within a small aim cone
   _pickTargetInAim(range = 36, halfAngleDeg = 12) {
     try {
@@ -344,7 +327,15 @@ export class SkillsSystem {
           const from = __vA.copy(current.pos()).add(__vB.set(0, 1.2, 0)).clone();
           const to = __vC.copy(nxt.pos()).add(__vB.set(0, 1.2, 0)).clone();
           try {
-            this.effects.spawnFireStreamAuto(from, to, COLOR.ember, 0.08);
+            // Auto-scale arc parameters based on distance
+            const dir = to.clone().sub(from);
+            const length = dir.length() || 1;
+            const segments = Math.max(8, Math.min(18, Math.round(8 + length * 0.5)));
+            const amplitude = Math.min(1.0, 0.25 + length * 0.02);
+            const passes = 2; // Use fewer passes for chain lightning
+            for (let i = 0; i < passes; i++) {
+              this.effects.spawnArc(from, to, COLOR.ember, 0.08, segments, amplitude);
+            }
           } catch (_) { }
           nxt.takeDamage(Math.max(1, Math.floor(dmg * 0.85)));
           current = nxt;

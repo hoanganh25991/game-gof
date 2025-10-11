@@ -76,7 +76,8 @@ export function createIndicators({
           z: (Math.random() - 0.5) * 0.6
         });
         try {
-          effects.spawnFireStream(a, b, COLOR.ember, 0.06, 5, 0.2);
+          // Use spawnArc instead of deprecated spawnFireStream
+          effects.spawnArc(a, b, COLOR.ember, 0.06, 5, 0.2);
           window.__nextHandSparkT = t + 0.5 + Math.random() * 0.5;
         } catch (_) {}
       }

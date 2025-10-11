@@ -104,7 +104,7 @@ class MeteorStormEffect {
       }, 140);
 
       // Storm cloud
-      this.baseEffects.spawnStormCloud(
+      this._spawnStormCloud(
         center,
         radius * 0.9,
         this.colors.smoke,
@@ -343,6 +343,20 @@ class MeteorStormEffect {
         } catch (_) { }
       }
     }
+  }
+
+  _spawnStormCloud(center, radius = 12, color = COLOR.fire, duration = 6, height = 3.6) {
+    try {
+      const thick = Math.max(0.6, radius * 0.08);
+      const torus = new THREE.Mesh(
+        new THREE.TorusGeometry(Math.max(2, radius * 0.8), thick * 0.5, 12, 32),
+        new THREE.MeshBasicMaterial({ color: normalizeColor(color), transparent: true, opacity: 0.18 })
+      );
+      torus.position.set(center.x, height, center.z);
+      torus.rotation.x = Math.PI / 2;
+      this.transient.add(torus);
+      this.queue.push({ obj: torus, until: now() + duration * FX.timeScale, fade: true, mat: torus.material, spinRate: 0.6 });
+    } catch (_) {}
   }
 
   /**
