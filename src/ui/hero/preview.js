@@ -1,7 +1,7 @@
 import { CSS_VAR } from "../../constants.js";
 import { getSkill, setSkill } from "../../skills_api.js";
 import { saveLoadout, loadOrDefault } from "../../loadout.js";
-import { SKILLS_POOL, DEFAULT_LOADOUT } from "../../skills_pool.js";
+import { SKILLS_POOL, DEFAULT_LOADOUT } from "../../../config/skills_pool.js";
 import { now } from "../../utils.js";
 import { getSkillUpgradeManager } from "../../skills_upgrade.js";
 

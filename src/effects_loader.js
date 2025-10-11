@@ -1,7 +1,7 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { COLOR } from "./constants.js";
 import { SKILL_FX } from "./skills_fx.js";
-import { SKILLS_POOL } from "./skills_pool.js";
+import { SKILLS_POOL } from "../config/skills_pool.js";
 
 /**
  * Dynamic Effects Loader

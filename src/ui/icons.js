@@ -1,5 +1,5 @@
 import { getSkill } from "../skills_api.js";
-import { BASIC_ATTACK } from "../skills_pool.js";
+import { BASIC_ATTACK } from "../../config/skills_pool.js";
 import { t } from "../i18n.js";
 
 /**

@@ -22,7 +22,7 @@
  *      (id, baseSkill) => upgradedSkill
  *    This keeps upgrade logic outside the API and avoids coupling to skill_upgrades.js.
  */
-import { SKILLS_POOL, DEFAULT_LOADOUT } from "./skills_pool.js";
+import { SKILLS_POOL, DEFAULT_LOADOUT } from "../config/skills_pool.js";
 
 const KEYS = ["Q", "W", "E", "R"];
 

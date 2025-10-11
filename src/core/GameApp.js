@@ -20,7 +20,7 @@ import { initI18n, setLanguage, getLanguage, t } from "../i18n.js";
 import { initSplash } from "../splash.js";
 import { initTouchControls } from "../touch.js";
 import { createInputService } from "../input_service.js";
-import { SKILLS_POOL, DEFAULT_LOADOUT } from "../skills_pool.js";
+import { SKILLS_POOL, DEFAULT_LOADOUT } from "../../config/skills_pool.js";
 import { loadOrDefault, saveLoadout, resolveLoadout } from "../loadout.js";
 import { audio } from "../audio.js";
 import { createVillagesSystem } from "../villages.js";
