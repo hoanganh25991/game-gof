@@ -86,6 +86,14 @@ export const THEME_COLORS = {
   villageColor: "#ffb347",
   ash: "#696969",
   volcano: "#8b4513",
+  
+  // Environment-specific colors
+  ambientDark: "#8b2500",
+  rock: "#3a2520",
+  trunk: "#2a1a12",
+  stem: "#4a2a1a",
+  darkFire: "#8b0000",
+  tomato: "#ff6347",
 };
 
 /**
@@ -200,6 +208,13 @@ export const COLOR = {
   ember: THEME_COLORS.ember,
   ash: THEME_COLORS.ash,
   volcano: THEME_COLORS.volcano,
+  
+  // Environment colors
+  ambientDark: THEME_COLORS.ambientDark,
+  rock: THEME_COLORS.rock,
+  trunk: THEME_COLORS.trunk,
+  stem: THEME_COLORS.stem,
+  tomato: THEME_COLORS.tomato,
 };
 
 /**

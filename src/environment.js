@@ -1,30 +1,25 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
 import { WORLD, storageKey } from "../config/index.js";
+import { COLOR, THEME_COLORS } from "../config/theme.js";
 import { createCypressTree, createOliveTree } from "./meshes.js";
 import { createHouseCluster } from "./village_utils.js";
 
-// Environment color palette
+// Environment color palette - All colors sourced from theme.js
+// Converts hex color strings to Three.js integer format
 const ENV_COLORS = {
-  // Atmospheric & Lighting
-  fogDark: 0x1a0f0a,
-  ambientDark: 0x8b2500,
-  sunAccent: 0xff6b35,
-  
-  // Nature elements
-  rock: 0x3a2520,
-  trunk: 0x2a1a12,
-  stem: 0x4a2a1a,
-  
-  // Fire theme
-  fire: 0xff4500,
-  midFire: 0xff8c42,
-  darkFire: 0x8b0000,
-  
-  // Highlights
-  yellow: 0xffeb3b,
-  volcano: 0xd32f2f,
-  tomato: 0xff6347,
+  fogDark: parseInt(COLOR.themeDark.replace('#', '0x'), 16),
+  sunAccent: parseInt(COLOR.fire.replace('#', '0x'), 16),
+  fire: parseInt(COLOR.lava.replace('#', '0x'), 16),
+  midFire: parseInt(COLOR.midFire.replace('#', '0x'), 16),
+  yellow: parseInt(COLOR.yellow.replace('#', '0x'), 16),
+  volcano: parseInt(COLOR.volcano.replace('#', '0x'), 16),
+  ambientDark: parseInt(COLOR.ambientDark.replace('#', '0x'), 16),
+  rock: parseInt(COLOR.rock.replace('#', '0x'), 16),
+  trunk: parseInt(COLOR.trunk.replace('#', '0x'), 16),
+  stem: parseInt(COLOR.stem.replace('#', '0x'), 16),
+  darkFire: parseInt(THEME_COLORS.darkFire.replace('#', '0x'), 16),
+  tomato: parseInt(COLOR.tomato.replace('#', '0x'), 16),
 };
 
 /**
