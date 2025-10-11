@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { COLOR, VILLAGE_POS, REST_RADIUS } from "../config/index.js";
-import { createHouse } from "./meshes.js";
+import { createHouseCluster } from "./village_utils.js";
 
 /**
  * Villages System
@@ -387,17 +387,20 @@ export function initVillages(scene, portals, opts = {}) {
     ring.position.set(center.x, 0, center.z);
     villageGroup.add(ring);
 
-    // Houses
-    for (let i = 0; i < houseCount; i++) {
-      const house = createHouse();
-      const ang = (i / houseCount) * Math.PI * 2 + Math.random() * 0.2;
-      const r = (fenceRadius * (0.35 + 0.5 * Math.random()));
-      house.position.set(center.x + Math.cos(ang) * r, 0, center.z + Math.sin(ang) * r);
-      house.rotation.y = Math.random() * Math.PI * 2;
-      const sc = 0.9 + Math.random() * (0.4 + scale * 0.2);
-      house.scale.setScalar(sc);
-      villageGroup.add(house);
-    }
+    // Houses - using shared house cluster utility
+    const houses = createHouseCluster(center, houseCount, fenceRadius * 0.7, {
+      lights: 'full',
+      decorations: false,
+      scaleMin: 0.9,
+      scaleMax: 0.4 + scale * 0.2,
+      ENV_COLORS: {
+        yellow: 0xffeb3b,
+        volcano: 0xd32f2f,
+        stem: 0x4a2a1a
+      },
+      acquireLight: () => true  // Dynamic villages always get lights
+    });
+    houses.children.forEach(house => villageGroup.add(house));
 
     // Gate + label
     const gatePos = new THREE.Vector3(center.x + fenceRadius, 0, center.z);

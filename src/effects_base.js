@@ -615,7 +615,7 @@ export class BaseEffects {
  * These are the building blocks for all visual effects in the game.
  */
 
-// Normalize color inputs from various formats ("#66ffc2", 0x66ffc2, 6750146)
+// Normalize color inputs from various formats ("#000000", 0x000000, 000000)
 export function normalizeColor(c, fallback = COLOR.fire) {
   try {
     if (typeof c === "number" && Number.isFinite(c)) return c >>> 0;
@@ -627,7 +627,7 @@ export function normalizeColor(c, fallback = COLOR.fire) {
     if (typeof fallback === "string") return parseThreeColor(fallback).hex >>> 0;
     if (typeof fallback === "number") return fallback >>> 0;
   } catch (_) { }
-  return 0xff6b35;
+  return 0x000000;
 }
 
 // Standalone ring factory (used by UI modules and effects)

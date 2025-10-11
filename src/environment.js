@@ -1,7 +1,8 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
 import { WORLD, storageKey } from "../config/index.js";
-import { createHouse, createCypressTree, createOliveTree } from "./meshes.js";
+import { createCypressTree, createOliveTree } from "./meshes.js";
+import { createHouseCluster } from "./village_utils.js";
 
 // Environment color palette
 const ENV_COLORS = {
@@ -303,58 +304,17 @@ export async function initEnvironment(scene, options = {}) {
   // (removed old straight cross roads; replaced with curved, connected network below)
 
   // ----------------
-  // Village generator (simple clustering of houses)
+  // Village generator (simple clustering of houses) - now uses shared utility
   function generateVillage(center = new THREE.Vector3(0, 0, 0), count = 6, radius = 8) {
-    const vgroup = new THREE.Group();
+    const vgroup = createHouseCluster(center, count, radius, {
+      lights: __houseLights,
+      decorations: true,
+      scaleMin: 0.9,
+      scaleMax: 0.5,
+      ENV_COLORS,
+      acquireLight
+    });
     vgroup.name = "village";
-    for (let i = 0; i < count; i++) {
-      try {
-        const house = createHouse();
-        const ang = Math.random() * Math.PI * 2;
-        const r = radius * (0.3 + Math.random() * 0.9);
-        house.position.set(center.x + Math.cos(ang) * r, 0, center.z + Math.sin(ang) * r);
-        house.rotation.y = Math.random() * Math.PI * 2;
-        // small variant: scale slightly
-        const sc = 0.9 + Math.random() * 0.5;
-        house.scale.setScalar(sc);
-
-        // Add a warm lantern and small emissive bulb near each house to match village ambiance
-        let __hasLanternLight = false;
-        if (__houseLights !== "none" && acquireLight(1)) {
-          __hasLanternLight = true;
-          const intensity = __houseLights === "dim" ? 0.4 : 0.9;
-          const dist = __houseLights === "dim" ? 4 : 6;
-          const decay = 2;
-          const lanternLight = new THREE.PointLight(ENV_COLORS.yellow, intensity, dist, decay);
-          lanternLight.position.set(0.6, 0.8, 0.6);
-          lanternLight.castShadow = false;
-          house.add(lanternLight);
-        }
-
-        const lanternBulb = new THREE.Mesh(
-          new THREE.SphereGeometry(0.08, 8, 8),
-          new THREE.MeshStandardMaterial({ emissive: ENV_COLORS.yellow, emissiveIntensity: (__houseLights === "none" ? 0.9 : 1.2), color: ENV_COLORS.volcano, roughness: 0.7 })
-        );
-        lanternBulb.position.set(0.6, 0.8, 0.6);
-        house.add(lanternBulb);
-        if (typeof __hasLanternLight !== "undefined" && !__hasLanternLight) {
-          lanternBulb.material.emissiveIntensity = (__houseLights === "none" ? 1.2 : 1.4);
-        }
-
-        // small ground decoration near house entrance
-        const peb = new THREE.Mesh(
-          new THREE.DodecahedronGeometry(0.22, 0),
-          new THREE.MeshStandardMaterial({ color: ENV_COLORS.stem, roughness: 0.95 })
-        );
-        peb.position.set(0.9, 0.02, 0.2);
-        peb.scale.setScalar(0.8 + Math.random() * 0.6);
-        house.add(peb);
-
-        vgroup.add(house);
-      } catch (e) {
-        // fallback safety
-      }
-    }
     root.add(vgroup);
     return vgroup;
   }
