@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { THEME_COLORS, VILLAGE_POS, REST_RADIUS, STORAGE_KEYS } from "../config/index.js";
-import { createPortalMesh } from "./hero_mesh.js";
+import { createPortalMesh } from "./meshes.js";
 import { distance2D, now } from "./utils.js";
 
 /**

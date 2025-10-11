@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { THEME_COLORS, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "../config/index.js";
-import { createHeroMesh, createEnemyMesh, createBillboardHPBar } from "./hero_mesh.js";
+import { createHeroMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
 import { distance2D, now, parseThreeColor } from "./utils.js";
 import { getSkillUpgradeManager } from "./skills_upgrade.js";
 
