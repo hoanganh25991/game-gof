@@ -289,7 +289,7 @@ export function createMapManager() {
     if (!canSelect(idx)) return false;
     currentIndex = idx;
     saveInt(LS_CUR, currentIndex);
-    // Apply per-map enemy CSS theme so COLOR.enemy/enemyDark update live
+    // Apply per-map enemy CSS theme so THEME_COLORS.enemy/enemyDark update live
     try { applyMapEnemyCss(getModifiers()); } catch (_) {}
     return true;
   }

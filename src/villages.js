@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, VILLAGE_POS, REST_RADIUS } from "../config/index.js";
+import { THEME_COLORS, VILLAGE_POS, REST_RADIUS } from "../config/index.js";
 import { createHouseCluster } from "./village_utils.js";
 
 /**
@@ -381,7 +381,7 @@ export function initVillages(scene, portals, opts = {}) {
     // Ground ring
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(fenceRadius - 0.1, fenceRadius + 0.1, 64),
-      new THREE.MeshBasicMaterial({ color: COLOR.village, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+      new THREE.MeshBasicMaterial({ color: THEME_COLORS.village, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
     );
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(center.x, 0, center.z);
@@ -426,7 +426,7 @@ export function initVillages(scene, portals, opts = {}) {
 
     // Portal inside village
     const portalOffset = new THREE.Vector3(-2.5, 0, 0);
-    const portal = portals.addPortalAt(gatePos.clone().add(portalOffset), COLOR.portal);
+    const portal = portals.addPortalAt(gatePos.clone().add(portalOffset), THEME_COLORS.portal);
 
     return { center: center.clone(), radius: fenceRadius, group: villageGroup, portal, name };
   }

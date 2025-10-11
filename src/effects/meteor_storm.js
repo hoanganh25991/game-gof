@@ -345,7 +345,7 @@ class MeteorStormEffect {
     }
   }
 
-  _spawnStormCloud(center, radius = 12, color = COLOR.fire, duration = 6, height = 3.6) {
+  _spawnStormCloud(center, radius = 12, color = THEME_COLORS.fire, duration = 6, height = 3.6) {
     try {
       const thick = Math.max(0.6, radius * 0.08);
       const torus = new THREE.Mesh(

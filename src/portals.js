@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, VILLAGE_POS, REST_RADIUS, STORAGE_KEYS } from "../config/index.js";
+import { THEME_COLORS, VILLAGE_POS, REST_RADIUS, STORAGE_KEYS } from "../config/index.js";
 import { createPortalMesh } from "./meshes.js";
 import { distance2D, now } from "./utils.js";
 
@@ -25,7 +25,7 @@ export function initPortals(scene) {
 
   function ensureVillagePortal() {
     if (villagePortal) return;
-    const pm = createPortalMesh(COLOR.village);
+    const pm = createPortalMesh(THEME_COLORS.village);
     pm.group.position.copy(VILLAGE_POS).add(new THREE.Vector3(4, 1, 0));
     scene.add(pm.group);
     villagePortal = { ...pm, linkTo: null, radius: 2.2, __kind: "village" };
@@ -61,7 +61,7 @@ export function initPortals(scene) {
   }
 
   // Add a new portal at a position (used by generated distant villages)
-  function addPortalAt(position, color = COLOR.village) {
+  function addPortalAt(position, color = THEME_COLORS.village) {
     const pm = createPortalMesh(color);
     pm.group.position.copy(position.clone().add(new THREE.Vector3(0, 1, 0)));
     scene.add(pm.group);
@@ -95,7 +95,7 @@ export function initPortals(scene) {
     // Create/refresh return portal where player stands and auto-teleport after countdown
     const here = player.pos().clone();
     if (!returnPortal) {
-      const pm = createPortalMesh(COLOR.village);
+      const pm = createPortalMesh(THEME_COLORS.village);
       scene.add(pm.group);
       returnPortal = { ...pm, linkTo: null, radius: 2.2 };
     } else {

@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "../config/index.js";
+import { THEME_COLORS, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "../config/index.js";
 import { createGoTMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
 import { distance2D, now, parseThreeColor } from "./utils.js";
 import { getSkillUpgradeManager } from "./skills_upgrade.js";
@@ -278,7 +278,7 @@ export class Enemy extends Entity {
     else if (r < toughChance) tier = "tough";
 
     const TIER_COLOR = {
-      normal: COLOR.enemyDark,
+      normal: THEME_COLORS.enemyDark,
       tough: 0xff8a50,
       elite: 0xffd86a,
       boss: 0xffeb99,
@@ -371,7 +371,7 @@ export class Enemy extends Entity {
 
     // color HP fill per tier
     const BAR_COLOR = {
-      normal: COLOR.enemy,
+      normal: THEME_COLORS.enemy,
       tough: 0xffa65a,
       elite: 0xffe085,
       boss: 0xfff0b3,

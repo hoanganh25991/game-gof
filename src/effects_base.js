@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, FX } from "../config/index.js";
+import { THEME_COLORS, FX } from "../config/index.js";
 import { now, parseThreeColor } from "./utils.js";
 import { handWorldPos, leftHandWorldPos } from "./entities.js";
 
@@ -31,7 +31,7 @@ export class BaseEffects {
   /**
    * Spawn a simple beam/line between two points
    */
-  spawnBeam(from, to, color = COLOR.themeOrange, life = 0.12) {
+  spawnBeam(from, to, color = THEME_COLORS.themeOrange, life = 0.12) {
     const p0 = this._tmpVecA.copy(from);
     const p1 = this._tmpVecB.copy(to);
     const geometry = new THREE.BufferGeometry().setFromPoints([p0, p1]);
@@ -45,7 +45,7 @@ export class BaseEffects {
   /**
    * Spawn a wavy arc/stream between two points with turbulence
    */
-  spawnArc(from, to, color = COLOR.themeOrange, life = 0.12, segments = 10, amplitude = 0.6) {
+  spawnArc(from, to, color = THEME_COLORS.themeOrange, life = 0.12, segments = 10, amplitude = 0.6) {
     const dir = this._tmpVecA.copy(to).sub(this._tmpVecB.copy(from));
     const normal = this._tmpVecC.set(-dir.z, 0, dir.x).normalize();
     const up = this._tmpVecD.set(0, 1, 0);
@@ -81,11 +81,11 @@ export class BaseEffects {
   /**
    * Spawn an impact effect at a point (vertical beams + radial bursts)
    */
-  spawnImpact(point, radius = 2, color = COLOR.themeOrange, intensity = 1.0) {
+  spawnImpact(point, radius = 2, color = THEME_COLORS.themeOrange, intensity = 1.0) {
     const colors = [
-      COLOR.themeYellow,
-      COLOR.themeAccent,
-      COLOR.themeOrange,
+      THEME_COLORS.themeYellow,
+      THEME_COLORS.themeAccent,
+      THEME_COLORS.themeOrange,
     ];
 
     const pillarPasses = Math.max(1, Math.round((this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4)) * intensity));
@@ -116,7 +116,7 @@ export class BaseEffects {
         0.8 + Math.random() * 1.5,
         Math.sin(ang) * r
       ));
-      const burstColor = Math.random() > 0.5 ? COLOR.themeAccent : color;
+      const burstColor = Math.random() > 0.5 ? THEME_COLORS.themeAccent : color;
       this.spawnBeam(point.clone().add(new THREE.Vector3(0, 0.2, 0)), p2, burstColor, 0.12);
     }
   }
@@ -124,7 +124,7 @@ export class BaseEffects {
   /**
    * Spawn a ground ring that expands and fades
    */
-  spawnRing(center, radius = 6, color = COLOR.themeOrange, duration = 0.35, width = 0.6, opacity = 0.55) {
+  spawnRing(center, radius = 6, color = THEME_COLORS.themeOrange, duration = 0.35, width = 0.6, opacity = 0.55) {
     try {
       const ring = createGroundRing(Math.max(0.05, radius - width * 0.5), radius + width * 0.5, color, opacity);
       ring.position.set(center.x, 0.02, center.z);
@@ -136,7 +136,7 @@ export class BaseEffects {
   /**
    * Spawn a sphere at a position (for explosions, flashes, etc.)
    */
-  spawnSphere(position, radius = 0.3, color = COLOR.themeOrange, life = 0.12, opacity = 0.9) {
+  spawnSphere(position, radius = 0.3, color = THEME_COLORS.themeOrange, life = 0.12, opacity = 0.9) {
     const sphere = new THREE.Mesh(
       new THREE.SphereGeometry(radius, 12, 12),
       new THREE.MeshBasicMaterial({ color: normalizeColor(color), transparent: true, opacity })
@@ -150,7 +150,7 @@ export class BaseEffects {
    * Spawn a projectile that travels from source to target
    */
   spawnProjectile(from, to, opts = {}) {
-    const color = opts.color || COLOR.themeOrange;
+    const color = opts.color || THEME_COLORS.themeOrange;
     const size = opts.size || 0.4;
     const speed = opts.speed || 20;
     const trail = opts.trail !== false;
@@ -172,7 +172,7 @@ export class BaseEffects {
     // Add outer glow layer
     const glowGeo = new THREE.SphereGeometry(size * 1.4, 12, 12);
     const glowMat = new THREE.MeshBasicMaterial({
-      color: COLOR.themeAccent,
+      color: THEME_COLORS.themeAccent,
       transparent: true,
       opacity: 0.4
     });
@@ -201,7 +201,7 @@ export class BaseEffects {
   /**
    * Spawn a cage of vertical bars around a point
    */
-  spawnCage(center, radius = 12, color = COLOR.themeOrange, duration = 0.6, bars = 12, height = 2.2) {
+  spawnCage(center, radius = 12, color = THEME_COLORS.themeOrange, duration = 0.6, bars = 12, height = 2.2) {
     try {
       const g = new THREE.Group();
       const mats = [];
@@ -233,7 +233,7 @@ export class BaseEffects {
   /**
    * Spawn a shield bubble around an entity
    */
-  spawnShield(entity, color = COLOR.themeOrange, duration = 6, radius = 1.7) {
+  spawnShield(entity, color = THEME_COLORS.themeOrange, duration = 6, radius = 1.7) {
     try {
       const mat = new THREE.MeshBasicMaterial({
         color: normalizeColor(color),
@@ -262,7 +262,7 @@ export class BaseEffects {
   /**
    * Spawn orbiting orbs around an entity
    */
-  spawnOrbitingOrbs(entity, color = COLOR.themeOrange, opts = {}) {
+  spawnOrbitingOrbs(entity, color = THEME_COLORS.themeOrange, opts = {}) {
     try {
       const count = Math.max(1, opts.count ?? 4);
       const r = Math.max(0.4, opts.radius ?? 1.2);
@@ -298,14 +298,14 @@ export class BaseEffects {
   }
 
   // ===== INDICATOR HELPERS (UI/Feedback) =====
-  spawnMovePing(point, color = COLOR.themeOrange) {
+  spawnMovePing(point, color = THEME_COLORS.themeOrange) {
     const ring = createGroundRing(0.6, 0.85, color, 0.8);
     ring.position.set(point.x, 0.02, point.z);
     this.indicators.add(ring);
     this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material, scaleRate: 1.6 });
   }
 
-  spawnTargetPing(entity, color = COLOR.ember) {
+  spawnTargetPing(entity, color = THEME_COLORS.ember) {
     if (!entity || !entity.alive) return;
     const p = entity.pos();
     const ring = createGroundRing(0.65, 0.9, color, 0.85);
@@ -315,18 +315,18 @@ export class BaseEffects {
   }
 
   showNoTargetHint(player, radius) {
-    const ring = createGroundRing(Math.max(0.1, radius - 0.2), radius + 0.2, COLOR.ember, 0.35);
+    const ring = createGroundRing(Math.max(0.1, radius - 0.2), radius + 0.2, THEME_COLORS.ember, 0.35);
     const p = player.pos();
     ring.position.set(p.x, 0.02, p.z);
     this.indicators.add(ring);
     this.queue.push({ obj: ring, until: now() + 0.8 * FX.timeScale, fade: true, mat: ring.material });
-    this.spawnStrike(player.pos(), 1.2, COLOR.ember);
+    this.spawnStrike(player.pos(), 1.2, THEME_COLORS.ember);
   }
 
   /**
   * Hit decal on ground
   */
-  spawnHitDecal(center, color = COLOR.ember) {
+  spawnHitDecal(center, color = THEME_COLORS.ember) {
     const ring = createGroundRing(0.2, 0.55, color, 0.5);
     ring.position.set(center.x, 0.02, center.z);
     this.indicators.add(ring);
@@ -336,7 +336,7 @@ export class BaseEffects {
   /**
    * Strike/explosion effect
    */
-  spawnStrike(point, radius = 2, color = COLOR.themeOrange) {
+  spawnStrike(point, radius = 2, color = THEME_COLORS.themeOrange) {
     this.spawnImpact(point, radius, color, 1.5);
 
     const emberCount = this.quality === "low" ? 4 : (this.quality === "medium" ? 8 : 12);
@@ -353,7 +353,7 @@ export class BaseEffects {
         2 + Math.random() * 3,
         (Math.random() - 0.5) * 1.5
       ));
-      const emberColor = Math.random() > 0.6 ? COLOR.themeYellow : (Math.random() > 0.5 ? COLOR.themeAccent : COLOR.ember);
+      const emberColor = Math.random() > 0.6 ? THEME_COLORS.themeYellow : (Math.random() > 0.5 ? THEME_COLORS.themeAccent : THEME_COLORS.ember);
       this.spawnBeam(emberStart, emberEnd, emberColor, 0.1 + Math.random() * 0.1);
     }
   }
@@ -361,10 +361,10 @@ export class BaseEffects {
   // ===== HAND/PLAYER EFFECTS =====
   spawnHandFlash(player, left = false) {
     const p = left ? leftHandWorldPos(player) : handWorldPos(player);
-    this.spawnSphere(p, 0.28, COLOR.themeOrange, 0.12, 0.9);
+    this.spawnSphere(p, 0.28, THEME_COLORS.themeOrange, 0.12, 0.9);
   }
 
-  spawnHandFlashColored(player, color = COLOR.themeOrange, left = false) {
+  spawnHandFlashColored(player, color = THEME_COLORS.themeOrange, left = false) {
     const p = left ? leftHandWorldPos(player) : handWorldPos(player);
     this.spawnSphere(p, 0.28, color, 0.14, 0.95);
   }
@@ -378,7 +378,7 @@ export class BaseEffects {
       const dir = new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.2), (Math.random() - 0.5)).normalize();
       const len = 0.35 + Math.random() * 0.5 * strength;
       const to = origin.clone().add(dir.multiplyScalar(len));
-      this.spawnBeam(origin.clone(), to, COLOR.themeOrange, 0.06);
+      this.spawnBeam(origin.clone(), to, THEME_COLORS.themeOrange, 0.06);
     }
   }
 
@@ -396,7 +396,7 @@ export class BaseEffects {
     // Create multiple passes for fire effect
     const passes = this.quality === "low" ? 2 : (this.quality === "medium" ? 3 : 4);
     for (let i = 0; i < passes; i++) {
-      this.spawnArc(a, b, COLOR.themeOrange, life, segments, amplitude);
+      this.spawnArc(a, b, THEME_COLORS.themeOrange, life, segments, amplitude);
     }
   }
 
@@ -493,7 +493,7 @@ export class BaseEffects {
             -0.2 - Math.random() * 0.3,
             (Math.random() - 0.5) * 0.3
           ));
-          this.spawnBeam(trailPos, trailEnd, e.trailColor || COLOR.themeOrange, 0.08);
+          this.spawnBeam(trailPos, trailEnd, e.trailColor || THEME_COLORS.themeOrange, 0.08);
         }
 
         if (progress >= 1 && e.onComplete) {
@@ -616,7 +616,7 @@ export class BaseEffects {
  */
 
 // Normalize color inputs from various formats ("#000000", 0x000000, 000000)
-export function normalizeColor(c, fallback = COLOR.themeOrange) {
+export function normalizeColor(c, fallback = THEME_COLORS.themeOrange) {
   try {
     if (typeof c === "number" && Number.isFinite(c)) return c >>> 0;
     if (typeof c === "string") {

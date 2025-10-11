@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { audio } from "./audio.js";
-import { COLOR, FX, REST_RADIUS, SCALING, VILLAGE_POS, WORLD } from "../config/index.js";
+import { THEME_COLORS, FX, REST_RADIUS, SCALING, VILLAGE_POS, WORLD } from "../config/index.js";
 import { handWorldPos } from "./entities.js";
 import { getSkill } from "./skills_api.js";
 import { SKILL_FX } from "../config/skills_fx.js";
@@ -43,11 +43,11 @@ export class SkillsSystem {
     const id = def && def.id;
     const e = (id && SKILL_FX[id]) || {};
     return {
-      beam: e.beam ?? COLOR.themeOrange, // Orange-red fire beam
-      impact: e.impact ?? COLOR.themeLightOrange, // Tomato red impact
-      ring: e.ring ?? COLOR.ember, // Ember orange ring
-      arc: e.arc ?? COLOR.arc, // Bright orange arc
-      hand: e.hand ?? COLOR.ember, // Ember orange hand
+      beam: e.beam ?? THEME_COLORS.themeOrange, // Orange-red fire beam
+      impact: e.impact ?? THEME_COLORS.themeLightOrange, // Tomato red impact
+      ring: e.ring ?? THEME_COLORS.ember, // Ember orange ring
+      arc: e.arc ?? THEME_COLORS.arc, // Bright orange arc
+      hand: e.hand ?? THEME_COLORS.ember, // Ember orange hand
       shake: e.shake ?? 0,
     };
   }
@@ -301,14 +301,14 @@ export class SkillsSystem {
     const dmg = Math.max(1, Math.floor(baseDmg * (up.dmgMul || 1)));
 
     this.effects.spawnProjectile(from, to, {
-      color: COLOR.themeOrange,
+      color: THEME_COLORS.themeOrange,
       size: 0.35,
       speed: 25,
       onComplete: (hitPos) => {
         // Impact explosion at target
-        this.effects.spawnStrike(hitPos, 1.2, COLOR.themeOrange);
+        this.effects.spawnStrike(hitPos, 1.2, THEME_COLORS.themeOrange);
         if (hasValidTarget) {
-          this.effects.spawnHitDecal(target.pos(), COLOR.ember);
+          this.effects.spawnHitDecal(target.pos(), THEME_COLORS.ember);
         }
       },
     });
@@ -329,7 +329,7 @@ export class SkillsSystem {
       // Uplift: AOE explosion around the hit target
       try {
         if (up.aoeRadius && up.aoeRadius > 0) {
-          this.effects.spawnStrike(target.pos(), up.aoeRadius, COLOR.ember);
+          this.effects.spawnStrike(target.pos(), up.aoeRadius, THEME_COLORS.ember);
           const r = up.aoeRadius + 2.5;
           this.enemies.forEach((en) => {
             if (!en.alive || en === target) return;
@@ -358,7 +358,7 @@ export class SkillsSystem {
             const amplitude = Math.min(1.0, 0.25 + length * 0.02);
             const passes = 2; // Use fewer passes for chain lightning
             for (let i = 0; i < passes; i++) {
-              this.effects.spawnArc(from, to, COLOR.ember, 0.08, segments, amplitude);
+              this.effects.spawnArc(from, to, THEME_COLORS.ember, 0.08, segments, amplitude);
             }
           } catch (_) { }
           nxt.takeDamage(Math.max(1, Math.floor(dmg * 0.85)));

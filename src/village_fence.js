@@ -73,7 +73,7 @@ export function createVillageFence(VILLAGE_POS, REST_RADIUS, COLOR) {
   // Subtle ground ring
   const fenceRing = new THREE.Mesh(
     new THREE.RingGeometry(fenceRadius - 0.08, fenceRadius + 0.08, 64),
-    new THREE.MeshBasicMaterial({ color: COLOR.village, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+    new THREE.MeshBasicMaterial({ color: THEME_COLORS.village, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
   );
   fenceRing.rotation.x = -Math.PI / 2;
   fenceRing.position.copy(VILLAGE_POS);

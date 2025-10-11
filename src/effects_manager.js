@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, FX } from "../config/index.js";
+import { THEME_COLORS, FX } from "../config/index.js";
 import { now, parseThreeColor } from "./utils.js";
 import { handWorldPos, leftHandWorldPos } from "./entities.js";
 import { BaseEffects, normalizeColor, createGroundRing } from "./effects_base.js";

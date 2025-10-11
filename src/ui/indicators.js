@@ -10,7 +10,7 @@ export function createIndicators({
   handWorldPos
 }) {
   // Selection ring
-  const selectionRing = createGroundRing(0.9, 1.05, COLOR.fire, 0.55);
+  const selectionRing = createGroundRing(0.9, 1.05, THEME_COLORS.fire, 0.55);
   selectionRing.visible = true;
   try { effects.indicators.add(selectionRing); } catch (_) {}
 
@@ -29,7 +29,7 @@ export function createIndicators({
         selectionRing.visible = true;
         const p = selectedUnit.pos();
         selectionRing.position.set(p.x, 0.02, p.z);
-        const col = selectedUnit.team === "enemy" ? COLOR.village : COLOR.fire;
+        const col = selectedUnit.team === "enemy" ? THEME_COLORS.village : THEME_COLORS.fire;
         selectionRing.material.color.setHex(col);
       } else {
         selectionRing.visible = false;
@@ -44,7 +44,7 @@ export function createIndicators({
           const slowed = en.slowUntil && t < en.slowUntil;
           if (slowed) {
             if (!en._slowRing) {
-              const r = createGroundRing(0.6, 0.9, COLOR.ember, 0.7);
+              const r = createGroundRing(0.6, 0.9, THEME_COLORS.ember, 0.7);
               effects.indicators.add(r);
               en._slowRing = r;
             }
@@ -77,7 +77,7 @@ export function createIndicators({
         });
         try {
           // Use spawnArc instead of deprecated spawnFireStream
-          effects.spawnArc(a, b, COLOR.ember, 0.06, 5, 0.2);
+          effects.spawnArc(a, b, THEME_COLORS.ember, 0.06, 5, 0.2);
           window.__nextHandSparkT = t + 0.5 + Math.random() * 0.5;
         } catch (_) {}
       }

@@ -15,7 +15,7 @@
  * - No raycast coupling
  */
 
-import { COLOR } from "../config/index.js";
+import { THEME_COLORS } from "../config/index.js";
 
 export class EnemiesSystem {
   // Private fields for dependencies
@@ -328,15 +328,15 @@ export class EnemiesSystem {
     try {
       if (en.attackEffect === "melee") {
         // lightweight strike
-        try { this.#effects.spawnStrike(this.#player.pos(), 0.9, COLOR.themeAccent); } catch (_) {}
+        try { this.#effects.spawnStrike(this.#player.pos(), 0.9, THEME_COLORS.themeAccent); } catch (_) {}
       } else if (en.attackEffect === "fire") {
         if (this.#shouldSpawnVfx && this.#shouldSpawnVfx("fire", from)) {
           this.#effects.spawnProjectile(from.clone(), to.clone(), {
-            color: en.beamColor || COLOR.themeLightOrange,
+            color: en.beamColor || THEME_COLORS.themeLightOrange,
             size: 0.3,
             speed: 20,
             onComplete: (hitPos) => {
-              this.#effects.spawnHitDecal(hitPos, 0.8, COLOR.themeOrange);
+              this.#effects.spawnHitDecal(hitPos, 0.8, THEME_COLORS.themeOrange);
             }
           });
         }
@@ -344,11 +344,11 @@ export class EnemiesSystem {
         // default ranged
         if (this.#shouldSpawnVfx && this.#shouldSpawnVfx("largeBeam", from)) {
           this.#effects.spawnProjectile(from.clone(), to.clone(), {
-            color: en.beamColor || COLOR.themeLightOrange,
+            color: en.beamColor || THEME_COLORS.themeLightOrange,
             size: 0.25,
             speed: 22,
             onComplete: (hitPos) => {
-              this.#effects.spawnHitDecal(hitPos, COLOR.themeOrange);
+              this.#effects.spawnHitDecal(hitPos, THEME_COLORS.themeOrange);
             }
           });
         }
@@ -358,7 +358,7 @@ export class EnemiesSystem {
     // Apply damage
     this.#player.takeDamage(en.attackDamage);
     try { this.#audio.sfx("player_hit"); } catch (_) {}
-    try { this.#effects.spawnDamagePopup(this.#player.pos(), en.attackDamage, COLOR.textWarm); } catch (_) {}
+    try { this.#effects.spawnDamagePopup(this.#player.pos(), en.attackDamage, THEME_COLORS.textWarm); } catch (_) {}
   }
 
   /**

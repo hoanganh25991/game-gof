@@ -77,7 +77,7 @@ updateThemeColor('themeOrange', '#ff0000');
 ### Option 1: Import from specific modules (recommended for new code)
 ```javascript
 import { STORAGE_KEYS } from "../config/storage.js";
-import { COLOR, CSS_VAR, initializeTheme } from "../config/theme.js";
+import { THEME_COLORS, CSS_VAR, initializeTheme } from "../config/theme.js";
 import { WORLD } from "../config/world.js";
 ```
 

@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { createHouse } from "./meshes.js";
-import { COLOR } from "../config/theme.js";
+import { THEME_COLORS } from "../config/theme.js";
 
 /**
  * Creates a cluster of houses in circular arrangement
@@ -51,7 +51,7 @@ export function createHouseCluster(center, count, radius, options = {}) {
         const intensity = lights === 'dim' ? 0.4 : 0.9;
         const dist = lights === 'dim' ? 4 : 6;
         const decay = 2;
-        const lanternLight = new THREE.PointLight(COLOR.themeYellow, intensity, dist, decay);
+        const lanternLight = new THREE.PointLight(THEME_COLORS.themeYellow, intensity, dist, decay);
         lanternLight.position.set(0.6, 0.8, 0.6);
         lanternLight.castShadow = false;
         house.add(lanternLight);
@@ -65,9 +65,9 @@ export function createHouseCluster(center, count, radius, options = {}) {
       const lanternBulb = new THREE.Mesh(
         new THREE.SphereGeometry(0.08, 8, 8),
         new THREE.MeshStandardMaterial({
-          emissive: COLOR.themeYellow,
+          emissive: THEME_COLORS.themeYellow,
           emissiveIntensity,
-          color: COLOR.volcano,
+          color: THEME_COLORS.volcano,
           roughness: 0.7
         })
       );
@@ -78,7 +78,7 @@ export function createHouseCluster(center, count, radius, options = {}) {
       if (decorations) {
         const peb = new THREE.Mesh(
           new THREE.DodecahedronGeometry(0.22, 0),
-          new THREE.MeshStandardMaterial({ color: COLOR.stem, roughness: 0.95 })
+          new THREE.MeshStandardMaterial({ color: THEME_COLORS.stem, roughness: 0.95 })
         );
         peb.position.set(0.9, 0.02, 0.2);
         peb.scale.setScalar(0.8 + Math.random() * 0.6);

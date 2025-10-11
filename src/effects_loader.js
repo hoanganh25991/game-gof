@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR } from "../config/index.js";
+import { THEME_COLORS } from "../config/index.js";
 import { SKILL_FX } from "../config/skills_fx.js";
 import { SKILLS_POOL } from "../config/skills_pool.js";
 
@@ -32,11 +32,11 @@ let isLoaded = false;
 function getSkillColors(skillId) {
   const fx = SKILL_FX[skillId] || {};
   return {
-    beam: fx.beam ?? COLOR.themeOrange,
-    arc: fx.arc ?? COLOR.themeAccent,
-    impact: fx.impact ?? COLOR.themeOrange,
-    ring: fx.ring ?? COLOR.ember,
-    hand: fx.hand ?? COLOR.ember,
+    beam: fx.beam ?? THEME_COLORS.themeOrange,
+    arc: fx.arc ?? THEME_COLORS.themeAccent,
+    impact: fx.impact ?? THEME_COLORS.themeOrange,
+    ring: fx.ring ?? THEME_COLORS.ember,
+    hand: fx.hand ?? THEME_COLORS.ember,
     shake: fx.shake ?? 0.2
   };
 }

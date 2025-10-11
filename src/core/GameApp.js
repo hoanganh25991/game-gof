@@ -4,7 +4,7 @@
  */
 
 import * as THREE from "../../vendor/three/build/three.module.js";
-import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey } from "../../config/index.js";
+import { THEME_COLORS, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey } from "../../config/index.js";
 import { initializeTheme, THEME_READY } from "../../config/theme.js";
 import { setLoadoutAndApply, getSkill, setSkill } from "../skills_api.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "../world.js";
