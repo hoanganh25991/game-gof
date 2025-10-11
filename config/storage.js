@@ -7,6 +7,7 @@ export const storageKey = (suffix, separator = ".") => {
 };
 
 export const STORAGE_KEYS = {
+  lang: storageKey("lang"),
   renderPrefs: storageKey("renderPrefs"),
   envPrefs: storageKey("envPrefs"),
   audioPrefs: storageKey("audioPrefs"),

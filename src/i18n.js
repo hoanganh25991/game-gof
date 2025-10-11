@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from "../config/storage.js"; // ensure storageKey is defined
 /**
  * i18n utility (logic only) for GoF RPG.
  *
@@ -9,7 +10,6 @@
  *   are re-applied.
  */
 
-const STORAGE_KEY = "gof.lang";
 const DEFAULT_LANG = "vi";
 
 /**
@@ -23,7 +23,7 @@ const LOCALES = {};
 
 let currentLang = (() => {
   try {
-    const saved = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    const saved = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEYS.lang) : null;
     return saved || DEFAULT_LANG;
   } catch (e) {
     return DEFAULT_LANG;
@@ -175,7 +175,7 @@ export function initI18n() {
       window.applyTranslations = applyTranslations;
       window.loadLocale = loadLocale;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // Apply keys immediately so the UI is populated
   applyTranslations(document);
