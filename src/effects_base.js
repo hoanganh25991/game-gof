@@ -338,7 +338,6 @@ export class BaseEffects {
   spawnStrike(point, radius = 2, color = COLOR.fire) {
     this.spawnImpact(point, radius, color, 1.5);
 
-    // Add extra embers for legacy compatibility
     const emberCount = this.quality === "low" ? 4 : (this.quality === "medium" ? 8 : 12);
     for (let i = 0; i < emberCount; i++) {
       const ang = Math.random() * Math.PI * 2;

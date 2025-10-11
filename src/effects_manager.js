@@ -18,7 +18,6 @@ export { createGroundRing, normalizeColor };
  * Architecture:
  * - Base effects: Generic primitives (beam, arc, impact, ring, etc.)
  * - Skill effects: Registered effects per skill ID
- * - Legacy methods: Preserved for backward compatibility
  */
 export class EffectsManager extends BaseEffects {
   constructor(scene, opts = {}) {
@@ -28,9 +27,7 @@ export class EffectsManager extends BaseEffects {
         : "high");
     
     super(scene, quality);
-    
-    // Store options for legacy methods
-    this.opts = opts;
+
     // Active, long-lived skill effect instances (class-based effects)
     this.activeSkillEffects = [];
   }

@@ -264,11 +264,6 @@ export function startInstructionGuide() {
   } catch (_) { }
 }
 
-// Optional global fallback binding so legacy callers still work
-try {
-  window.startInstructionGuide = startInstructionGuide;
-} catch (_) { }
-
 // Convenience: enable delegated click on Guide button if present
 document.addEventListener("click", (ev) => {
   const t = ev.target;

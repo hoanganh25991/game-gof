@@ -312,17 +312,7 @@ export function initTouchControls({ player, skills, effects, aimPreview, attackP
       if (aoeDrag.didDrag) { aoeDrag.didDrag = false; return; }
       if (downAt[key] && nowTs - downAt[key] > 250) { downAt[key] = 0; return; }
       downAt[key] = 0;
-
-      // Instant cast (no aim). AOE skills auto-select target point in skills._castAOE when point is omitted.
-      if (typeof skills.castSkill === "function") {
-        skills.castSkill(key);
-      } else {
-        // Legacy fallbacks
-        if (key === "Q" && typeof skills.castQ_ChainLightning === "function") return skills.castQ_ChainLightning();
-        if (key === "W" && typeof skills.castW_AOE === "function") return skills.castW_AOE();
-        if (key === "E" && typeof skills.castE_StaticField === "function") return skills.castE_StaticField();
-        if (key === "R" && typeof skills.castR_Thunderstorm === "function") return skills.castR_Thunderstorm();
-      }
+      skills.castSkill(key);
     });
   }
 
