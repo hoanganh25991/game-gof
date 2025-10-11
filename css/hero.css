@@ -356,11 +356,63 @@
   border: 1px solid var(--border-orange-subtle);
   border-radius: 8px;
   padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.items-row:hover {
+  background: rgba(255, 140, 66, 0.08);
+  border-color: var(--border-orange-subtle);
+  transform: scale(1.01);
 }
 
 .items-row.selected {
-  background: rgba(255, 140, 66, 0.10);
-  border-color: var(--border-orange-light);
+  background: rgba(255, 140, 66, 0.25);
+  border-color: var(--border-orange);
+  box-shadow: 0 0 0 2px rgba(255, 140, 66, 0.40), 
+              0 4px 16px rgba(255, 140, 66, 0.35);
+  transform: scale(1.02);
+}
+
+.items-row.selected:hover {
+  background: rgba(255, 140, 66, 0.30);
+}
+
+/* Assigned skills (currently in Q/W/E/R slots) */
+.items-row.assigned {
+  position: relative;
+  background: rgba(76, 175, 80, 0.12);
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.items-row.assigned:hover {
+  background: rgba(76, 175, 80, 0.18);
+}
+
+/* Show slot indicator for assigned skills */
+.items-row.assigned::before {
+  content: attr(data-assigned-slot);
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  font-weight: 900;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Locked/disabled skill rows */
+.items-row[style*="opacity: 0.5"] {
+  cursor: not-allowed;
+}
+
+.items-row[style*="opacity: 0.5"]:hover {
+  background: transparent;
+  transform: none;
 }
 
 .items-thumb {

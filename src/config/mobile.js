@@ -35,8 +35,7 @@ export const MOBILE_OPTIMIZATIONS = {
  * Safe to call on desktop; it will be a no-op except logging.
  */
 export function applyMobileRendererHints(renderer, { quality }) {
-  if (!isMobile || !renderer) return;
-  if (quality == "high") return;
+  if (!isMobile || !renderer || quality == "high") return;
   try {
     console.log("[Mobile] Apply renderer hints", { quality })
     const currentRatio = renderer.getPixelRatio();
@@ -55,8 +54,8 @@ export function applyMobileRendererHints(renderer, { quality }) {
         // Context already created, log preference if needed
         console.info('[Mobile] GPU power preference: high-performance');
       }
-    } catch (_) {}
-  } catch (_) {}
+    } catch (_) { }
+  } catch (_) { }
 }
 
 /**

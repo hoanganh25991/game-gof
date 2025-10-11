@@ -1,5 +1,6 @@
 /* css/uplift.css
    Styles for the Uplift popup and toast
+   Uses fire theme colors from base.css
 */
 
 #upliftPopup {
@@ -24,24 +25,26 @@
   max-width: 90vw;
   max-height: 90vh;
   overflow: auto;
-  background: rgba(12,28,52,0.95);
-  border: 1px solid rgba(124,196,255,0.35);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+  background: var(--glass-strong);
+  border: 1px solid var(--border-orange);
+  box-shadow: var(--shadow-strong);
   border-radius: 10px;
   padding: 16px;
-  color: #fff;
+  color: var(--text-warm);
   text-align: center;
 }
 
 #upliftPopup .uplift-title {
   font-size: 18px;
   margin-bottom: 8px;
-  color: #ffd86a;
+  color: var(--theme-yellow);
+  text-shadow: 0 0 8px var(--glow-orange);
 }
 
 #upliftPopup .uplift-desc {
   opacity: 0.9;
   margin-bottom: 12px;
+  color: var(--text-warm-light);
 }
 
 #upliftPopup .uplift-btn-row {
@@ -54,17 +57,24 @@
 #upliftPopup .uplift-btn {
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(124,196,255,0.35);
-  
-  color: #fff;
+  border: 1px solid var(--border-orange);
+  background: var(--glass);
+  color: var(--text-warm);
   cursor: pointer;
   min-width: 110px;
   text-align: center;
   user-select: none;
+  transition: all 0.2s ease;
+}
+
+#upliftPopup .uplift-btn:hover {
+  background: var(--border-orange-light);
+  border-color: var(--theme-orange);
+  box-shadow: 0 0 12px var(--glow-orange);
 }
 
 #upliftPopup .uplift-btn:focus {
-  outline: 2px solid rgba(124,196,255,0.6);
+  outline: 2px solid var(--theme-orange);
   outline-offset: 2px;
 }
 
@@ -75,10 +85,16 @@
 #upliftPopup .uplift-skip {
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(124,196,255,0.25);
-  background: rgba(12,28,52,0.85);
-  color: #ddd;
+  border: 1px solid var(--border-orange-subtle);
+  background: var(--glass);
+  color: var(--text-warm-light);
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#upliftPopup .uplift-skip:hover {
+  border-color: var(--border-orange);
+  background: var(--border-orange-subtle);
 }
 
 #upliftToast {
@@ -86,16 +102,34 @@
   left: 50%;
   top: 12%;
   transform: translateX(-50%);
-  background: rgba(20,40,70,0.95);
-  border: 1px solid rgba(124,196,255,0.35);
+  background: var(--glass-strong);
+  border: 1px solid var(--border-orange);
   border-radius: 8px;
-  padding: 8px 12px;
-  color: #fff;
+  padding: 10px 16px;
+  color: var(--theme-yellow);
+  font-weight: 600;
+  text-shadow: 0 0 8px var(--glow-orange);
+  box-shadow: var(--shadow-strong), 0 0 20px var(--glow-orange);
   z-index: 9999;
   display: none;
   pointer-events: none;
+  animation: upliftToastPulse 1s ease-out;
 }
 
 #upliftToast.show {
   display: block;
+}
+
+@keyframes upliftToastPulse {
+  0% {
+    transform: translateX(-50%) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.05);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
 }

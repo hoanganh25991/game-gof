@@ -199,6 +199,27 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
   poolPanel.appendChild(list);
   leftCol.appendChild(poolPanel);
 
+  // Function to highlight skills that are currently assigned to slots
+  function updateAssignedSkillsHighlight(loadout) {
+    try {
+      list.querySelectorAll(".items-row").forEach((row) => {
+        const skillId = row.dataset.skillId;
+        // Check if this skill is in the current loadout
+        const slotIndex = loadout.indexOf(skillId);
+        if (slotIndex !== -1) {
+          row.classList.add("assigned");
+          row.dataset.assignedSlot = keys[slotIndex];
+        } else {
+          row.classList.remove("assigned");
+          delete row.dataset.assignedSlot;
+        }
+      });
+    } catch (_) {}
+  }
+
+  // Initial highlight of assigned skills
+  updateAssignedSkillsHighlight(activeLoadout);
+
   // Actions row (Reset)
   const actions = document.createElement("div");
   actions.className = "hero-actions";
@@ -245,6 +266,8 @@ export function renderSkillsTab(panelEl, ctx = {}, rerender) {
       updateSkillBarLabels && updateSkillBarLabels();
       // Update slots UI in place to preserve scroll and avoid remounting other tabs
       updateSlotsFromLoadout(activeLoadout);
+      // Update assigned skills highlight in the list
+      updateAssignedSkillsHighlight(activeLoadout);
     } catch (_) {}
   }
   function assignSkillTo(slotIndex, skillId) {

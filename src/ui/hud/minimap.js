@@ -211,9 +211,6 @@ export class MinimapUI {
     try {
       const structureList = structures?.listStructures?.() || [];
       
-      // Debug: log structure count
-      try { console.log("[Minimap] Drawing", structureList.length, "structures"); } catch (_) {}
-      
       for (const structure of structureList) {
         const p = w2p(structure.position.x, structure.position.z);
         
@@ -238,9 +235,6 @@ export class MinimapUI {
           default:
             structureColor = CSS_COLOR.templeDot; // fallback
         }
-        
-        // Debug: log structure drawing
-        try { console.log("[Minimap] Drawing structure:", structure.type, structure.name, "at:", structure.position.x, structure.position.z, "color:", structureColor); } catch (_) {}
         
         ctx.fillStyle = structureColor;
         

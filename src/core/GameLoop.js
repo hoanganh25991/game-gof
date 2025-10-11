@@ -19,12 +19,12 @@ export class GameLoop {
   #isMobile;
   #MOBILE_OPTIMIZATIONS;
   #onUpdate;
-  
+
   // Loop state
   #isRunning = false;
   #lastT = 0;
   #animationFrameId = null;
-  
+
   // Performance budgeting
   #frameBudgetMs;
   #frameStartMs = 0;
@@ -34,18 +34,18 @@ export class GameLoop {
     this.#isMobile = isMobile;
     this.#MOBILE_OPTIMIZATIONS = MOBILE_OPTIMIZATIONS;
     this.#onUpdate = onUpdate;
-    
+
     // Set frame budget based on platform
-    this.#frameBudgetMs = isMobile 
+    this.#frameBudgetMs = isMobile
       ? (MOBILE_OPTIMIZATIONS?.frameBudgetMs || 10.0)
       : 10.0;
-    
+
     // Allow runtime tuning
     try {
       if (typeof window !== 'undefined') {
         window.__FRAME_BUDGET_MS = this.#frameBudgetMs;
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   /**
@@ -71,16 +71,16 @@ export class GameLoop {
    */
   #tick = () => {
     if (!this.#isRunning) return;
-    
+
     this.#animationFrameId = requestAnimationFrame(this.#tick);
-    
+
     // Track frame timing
     this.#frameStartMs = performance.now();
-    
+
     const t = this.#now();
     const dt = this.#calculateDeltaTime(t);
     this.#lastT = t;
-    
+
     // Call the update callback with delta time, current time, and budget checker
     try {
       this.#onUpdate(dt, t, {
@@ -98,11 +98,11 @@ export class GameLoop {
    */
   start() {
     if (this.#isRunning) return;
-    
+
     this.#isRunning = true;
     this.#lastT = this.#now();
     this.#tick();
-    
+
     console.info('[GameLoop] Started');
   }
 
@@ -111,14 +111,14 @@ export class GameLoop {
    */
   stop() {
     if (!this.#isRunning) return;
-    
+
     this.#isRunning = false;
-    
+
     if (this.#animationFrameId !== null) {
       cancelAnimationFrame(this.#animationFrameId);
       this.#animationFrameId = null;
     }
-    
+
     console.info('[GameLoop] Stopped');
   }
 
@@ -138,7 +138,7 @@ export class GameLoop {
       if (typeof window !== 'undefined') {
         window.__FRAME_BUDGET_MS = this.#frameBudgetMs;
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   /**

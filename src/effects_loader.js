@@ -7,15 +7,19 @@ import { SKILLS_POOL } from "./skills_pool.js";
  * Dynamic Effects Loader
  * 
  * Automatically loads effect implementations from the effects/ directory.
- * Each effect file should export a default function with signature:
- *   (baseEffects, params) => void
+ * 
+ * Each effect file should follow the SkillEffect interface pattern:
+ * - Export a default factory function: (baseEffects, params) => EffectInstance
+ * - Effect class must implement: update(dt, t), dispose(), and finished property
+ * - See src/effects/effect_base_interface.js for details and examples
  * 
  * File naming convention: {skill_id}.js
  * 
  * Benefits:
  * - No need to modify registry when adding new effects
  * - Just drop a file into effects/ directory
- * - Automatic registration based on filename
+ * - Automatic registration and lifecycle management
+ * - Consistent interface for all effects
  * - Graceful fallback for missing effects
  */
 

@@ -52,24 +52,24 @@ export class WorldManager {
    */
   #initialize() {
     const world = this.#initWorld();
-    
+
     this.#renderer = world.renderer;
     this.#scene = world.scene;
     this.#camera = world.camera;
     this.#ground = world.ground;
     this.#cameraOffset = world.cameraOffset;
     this.#cameraShake = world.cameraShake;
-    
+
     // Store base camera offset for reset
     this.#baseCameraOffset = this.#cameraOffset.clone();
-    
+
     // Store default camera settings
     this.#defaultCameraNear = this.#camera.near || 0.1;
     this.#defaultCameraFov = this.#camera.fov || 60;
 
     // Setup resize handler
     this.#addResizeHandler(this.#renderer, this.#camera);
-    
+
     console.info('[WorldManager] Initialized');
   }
 
@@ -142,14 +142,14 @@ export class WorldManager {
    */
   updateCameraForPlayer(player, lastMoveDir, dt) {
     if (this.#firstPersonMode) return; // Skip if in FP mode
-    
+
     try {
       this.#updateCamera(
-        this.#camera, 
-        player, 
-        lastMoveDir, 
-        dt, 
-        this.#cameraOffset, 
+        this.#camera,
+        player,
+        lastMoveDir,
+        dt,
+        this.#cameraOffset,
         this.#cameraShake
       );
     } catch (err) {
@@ -184,13 +184,13 @@ export class WorldManager {
    */
   setFirstPersonMode(enabled, player = null, heroBars = null) {
     this.#firstPersonMode = !!enabled;
-    
+
     if (this.#firstPersonMode) {
       // First-person mode: tighter near plane and wider FOV
       this.#camera.near = 0.01;
       this.#camera.fov = 75;
       this.#camera.updateProjectionMatrix();
-      
+
       // Hide torso/head/cloak parts so arms remain visible
       try {
         if (player?.mesh?.userData?.fpHide) {
@@ -199,13 +199,13 @@ export class WorldManager {
         if (heroBars?.container) {
           heroBars.container.visible = false;
         }
-      } catch (_) {}
+      } catch (_) { }
     } else {
       // Third-person mode: restore defaults
       this.#camera.near = this.#defaultCameraNear;
       this.#camera.fov = this.#defaultCameraFov;
       this.#camera.updateProjectionMatrix();
-      
+
       // Restore visibility
       try {
         if (player?.mesh?.userData?.fpHide) {
@@ -214,7 +214,7 @@ export class WorldManager {
         if (heroBars?.container) {
           heroBars.container.visible = true;
         }
-      } catch (_) {}
+      } catch (_) { }
     }
   }
 
@@ -269,10 +269,10 @@ export class WorldManager {
           }
         }
       });
-      
+
       // Dispose renderer
       this.#renderer.dispose();
-      
+
       console.info('[WorldManager] Disposed');
     } catch (err) {
       console.error('[WorldManager] Disposal failed:', err);

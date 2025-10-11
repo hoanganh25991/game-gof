@@ -70,7 +70,7 @@ export function getBasicUplift() {
   const aoeRadius = aoePicks > 0 ? 2 + (aoePicks - 1) * 1.5 : 0; // 2, 3.5, 5.0, ...
   const chainJumps = chainPicks; // 0,1,2,3...
   const dmgMul = 1 + impactPicks * 0.05; // +5% per pick
-  const fx = impactPicks > 0 ? { impactColor: 0xffa500 } : null; // Ember orange
+  const fx = impactPicks > 0 ? { impactColor: 0xff6b35 } : null; // Fire theme orange
   return { aoeRadius, chainJumps, dmgMul, fx };
 }
 
