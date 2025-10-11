@@ -40,12 +40,6 @@ The `config/constants.js` file has been refactored into a modular structure for 
 **Purpose**: Visual effects timing and configuration
 - `FX` - Global VFX timing controls (timeScale, fade, spin, etc.)
 
-### effects-colors.js
-**Purpose**: Centralized color palette for visual effects
-- `EFFECTS_COLORS` - Predefined color palette for fire, lava, materials, structures
-- `toThreeColor()` - Helper to convert color formats to THREE.js compatible values
-- **Note**: Individual effects currently use hardcoded colors (300+ instances). This module provides a centralized palette for future refactoring.
-
 ### index.js
 **Purpose**: Central re-export point
 - Re-exports all constants from all modules
