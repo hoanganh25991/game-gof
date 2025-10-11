@@ -4,7 +4,7 @@
      import { renderHeroScreen } from "./ui/hero/index.js";
      renderHeroScreen("skills", { ...ctx });
 */
-import { SCALING } from "../../constants.js";
+import { SCALING } from "../../../config/constants.js";
 import { renderSkillsTab } from "./tabs/skills.js";
 import { renderInfoTab } from "./tabs/info.js";
 import { renderBookTab } from "./tabs/book.js";

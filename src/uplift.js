@@ -7,7 +7,7 @@
  */
 
 import { t } from "./i18n.js";
-import { STORAGE_KEYS } from "./constants.js";
+import { STORAGE_KEYS } from "../config/constants.js";
 
 const LS_KEY = STORAGE_KEYS.upliftChoices;
 

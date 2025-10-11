@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR } from "./constants.js";
+import { COLOR } from "../config/constants.js";
 import { SKILL_FX } from "./skills_fx.js";
 import { SKILLS_POOL } from "../config/skills_pool.js";
 

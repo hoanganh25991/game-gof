@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture } from "./utils.js";
-import { WORLD, storageKey } from "./constants.js";
+import { WORLD, storageKey } from "../config/constants.js";
 
 export function getTargetPixelRatio() {
   // Read render quality preference (persisted). Default to "high".

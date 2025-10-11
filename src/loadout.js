@@ -12,7 +12,7 @@
  * so it can be used from anywhere (eg. src/main.js) by passing the skill pool array.
  */
 
-import { STORAGE_KEYS } from "./constants.js";
+import { STORAGE_KEYS } from "../config/constants.js";
 
 const STORAGE_KEY = STORAGE_KEYS.fireLoadout;
 

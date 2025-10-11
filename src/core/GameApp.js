@@ -4,7 +4,7 @@
  */
 
 import * as THREE from "../../vendor/three/build/three.module.js";
-import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey, CSS_READY } from "../constants.js";
+import { COLOR, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey, CSS_READY } from "../../config/constants.js";
 import { setLoadoutAndApply, getSkill, setSkill } from "../skills_api.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "../world.js";
 import { UIManager } from "../ui/hud/index.js";

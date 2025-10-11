@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { makeNoiseTexture, createSeededRNG, seededRange } from "./utils.js";
-import { WORLD, storageKey, COLOR } from "./constants.js";
+import { WORLD, storageKey, COLOR } from "../config/constants.js";
 import { createHouse, createCypressTree, createOliveTree } from "./meshes.js";
 
 /**

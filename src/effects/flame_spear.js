@@ -1,7 +1,7 @@
 import * as THREE from "../../vendor/three/build/three.module.js";
 import { SKILL_FX } from "../skills_fx.js";
 import { now } from "../utils.js";
-import { FX } from "../constants.js";
+import { FX } from "../../config/constants.js";
 
 /**
  * Flame Spear Effect

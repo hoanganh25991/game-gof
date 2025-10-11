@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { seededRand01 } from "./utils.js";
-import { COLOR, CSS_READY } from "./constants.js";
+import { COLOR, CSS_READY } from "../config/constants.js";
 import {
   createGreekTemple,
   createVilla,

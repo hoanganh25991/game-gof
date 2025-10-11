@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { COLOR, FX } from "./constants.js";
+import { COLOR, FX } from "../config/constants.js";
 import { now, parseThreeColor } from "./utils.js";
 import { handWorldPos, leftHandWorldPos } from "./entities.js";
 
