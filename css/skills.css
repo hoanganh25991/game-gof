@@ -71,24 +71,9 @@
   text-shadow: 0 1px 0 rgba(0,0,0,0.6);
 }
 
-/* Cooldown state classes - applied by JS based on remaining time percentage */
-.skill .cooldown.cd-high,
-.skill-btn .cooldown.cd-high {
-  /* High cooldown (>50% remaining) - set via inline style with --cooldown-high */
-}
-
-.skill .cooldown.cd-mid,
-.skill-btn .cooldown.cd-mid {
-  /* Medium cooldown (20-50% remaining) - set via inline style with --cooldown-mid */
-}
-
-.skill .cooldown.cd-low,
-.skill-btn .cooldown.cd-low {
-  /* Low cooldown (<20% remaining) - set via inline style with --cooldown-low */
-}
-
 .skill .cooldown{
   border-radius: 10px;
+  z-index: 100;
 }
 
 /* Circular cooldown visuals inside round skill buttons */

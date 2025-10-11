@@ -185,7 +185,7 @@ export class SkillsSystem {
       } else {
         remain = Math.max(0, end - t);
         // Hide when very close to ready
-        if (remain <= 0.1) {
+        if (remain <= 0.05) {
           el.style.background = "none";
           el.textContent = "";
           el.className = "cooldown";
@@ -200,7 +200,8 @@ export class SkillsSystem {
 
           el.className = `cooldown ${cdClass}`;
           el.style.background = `conic-gradient(var(${colorVar}) ${deg}deg, rgba(0,0,0,0) 0deg)`;
-          el.textContent = remain < 3 ? remain.toFixed(1) : `${Math.ceil(remain)}`;
+          // el.textContent = remain < 3 ? remain.toFixed(1) : `${Math.ceil(remain)}`;
+          el.textContent = remain.toFixed(1);
         }
       }
 

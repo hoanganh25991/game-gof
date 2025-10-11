@@ -1,6 +1,7 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { COLOR, FX } from "./constants.js";
 import { now, parseThreeColor } from "./utils.js";
+import { handWorldPos, leftHandWorldPos } from "./entities.js";
 
 /**
  * Base effect primitives - generic building blocks
