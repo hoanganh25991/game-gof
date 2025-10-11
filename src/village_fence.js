@@ -7,7 +7,7 @@ import * as THREE from "../vendor/three/build/three.module.js";
  * Returns:
  *   THREE.Group containing instanced posts, rails, and a subtle ground ring.
  */
-export function createVillageFence(VILLAGE_POS, REST_RADIUS, COLOR) {
+export function createVillageFence(VILLAGE_POS, REST_RADIUS, THEME_COLORS) {
   const fenceGroup = new THREE.Group();
 
   const FENCE_POSTS = 28;

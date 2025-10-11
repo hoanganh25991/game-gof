@@ -1,6 +1,6 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { seededRand01 } from "./utils.js";
-import { THEME_COLORS, CSS_READY } from "../config/index.js";
+import { THEME_COLORS } from "../config/index.js";
 import {
   createGreekTemple,
   createVilla,
@@ -165,9 +165,8 @@ export function createStructureWithLabel(structureType, params = {}, position = 
  *
  * This module performs placement and side-effects on the provided root group.
  */
-export async function placeStructures(params = {}) {
+export function placeStructures(params = {}) {
   // Wait for CSS variables to be available
-  await CSS_READY;
 
   const {
     rng,

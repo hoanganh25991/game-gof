@@ -5,7 +5,7 @@
 
 import * as THREE from "../../vendor/three/build/three.module.js";
 import { THEME_COLORS, WORLD, VILLAGE_POS, REST_RADIUS, SCALING, storageKey } from "../../config/index.js";
-import { initializeTheme, THEME_READY } from "../../config/theme.js";
+import { initializeTheme } from "../../config/theme.js";
 import { setLoadoutAndApply, getSkill, setSkill } from "../skills_api.js";
 import { initWorld, updateCamera, updateGridFollow, updateEnvironmentFollow, addResizeHandler, getTargetPixelRatio } from "../world.js";
 import { UIManager } from "../ui/hud/index.js";
@@ -139,7 +139,6 @@ export class GameApp {
   async init() {
     // Initialize theme colors from JavaScript into CSS variables
     initializeTheme();
-    await THEME_READY;
     
     await this._initSettings();
     await this._initWorld();
@@ -327,7 +326,7 @@ export class GameApp {
     
     this._indicators = createIndicators({
       effects: this._effects,
-      COLOR,
+      THEME_COLORS,
       createGroundRing,
       isMobile,
       MOBILE_OPTIMIZATIONS,
@@ -516,7 +515,7 @@ export class GameApp {
       (() => { const h = createHouse(); h.position.set(-16, 0, -12); this._scene.add(h); return h; })(),
     ];
 
-    const fenceGroup = createVillageFence(VILLAGE_POS, REST_RADIUS, COLOR);
+    const fenceGroup = createVillageFence(VILLAGE_POS, REST_RADIUS, THEME_COLORS);
     this._scene.add(fenceGroup);
 
     // Villages system

@@ -285,7 +285,7 @@ export async function initEnvironment(scene, options = {}) {
       decorations: true,
       scaleMin: 0.9,
       scaleMax: 0.5,
-      COLOR,
+      THEME_COLORS,
       acquireLight
     });
     vgroup.name = "village";

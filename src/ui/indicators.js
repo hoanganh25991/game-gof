@@ -3,7 +3,7 @@
 
 export function createIndicators({
   effects,
-  COLOR,
+  THEME_COLORS,
   createGroundRing,
   isMobile,
   MOBILE_OPTIMIZATIONS,

@@ -67,7 +67,7 @@ game-gof/
 ├── src/                    # Application source code
 │   ├── main.js             # Entry point, orchestrator, game loop
 │   ├── config.js           # Runtime flags (DEBUG, HERO_MODEL_URL)
-│   ├── constants.js        # Game constants (COLOR, WORLD, STATS_BASE)
+│   ├── constants.js        # Game constants (THEME_COLORS, WORLD, STATS_BASE)
 │   ├── utils.js            # Pure helper functions
 │   │
 │   ├── world.js            # 3D scene, camera, rendering

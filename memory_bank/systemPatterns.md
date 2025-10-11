@@ -72,7 +72,7 @@ Render  AI      Casting Settings Raycast Maps    SFX   Transients
 
 #### Data & Configuration (`src/`)
 - **skills_pool.js**: Skill definitions (SKILL_POOL array)
-- **constants.js**: Game constants (COLOR, WORLD, STATS_BASE, SKILLS)
+- **constants.js**: Game constants (THEME_COLORS, WORLD, STATS_BASE, SKILLS)
 - **config.js**: Runtime flags (DEBUG, HERO_MODEL_URL)
 - **maps.js**: Map manager, base maps, endless generation
 
@@ -152,7 +152,7 @@ SKILL_POOL.forEach(skill => {
 **Where Used**:
 - Skills: `SKILL_POOL` in `skills_pool.js`
 - Maps: `BASE_MAPS` in `maps.js`
-- Constants: `COLOR`, `WORLD`, `STATS_BASE` in `constants.js`
+- Constants: `THEME_COLORS`, `WORLD`, `STATS_BASE` in `constants.js`
 
 ### 2. Localization via Translation Keys
 

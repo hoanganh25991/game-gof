@@ -142,51 +142,6 @@ export function updateThemeColor(colorKey, value) {
 }
 
 /**
- * Promise that resolves when theme is initialized
- */
-export const THEME_READY = (() => {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return Promise.resolve(true);
-  }
-  
-  // Check if already initialized
-  const isInitialized = () => {
-    try {
-      const style = getComputedStyle(document.documentElement);
-      return style.getPropertyValue("--theme-orange").trim().length > 0;
-    } catch (_) {
-      return false;
-    }
-  };
-
-  if (isInitialized()) return Promise.resolve(true);
-
-  return new Promise((resolve) => {
-    const handler = () => {
-      resolve(true);
-    };
-    window.addEventListener("theme-initialized", handler, { once: true });
-    
-    // Fallback: auto-initialize if not done within 100ms
-    setTimeout(() => {
-      if (!isInitialized()) {
-        initializeTheme();
-      }
-      resolve(true);
-    }, 100);
-  });
-})();
-
-// Backward compatibility alias
-export const CSS_READY = THEME_READY;
-
-/**
- * Direct color access (uses JavaScript values, not CSS)
- * Provides convenient aliases for commonly used colors
- */
-export const COLOR = THEME_COLORS;
-
-/**
  * CSS variable references for DOM styling (preferred for live theming)
  * Dynamically generated from THEME_COLORS keys
  * Example: themeDark -> "var(--theme-dark)"
@@ -196,8 +151,3 @@ export const CSS_VAR = Object.keys(THEME_COLORS).reduce((acc, key) => {
   return acc;
 }, {});
 
-/**
- * CSS color values for non-CSS contexts (e.g., Canvas2D)
- * Direct reference to THEME_COLORS for immediate access
- */
-export const CSS_COLOR = THEME_COLORS;

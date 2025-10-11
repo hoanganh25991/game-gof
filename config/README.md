@@ -12,14 +12,10 @@ The `config/constants.js` file has been refactored into a modular structure for 
 
 ### theme.js
 **Purpose**: Theme colors and CSS variable management (JavaScript as source of truth)
-- `THEME_COLORS` - All color definitions in JavaScript (source of truth)
 - `initializeTheme()` - Function to inject colors into CSS variables (called on game load)
 - `updateThemeColor()` - Function to dynamically update a specific color
-- `THEME_READY` - Promise that resolves when theme is initialized
-- `CSS_READY` - Backward compatibility alias for THEME_READY
-- `COLOR` - Direct color access from JavaScript values
+- `THEME_COLORS` - Direct color access from JavaScript values
 - `CSS_VAR` - CSS variable references for DOM styling
-- `CSS_COLOR` - CSS color values for Canvas2D contexts
 
 ### world.js
 **Purpose**: World, player, and enemy configuration
@@ -83,12 +79,12 @@ import { WORLD } from "../config/world.js";
 
 ### Option 2: Import from index.js (convenient for multiple imports)
 ```javascript
-import { STORAGE_KEYS, COLOR, WORLD, SCALING } from "../config/index.js";
+import { STORAGE_KEYS, THEME_COLORS, WORLD, SCALING } from "../config/index.js";
 ```
 
 ### Option 3: Import from constants.js (backward compatibility)
 ```javascript
-import { STORAGE_KEYS, COLOR, WORLD } from "../config/index.js";
+import { STORAGE_KEYS, THEME_COLORS, WORLD } from "../config/index.js";
 ```
 
 ## Backward Compatibility
@@ -121,9 +117,9 @@ There are **300+ hardcoded color values** in the effects system (primarily in `s
 1. **Definition**: All colors are defined in `THEME_COLORS` object in `config/theme.js`
 2. **Initialization**: On game load, `initializeTheme()` injects these colors into CSS variables
 3. **Access**: 
-   - Use `COLOR` object for direct JavaScript access
+   - Use `THEME_COLORS` object for direct JavaScript access
    - Use `CSS_VAR` for CSS variable references in DOM styling
-   - Use `CSS_COLOR` for Canvas2D contexts
+   - Use `THEME_COLORS` for Canvas2D contexts
 4. **Updates**: Call `updateThemeColor(key, value)` to change colors at runtime
 
 ### Migration from CSS to JS

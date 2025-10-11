@@ -29001,7 +29001,7 @@ class WebGLRenderer {
 						uintClearColor[ 1 ] = g;
 						uintClearColor[ 2 ] = b;
 						uintClearColor[ 3 ] = a;
-						_gl.clearBufferuiv( _gl.COLOR, 0, uintClearColor );
+						_gl.clearBufferuiv( _gl.THEME_COLORS, 0, uintClearColor );
 
 					} else {
 
@@ -29009,7 +29009,7 @@ class WebGLRenderer {
 						intClearColor[ 1 ] = g;
 						intClearColor[ 2 ] = b;
 						intClearColor[ 3 ] = a;
-						_gl.clearBufferiv( _gl.COLOR, 0, intClearColor );
+						_gl.clearBufferiv( _gl.THEME_COLORS, 0, intClearColor );
 
 					}
 

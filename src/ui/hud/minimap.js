@@ -1,4 +1,4 @@
-import { VILLAGE_POS, REST_RADIUS, CSS_COLOR } from "../../../config/index.js";
+import { VILLAGE_POS, REST_RADIUS, THEME_COLORS } from "../../../config/index.js";
 
 /**
  * MinimapUI
@@ -81,9 +81,9 @@ export class MinimapUI {
 
     // Clear and background
     ctx.clearRect(0, 0, cssW, cssH);
-    ctx.fillStyle = CSS_COLOR.glass;
+    ctx.fillStyle = THEME_COLORS.glass;
     ctx.fillRect(0, 0, cssW, cssH);
-    ctx.strokeStyle = CSS_COLOR.borderOrange;
+    ctx.strokeStyle = THEME_COLORS.borderOrange;
     ctx.lineWidth = 1;
     ctx.strokeRect(0.5, 0.5, Math.max(0, cssW - 1), Math.max(0, cssH - 1));
 
@@ -103,7 +103,7 @@ export class MinimapUI {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         // Underlay (lighter edge)
-        ctx.strokeStyle = CSS_COLOR.roadUnderlay;
+        ctx.strokeStyle = THEME_COLORS.roadUnderlay;
         ctx.lineWidth = 4;
         if (usePolys) {
           for (const poly of polys) {
@@ -128,7 +128,7 @@ export class MinimapUI {
           }
         }
         // Main road line (dark)
-        ctx.strokeStyle = CSS_COLOR.roadDark;
+        ctx.strokeStyle = THEME_COLORS.roadDark;
         ctx.lineWidth = 2;
         if (usePolys) {
           for (const poly of polys) {
@@ -157,7 +157,7 @@ export class MinimapUI {
     } catch (_) {}
 
     // Origin village ring
-    ctx.strokeStyle = CSS_COLOR.villageRing;
+    ctx.strokeStyle = THEME_COLORS.villageRing;
     ctx.beginPath();
     ctx.arc(
       cx + (VILLAGE_POS.x - center.x) * scale,
@@ -171,7 +171,7 @@ export class MinimapUI {
     // Dynamic villages (discovered)
     try {
       const list = villages?.listVillages?.() || [];
-      ctx.strokeStyle = CSS_COLOR.villageRingFaint;
+      ctx.strokeStyle = THEME_COLORS.villageRingFaint;
       for (const v of list) {
         const p = w2p(v.center.x, v.center.z);
         ctx.beginPath();
@@ -186,13 +186,13 @@ export class MinimapUI {
     if (villagePortal) {
       const pos = villagePortal.group.position;
       const p = w2p(pos.x, pos.z);
-      ctx.fillStyle = CSS_COLOR.portal;
+      ctx.fillStyle = THEME_COLORS.portal;
       ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
     }
     if (returnPortal) {
       const pos = returnPortal.group.position;
       const p = w2p(pos.x, pos.z);
-      ctx.fillStyle = CSS_COLOR.portalAlt;
+      ctx.fillStyle = THEME_COLORS.portalAlt;
       ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
     }
 
@@ -202,7 +202,7 @@ export class MinimapUI {
         if (!en.alive) return;
         const ep = en.pos();
         const p = w2p(ep.x, ep.z);
-        ctx.fillStyle = CSS_COLOR.enemyDot;
+        ctx.fillStyle = THEME_COLORS.enemyDot;
         ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
       });
     }
@@ -218,22 +218,22 @@ export class MinimapUI {
         let structureColor;
         switch (structure.type) {
           case "temple":
-            structureColor = CSS_COLOR.templeDot;
+            structureColor = THEME_COLORS.templeDot;
             break;
           case "villa":
-            structureColor = CSS_COLOR.villaDot;
+            structureColor = THEME_COLORS.villaDot;
             break;
           case "column":
-            structureColor = CSS_COLOR.columnDot;
+            structureColor = THEME_COLORS.columnDot;
             break;
           case "statue":
-            structureColor = CSS_COLOR.statueDot;
+            structureColor = THEME_COLORS.statueDot;
             break;
           case "obelisk":
-            structureColor = CSS_COLOR.obeliskDot;
+            structureColor = THEME_COLORS.obeliskDot;
             break;
           default:
-            structureColor = CSS_COLOR.templeDot; // fallback
+            structureColor = THEME_COLORS.templeDot; // fallback
         }
         
         ctx.fillStyle = structureColor;
@@ -247,7 +247,7 @@ export class MinimapUI {
 
     // Player
     const pp = w2p(center.x, center.z);
-    ctx.fillStyle = CSS_COLOR.playerDot;
+    ctx.fillStyle = THEME_COLORS.playerDot;
     ctx.beginPath();
     ctx.arc(pp.x, pp.y, 3, 0, Math.PI * 2);
     ctx.fill();
