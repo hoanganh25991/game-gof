@@ -12,14 +12,39 @@ import { getCurrentTierOptimizations, DEVICE_TIERS } from "./device-tier.js";
 /**
  * Get optimized segment counts based on device tier
  */
+let _loggedOptimizations = false;
 function getOptimizedSegments(baseSegments, baseRings) {
   const opts = getCurrentTierOptimizations();
   const multiplier = opts.segmentMultiplier || 1.0;
   
+  // Log once for debugging
+  if (!_loggedOptimizations) {
+    console.info('[Meshes] Using segment multiplier:', multiplier, 'Material:', opts.useMeshStandard ? 'Standard' : 'Lambert');
+    _loggedOptimizations = true;
+  }
+  
+  // Prevent invalid geometries - minimum 3 for cylinders/spheres
+  // But allow lower minimums for simple shapes
+  const minSegments = baseSegments <= 8 ? 3 : 4;
+  const minRings = baseRings <= 8 ? 2 : 3;
+  
   return {
-    segments: Math.max(3, Math.round(baseSegments * multiplier)),
-    rings: Math.max(3, Math.round(baseRings * multiplier))
+    segments: Math.max(minSegments, Math.round(baseSegments * multiplier)),
+    rings: Math.max(minRings, Math.round(baseRings * multiplier))
   };
+}
+
+/**
+ * Get optimized detail level for IcosahedronGeometry
+ * Detail level: 0 (low poly) to higher (more triangles)
+ */
+function getOptimizedDetail(baseDetail) {
+  const opts = getCurrentTierOptimizations();
+  const multiplier = opts.segmentMultiplier || 1.0;
+  
+  // For IcosahedronGeometry, reduce detail level for lower-end devices
+  const detail = Math.floor(baseDetail * multiplier);
+  return Math.max(0, Math.min(10, detail)); // Clamp to valid range 0-10
 }
 
 /**
@@ -171,9 +196,10 @@ export class HeroMesh extends THREE.Group {
     this.leftHandAnchor.position.set(-0.85, 1.15, 0.25);
     this.add(this.leftHandAnchor);
 
-    // Fire orbs - use simplified geometry for medium/low
-    const orbSeg = getOptimizedSegments(1, 0);
-    const orbGeo = new THREE.IcosahedronGeometry(0.2, orbSeg.segments);
+    // Fire orbs - use optimized detail level
+    // Base detail of 2 for high-end, reduced for medium/low
+    const orbDetail = getOptimizedDetail(2);
+    const orbGeo = new THREE.IcosahedronGeometry(0.2, orbDetail);
     
     this.leftFireOrb = new THREE.Mesh(
       orbGeo,
@@ -190,7 +216,7 @@ export class HeroMesh extends THREE.Group {
     this.leftHandAnchor.add(this.leftHandLight);
 
     this.fireOrb = new THREE.Mesh(
-      orbGeo.clone(),
+      new THREE.IcosahedronGeometry(0.2, orbDetail),
       createOptimizedMaterial({ 
         color: THEME_COLORS.themeOrange, 
         emissive: THEME_COLORS.themeAccent, 

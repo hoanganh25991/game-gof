@@ -48,10 +48,10 @@ export function detectDeviceTier() {
     
     // Screen resolution factor (0-20 points)
     const totalPixels = screenWidth * screenHeight * pixelRatio;
-    if (totalPixels >= 4000000) score += 10; // 4K+
-    else if (totalPixels >= 2000000) score += 20; // FHD+
-    else if (totalPixels >= 1000000) score += 15; // HD+
-    else score += 10;
+    if (totalPixels >= 4000000) score += 20; // 4K+ (FIX: was 10)
+    else if (totalPixels >= 2000000) score += 15; // FHD+ (FIX: was 20)
+    else if (totalPixels >= 1000000) score += 10; // HD+ (FIX: was 15)
+    else score += 5; // Low res (FIX: was 10)
     
     // Mobile penalty (0-10 points)
     if (!isMobile) {
@@ -103,7 +103,10 @@ export function detectDeviceTier() {
       memory: deviceMemory,
       screen: `${screenWidth}x${screenHeight}`,
       pixelRatio,
-      isMobile
+      totalPixels,
+      isMobile,
+      gpu: gl ? (gl.getExtension('WEBGL_debug_renderer_info') ? 
+        gl.getParameter(gl.getExtension('WEBGL_debug_renderer_info').UNMASKED_RENDERER_WEBGL) : 'unknown') : 'no-webgl'
     });
     
     return tier;
@@ -117,6 +120,7 @@ export function detectDeviceTier() {
  * Get optimization settings based on device tier
  */
 export function getTierOptimizations(tier) {
+  console.info(`[DeviceTier] Getting optimizations for tier: ${tier}`);
   switch (tier) {
     case DEVICE_TIERS.HIGH:
       return {
