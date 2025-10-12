@@ -47,7 +47,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   max-height: min(90vh, 90dvh);
   overflow: auto;
 }

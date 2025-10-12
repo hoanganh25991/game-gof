@@ -42,12 +42,14 @@ export function renderInfoTab(panelEl, ctx = {}) {
   leftSection.style.display = "flex";
   leftSection.style.flexDirection = "column";
   leftSection.style.gap = "12px";
-  leftSection.style.overflow = "auto";
+  leftSection.style.overflowX = "hidden";
+  leftSection.style.overflowX = "scroll";
 
   // Right section: Info (2/3)
   const rightSection = document.createElement("div");
   rightSection.style.flex = "1";
-  rightSection.style.overflow = "auto";
+  rightSection.style.overflowX = "hidden";
+  rightSection.style.overflowY = "scroll";
 
   // Build 3D model preview section
   build3DModelPreview(leftSection);
@@ -64,23 +66,29 @@ export function renderInfoTab(panelEl, ctx = {}) {
  * Build the 3D model preview and controls
  */
 async function build3DModelPreview(container) {
-  // Title
-  const title = document.createElement("div");
-  title.className = "items-title";
-  title.textContent = "🎨 Hero Model";
-  title.style.padding = "8px";
-  title.style.fontSize = "16px";
-  title.style.fontWeight = "bold";
-  container.appendChild(title);
-
-  // Canvas container
+  // Canvas container - square and big for mobile
   const canvasContainer = document.createElement("div");
   canvasContainer.style.width = "100%";
-  canvasContainer.style.height = "240px";
+  canvasContainer.style.aspectRatio = "1 / 1"; // Square
   canvasContainer.style.backgroundColor = "#1a1a1a";
   canvasContainer.style.borderRadius = "8px";
   canvasContainer.style.position = "relative";
   canvasContainer.style.overflow = "hidden";
+
+  // Loading indicator
+  const loadingIndicator = document.createElement("div");
+  loadingIndicator.style.position = "absolute";
+  loadingIndicator.style.top = "50%";
+  loadingIndicator.style.left = "50%";
+  loadingIndicator.style.transform = "translate(-50%, -50%)";
+  loadingIndicator.style.color = "#ff6b35";
+  loadingIndicator.style.fontSize = "16px";
+  loadingIndicator.style.fontWeight = "bold";
+  loadingIndicator.style.display = "none";
+  loadingIndicator.style.zIndex = "10";
+  loadingIndicator.style.textAlign = "center";
+  loadingIndicator.innerHTML = '<div style="margin-bottom: 8px;">⏳</div><div>Loading model...</div>';
+  canvasContainer.appendChild(loadingIndicator);
 
   const canvas = document.createElement("canvas");
   canvas.style.width = "100%";
@@ -89,19 +97,24 @@ async function build3DModelPreview(container) {
   canvasContainer.appendChild(canvas);
   container.appendChild(canvasContainer);
 
-  // Initialize 3D preview and wait for it to complete
-  await init3DPreview(canvas);
+  // Store reference to loading indicator for later use
+  container._loadingIndicator = loadingIndicator;
 
-  // Model selection dropdown
-  const selectLabel = document.createElement("div");
-  selectLabel.className = "items-desc";
-  selectLabel.textContent = "Select Model:";
-  selectLabel.style.padding = "0 8px";
-  selectLabel.style.marginTop = "8px";
-  container.appendChild(selectLabel);
+  // Initialize 3D preview and wait for it to complete
+  await init3DPreview(canvas, loadingIndicator);
+
+  // Load saved selection
+  const savedUrl = localStorage.getItem(STORAGE_KEYS.heroModelUrl);
+
+  // Model selection row: select + scale slider in 1 row
+  const selectRow = document.createElement("div");
+  selectRow.style.display = "flex";
+  selectRow.style.gap = "8px";
+  selectRow.style.marginTop = "12px";
+  selectRow.style.alignItems = "center";
 
   const select = document.createElement("select");
-  select.style.width = "100%";
+  select.style.flex = "1";
   select.style.padding = "8px";
   select.style.fontSize = "14px";
   select.style.borderRadius = "4px";
@@ -117,8 +130,6 @@ async function build3DModelPreview(container) {
     select.appendChild(option);
   });
 
-  // Load saved selection
-  const savedUrl = localStorage.getItem(STORAGE_KEYS.heroModelUrl);
   if (savedUrl) {
     select.value = savedUrl;
   }
@@ -130,22 +141,62 @@ async function build3DModelPreview(container) {
     } else {
       localStorage.removeItem(STORAGE_KEYS.heroModelUrl);
     }
-    load3DModel(url);
+    load3DModel(url, loadingIndicator);
   });
-  container.appendChild(select);
 
-  // Custom URL input
-  const urlLabel = document.createElement("div");
-  urlLabel.className = "items-desc";
-  urlLabel.textContent = "Or paste custom URL:";
-  urlLabel.style.padding = "0 8px";
-  urlLabel.style.marginTop = "12px";
-  container.appendChild(urlLabel);
+  // Scale control in same row
+  const scaleContainer = document.createElement("div");
+  scaleContainer.style.display = "flex";
+  scaleContainer.style.alignItems = "center";
+  scaleContainer.style.gap = "6px";
+  scaleContainer.style.minWidth = "100px";
+
+  const scaleValue = document.createElement("span");
+  scaleValue.style.fontWeight = "bold";
+  scaleValue.style.color = "#ff6b35";
+  scaleValue.style.fontSize = "12px";
+  scaleValue.style.minWidth = "32px";
+
+  const savedScale = localStorage.getItem(STORAGE_KEYS.heroModelScale);
+  currentModelScale = savedScale ? parseFloat(savedScale) : 1.0;
+  scaleValue.textContent = currentModelScale.toFixed(1) + "x";
+
+  const scaleSlider = document.createElement("input");
+  scaleSlider.type = "range";
+  scaleSlider.min = "0.1";
+  scaleSlider.max = "3.0";
+  scaleSlider.step = "0.1";
+  scaleSlider.value = currentModelScale;
+  scaleSlider.style.width = "80px";
+  scaleSlider.style.cursor = "pointer";
+
+  scaleSlider.addEventListener("input", (e) => {
+    const scale = parseFloat(e.target.value);
+    currentModelScale = scale;
+    scaleValue.textContent = scale.toFixed(1) + "x";
+    localStorage.setItem(STORAGE_KEYS.heroModelScale, scale.toString());
+    
+    if (previewModel) {
+      previewModel.scale.setScalar(scale);
+    }
+  });
+
+  scaleContainer.appendChild(scaleValue);
+  scaleContainer.appendChild(scaleSlider);
+  selectRow.appendChild(select);
+  selectRow.appendChild(scaleContainer);
+  container.appendChild(selectRow);
+
+  // Custom URL row: input + Load button in 1 row
+  const urlRow = document.createElement("div");
+  urlRow.style.display = "flex";
+  urlRow.style.gap = "8px";
+  urlRow.style.marginTop = "8px";
 
   const urlInput = document.createElement("input");
   urlInput.type = "text";
-  urlInput.placeholder = "https://example.com/model.glb";
-  urlInput.style.width = "100%";
+  urlInput.placeholder = "Custom model URL";
+  urlInput.style.flex = "1";
   urlInput.style.padding = "8px";
   urlInput.style.fontSize = "14px";
   urlInput.style.borderRadius = "4px";
@@ -155,9 +206,7 @@ async function build3DModelPreview(container) {
 
   const loadButton = document.createElement("button");
   loadButton.textContent = "Load";
-  loadButton.style.width = "100%";
-  loadButton.style.marginTop = "8px";
-  loadButton.style.padding = "8px";
+  loadButton.style.padding = "8px 16px";
   loadButton.style.fontSize = "14px";
   loadButton.style.borderRadius = "4px";
   loadButton.style.border = "1px solid #ff6b35";
@@ -165,70 +214,66 @@ async function build3DModelPreview(container) {
   loadButton.style.color = "#fff";
   loadButton.style.cursor = "pointer";
   loadButton.style.fontWeight = "bold";
+  loadButton.style.whiteSpace = "nowrap";
 
   loadButton.addEventListener("click", () => {
     const customUrl = urlInput.value.trim();
     if (customUrl) {
       localStorage.setItem(STORAGE_KEYS.heroModelUrl, customUrl);
       select.value = ""; // Deselect dropdown
-      load3DModel(customUrl);
+      load3DModel(customUrl, loadingIndicator);
     }
   });
 
-  container.appendChild(urlInput);
-  container.appendChild(loadButton);
+  urlRow.appendChild(urlInput);
+  urlRow.appendChild(loadButton);
+  container.appendChild(urlRow);
 
-  // Model scale slider
-  const scaleLabel = document.createElement("div");
-  scaleLabel.className = "items-desc";
-  scaleLabel.style.padding = "0 8px";
-  scaleLabel.style.marginTop = "12px";
-  scaleLabel.style.display = "flex";
-  scaleLabel.style.justifyContent = "space-between";
-  scaleLabel.style.alignItems = "center";
-  
-  const scaleLabelText = document.createElement("span");
-  scaleLabelText.textContent = "Model Scale:";
-  
-  const scaleValue = document.createElement("span");
-  scaleValue.style.fontWeight = "bold";
-  scaleValue.style.color = "#ff6b35";
-  
-  // Load saved scale or default to 1.0
-  const savedScale = localStorage.getItem(STORAGE_KEYS.heroModelScale);
-  currentModelScale = savedScale ? parseFloat(savedScale) : 1.0;
-  scaleValue.textContent = currentModelScale.toFixed(1);
-  
-  scaleLabel.appendChild(scaleLabelText);
-  scaleLabel.appendChild(scaleValue);
-  container.appendChild(scaleLabel);
+  // Apply button - full width at the end
+  const applyButton = document.createElement("button");
+  applyButton.textContent = "Apply & Reload Game";
+  applyButton.style.width = "100%";
+  applyButton.style.marginTop = "12px";
+  applyButton.style.padding = "12px";
+  applyButton.style.fontSize = "16px";
+  applyButton.style.borderRadius = "8px";
+  applyButton.style.border = "1px solid #ff6b35";
+  applyButton.style.background = "linear-gradient(180deg, #ff8c5a, #ff6b35)";
+  applyButton.style.color = "#fff";
+  applyButton.style.cursor = "pointer";
+  applyButton.style.fontWeight = "bold";
+  applyButton.style.boxShadow = "0 4px 12px rgba(255, 107, 53, 0.3)";
 
-  const scaleSlider = document.createElement("input");
-  scaleSlider.type = "range";
-  scaleSlider.min = "0.1";
-  scaleSlider.max = "3.0";
-  scaleSlider.step = "0.1";
-  scaleSlider.value = currentModelScale;
-  scaleSlider.style.width = "100%";
-  scaleSlider.style.marginTop = "8px";
-  scaleSlider.style.cursor = "pointer";
-
-  scaleSlider.addEventListener("input", (e) => {
-    const scale = parseFloat(e.target.value);
-    currentModelScale = scale;
-    scaleValue.textContent = scale.toFixed(1);
-    localStorage.setItem(STORAGE_KEYS.heroModelScale, scale.toString());
-    
-    // Apply scale to current model
-    if (previewModel) {
-      previewModel.scale.setScalar(scale);
+  applyButton.addEventListener("click", async () => {
+    // Show confirmation dialog
+    const shouldReload = await showApplyConfirm();
+    if (shouldReload) {
+      try {
+        window.location.reload();
+      } catch (_) {
+        try {
+          location.reload();
+        } catch (_) {}
+      }
     }
   });
-  
-  container.appendChild(scaleSlider);
+
+  container.appendChild(applyButton);
 
   // Load initial model after scene is ready
-  load3DModel(savedUrl);
+  load3DModel(savedUrl, loadingIndicator);
+}
+
+/**
+ * Show confirmation dialog for applying model changes
+ */
+function showApplyConfirm() {
+  return new Promise((resolve) => {
+    const confirmed = window.confirm(
+      "Applying model changes will reload the game for a clean state.\n\nContinue?"
+    );
+    resolve(!!confirmed);
+  });
 }
 
 /**
@@ -315,7 +360,7 @@ async function init3DPreview(canvas) {
 /**
  * Load 3D model into preview
  */
-async function load3DModel(url) {
+async function load3DModel(url, loadingIndicator) {
   console.log('[3D Preview] load3DModel called with URL:', url);
   console.log('[3D Preview] previewScene exists:', !!previewScene);
   
@@ -334,7 +379,15 @@ async function load3DModel(url) {
   if (!url) {
     console.log('[3D Preview] No URL, creating default mesh');
     createDefaultPreviewMesh();
+    if (loadingIndicator) {
+      loadingIndicator.style.display = "none";
+    }
     return;
+  }
+
+  // Show loading indicator
+  if (loadingIndicator) {
+    loadingIndicator.style.display = "block";
   }
 
   try {
@@ -374,18 +427,41 @@ async function load3DModel(url) {
           previewModel = model;
           previewScene.add(previewModel);
           console.log('[3D Preview] Model added to scene');
+          
+          // Hide loading indicator after model is added
+          if (loadingIndicator) {
+            loadingIndicator.style.display = "none";
+          }
         }
       },
       (progress) => {
-        console.log('[3D Preview] Loading progress:', (progress.loaded / progress.total * 100).toFixed(2) + '%');
+        const percent = (progress.loaded / progress.total * 100).toFixed(0);
+        console.log('[3D Preview] Loading progress:', percent + '%');
+        
+        // Update loading text with progress
+        if (loadingIndicator && progress.total > 0) {
+          loadingIndicator.innerHTML = `<div style="margin-bottom: 8px;">⏳</div><div>Loading model... ${percent}%</div>`;
+        }
       },
       (error) => {
         console.warn("[3D Preview] Failed to load model:", url, error);
+        
+        // Hide loading indicator on error
+        if (loadingIndicator) {
+          loadingIndicator.style.display = "none";
+        }
+        
         createDefaultPreviewMesh();
       }
     );
   } catch (error) {
     console.warn("[3D Preview] Error loading model:", url, error);
+    
+    // Hide loading indicator on error
+    if (loadingIndicator) {
+      loadingIndicator.style.display = "none";
+    }
+    
     createDefaultPreviewMesh();
   }
 }
@@ -393,7 +469,7 @@ async function load3DModel(url) {
 /**
  * Create default preview mesh (using actual HeroMesh)
  */
-function createDefaultPreviewMesh() {
+function createDefaultPreviewMesh(loadingIndicator) {
   console.log('[3D Preview] Creating default HeroMesh');
   if (!previewScene) {
     console.warn('[3D Preview] Scene not ready for default mesh');
@@ -423,6 +499,11 @@ function createDefaultPreviewMesh() {
   previewModel = heroMesh;
   previewScene.add(previewModel);
   console.log('[3D Preview] HeroMesh added to scene with scale:', currentModelScale, '(all parts visible)');
+  
+  // Hide loading indicator for default mesh (it loads instantly)
+  if (loadingIndicator) {
+    loadingIndicator.style.display = "none";
+  }
 }
 
 /**

@@ -117,7 +117,7 @@
 
 .guide-nav {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   justify-content: flex-end;
 }
 

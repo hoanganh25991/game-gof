@@ -31,7 +31,6 @@ export function renderMarksTab(panelEl, ctx = {}) {
   try {
     list.style.flex = "1 1 auto";
     list.style.minHeight = "0";
-    list.style.overflow = "auto";
     list.style.maxHeight = "none";
   } catch (_) {}
 
