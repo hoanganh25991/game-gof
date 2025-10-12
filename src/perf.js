@@ -7,7 +7,7 @@
  */
 export function createPerformanceTracker(renderer, opts = {}) {
   const targetFPS = Number.isFinite(opts.targetFPS) ? opts.targetFPS : 90;
-  let autoAdjust = opts.autoAdjust !== false;
+  let autoAdjust = opts.autoAdjust === true; // DISABLED BY DEFAULT - user controls via settings
 
   const state = {
     prevMs: performance.now(),
