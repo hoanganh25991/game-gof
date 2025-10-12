@@ -51,39 +51,58 @@ async function setup3DModelPreview(canvas, loadingIndicator, select, scaleValue,
   if (isPreviewInitialized && previewRenderer && previewCamera) {
     console.log('[3D Preview] Already initialized, handling resize and reloading model');
     
-    // Wait for canvas to become visible again
-    await new Promise((resolve) => {
+    // Wait for canvas to become visible again using requestAnimationFrame for proper layout
+    const hasValidDimensions = await new Promise((resolve) => {
       let attempts = 0;
-      const maxAttempts = 50;
+      const maxAttempts = 100; // Increase attempts since we're using rAF
       
       function checkDimensions() {
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
+        const isVisible = canvas.offsetParent !== null;
+        
+        console.log(`[3D Preview] Re-init check (attempt ${attempts + 1}): ${width}x${height}, visible: ${isVisible}`);
         
         if (width > 0 && height > 0) {
           console.log('[3D Preview] Canvas visible again:', width, 'x', height);
-          // Update renderer size
-          previewCamera.aspect = width / height;
-          previewCamera.updateProjectionMatrix();
-          previewRenderer.setSize(width, height);
-          resolve();
+          resolve(true);
         } else if (attempts < maxAttempts) {
           attempts++;
-          setTimeout(checkDimensions, 20);
+          // Use requestAnimationFrame for proper layout timing
+          requestAnimationFrame(() => {
+            setTimeout(checkDimensions, 10);
+          });
         } else {
           console.warn('[3D Preview] Timeout waiting for canvas to become visible');
-          resolve();
+          resolve(false);
         }
       }
       
-      checkDimensions();
+      // Start checking on next frame
+      requestAnimationFrame(checkDimensions);
     });
     
-    // Reload the current model
-    const savedUrl = localStorage.getItem(STORAGE_KEYS.heroModelUrl);
-    load3DModel(savedUrl, loadingIndicator);
-    
-    return;
+    // If canvas still has invalid dimensions, force re-initialization
+    if (!hasValidDimensions) {
+      console.warn('[3D Preview] Canvas dimensions still invalid, forcing full re-initialization');
+      console.log({canvas})
+      isPreviewInitialized = false;
+      cleanup3DPreview();
+      // Fall through to first-time initialization below
+    } else {
+      // Canvas is valid, update renderer size
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      previewCamera.aspect = width / height;
+      previewCamera.updateProjectionMatrix();
+      previewRenderer.setSize(width, height);
+      
+      // Reload the current model
+      const savedUrl = localStorage.getItem(STORAGE_KEYS.heroModelUrl);
+      load3DModel(savedUrl, loadingIndicator);
+      
+      return;
+    }
   }
 
   // First time initialization
@@ -176,34 +195,53 @@ async function init3DPreview(canvas) {
   // Clean up previous scene
   cleanup3DPreview();
 
-  // Wait for canvas to have proper dimensions (with retry logic)
+  // Wait for parent to have valid dimensions using ResizeObserver
+  const parent = canvas.parentElement;
+  if (!parent) {
+    console.error('[3D Preview] Canvas has no parent element');
+    return;
+  }
+
   await new Promise((resolve) => {
-    let attempts = 0;
-    const maxAttempts = 50; // max 1 second wait
+    const parentWidth = parent.clientWidth;
+    const parentHeight = parent.clientHeight;
     
-    function checkDimensions() {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
+    console.log('[3D Preview] Initial parent dimensions:', parentWidth, 'x', parentHeight);
+    
+    if (parentWidth > 0 && parentHeight > 0) {
+      // Parent already has valid dimensions
+      console.log('[3D Preview] Parent already has valid dimensions');
+      resolve();
+    } else {
+      // Wait for parent to get valid dimensions
+      console.log('[3D Preview] Waiting for parent to get valid dimensions...');
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
+          const height = entry.contentRect.height;
+          
+          if (width > 0 && height > 0) {
+            console.log('[3D Preview] Parent now has valid dimensions:', width, 'x', height);
+            resizeObserver.disconnect();
+            resolve();
+          }
+        }
+      });
       
-      console.log(`[3D Preview] Checking canvas dimensions (attempt ${attempts + 1}): ${width}x${height}`);
-      
-      if (width > 0 && height > 0) {
-        console.log('[3D Preview] Canvas has valid dimensions:', width, 'x', height);
-        resolve();
-      } else if (attempts < maxAttempts) {
-        attempts++;
-        // Wait 20ms and check again
-        setTimeout(checkDimensions, 20);
-      } else {
-        console.warn('[3D Preview] Timeout waiting for canvas dimensions, proceeding anyway');
-        resolve();
-      }
+      resizeObserver.observe(parent);
     }
-    
-    checkDimensions();
   });
 
-  console.log('[3D Preview] Final canvas size:', canvas.clientWidth, 'x', canvas.clientHeight);
+  // Now parent has valid dimensions, set canvas size
+  const parentWidth = parent.clientWidth;
+  const parentHeight = parent.clientHeight;
+  
+  canvas.width = parentWidth;
+  canvas.height = parentHeight;
+  canvas.style.width = parentWidth + 'px';
+  canvas.style.height = parentHeight + 'px';
+  
+  console.log('[3D Preview] Canvas dimensions set to:', parentWidth, 'x', parentHeight);
 
   // Scene setup
   previewScene = new THREE.Scene();
