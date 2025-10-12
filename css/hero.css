@@ -684,6 +684,7 @@
 
 .model-url-row {
   display: flex;
+  align-items: center;
   gap: 8px;
   margin-top: 4px;
 }
@@ -696,11 +697,10 @@
   color: var(--system-text);
   height: 2rem;
   min-width: 0;
-  padding: 0 8px;
+  padding: 8px 12px;
 }
 
 .model-load-btn {
-  padding: 8px 16px;
   font-size: 14px;
   border-radius: 4px;
   border: 1px solid var(--theme-orange);

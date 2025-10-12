@@ -228,7 +228,7 @@ update(dt) {
 Added real-time metrics display:
 ```html
 <div class="row">
-  <span class="row-label">Spatial Grid (Phase 2)</span>
+  <span class="row-label">Spatial Grid</span>
   <div class="spatial-block">
     <div><b>Enemies:</b> <span id="spatialEnemies">60</span></div>
     <div><b>Occupied Cells:</b> <span id="spatialCells">15</span></div>

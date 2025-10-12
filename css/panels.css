@@ -110,7 +110,7 @@
 .panel-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -279,7 +279,7 @@
 /* Default themed button baseline inside screens for unclassed buttons */
 .screen .screen-content button:not(.icon-btn):not(.skill-btn):not(.flag):not(.tab-btn):not(.pill-btn) {
   cursor: pointer;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid var(--border-orange);
   background: var(--system-bg);
@@ -370,13 +370,11 @@
 .system-screen .screen-content {
   width: min(900px, 96vw);
   height: min(96vh, 100dvh - 24px);
-  max-height: min(96vh, 100dvh - 24px);
   display: flex;
   flex-direction: column;
   overflow: visible;
   /* allow native dropdowns to display outside container */
-  padding: 16px;
-  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  padding: 8px !important;
 }
 
 /* Make the main content area inside system screens scroll */
