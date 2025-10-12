@@ -31,4 +31,5 @@ export const STORAGE_KEYS = {
   skillPoints: storageKey("skill_points"),
   unlockedSkills: storageKey("unlocked_skills"),
   heroModelUrl: storageKey("hero_model_url"),
+  heroModelScale: storageKey("hero_model_scale"),
 };

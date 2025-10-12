@@ -2,10 +2,12 @@ import { getUpliftSummary } from "../../../uplift.js";
 import { now } from "../../../utils.js";
 import { STORAGE_KEYS } from "../../../../config/storage.js";
 import * as THREE from "../../../../vendor/three/build/three.module.js";
+import { HeroMesh } from "../../../meshes.js";
 
 // Model preview state
 let previewScene, previewCamera, previewRenderer, previewControls, previewModel;
 let previewAnimationId = null;
+let currentModelScale = 1.0; // Current scale value
 
 // Available default models
 const DEFAULT_MODELS = [
@@ -176,6 +178,55 @@ async function build3DModelPreview(container) {
   container.appendChild(urlInput);
   container.appendChild(loadButton);
 
+  // Model scale slider
+  const scaleLabel = document.createElement("div");
+  scaleLabel.className = "items-desc";
+  scaleLabel.style.padding = "0 8px";
+  scaleLabel.style.marginTop = "12px";
+  scaleLabel.style.display = "flex";
+  scaleLabel.style.justifyContent = "space-between";
+  scaleLabel.style.alignItems = "center";
+  
+  const scaleLabelText = document.createElement("span");
+  scaleLabelText.textContent = "Model Scale:";
+  
+  const scaleValue = document.createElement("span");
+  scaleValue.style.fontWeight = "bold";
+  scaleValue.style.color = "#ff6b35";
+  
+  // Load saved scale or default to 1.0
+  const savedScale = localStorage.getItem(STORAGE_KEYS.heroModelScale);
+  currentModelScale = savedScale ? parseFloat(savedScale) : 1.0;
+  scaleValue.textContent = currentModelScale.toFixed(1);
+  
+  scaleLabel.appendChild(scaleLabelText);
+  scaleLabel.appendChild(scaleValue);
+  container.appendChild(scaleLabel);
+
+  const scaleSlider = document.createElement("input");
+  scaleSlider.type = "range";
+  scaleSlider.min = "0.1";
+  scaleSlider.max = "3.0";
+  scaleSlider.step = "0.1";
+  scaleSlider.value = currentModelScale;
+  scaleSlider.style.width = "100%";
+  scaleSlider.style.marginTop = "8px";
+  scaleSlider.style.cursor = "pointer";
+
+  scaleSlider.addEventListener("input", (e) => {
+    const scale = parseFloat(e.target.value);
+    currentModelScale = scale;
+    scaleValue.textContent = scale.toFixed(1);
+    localStorage.setItem(STORAGE_KEYS.heroModelScale, scale.toString());
+    
+    // Apply scale to current model
+    if (previewModel) {
+      previewModel.scale.setScalar(scale);
+    }
+  });
+  
+  container.appendChild(scaleSlider);
+
   // Load initial model after scene is ready
   load3DModel(savedUrl);
 }
@@ -304,11 +355,13 @@ async function load3DModel(url) {
 
           model.position.sub(center);
           const maxDim = Math.max(size.x, size.y, size.z);
-          const scale = 2 / maxDim;
-          model.scale.setScalar(scale);
+          const baseScale = 2 / maxDim;
+          
+          // Apply base scale normalized to model size, then apply user scale
+          model.scale.setScalar(baseScale * currentModelScale);
           model.position.y = 1;
 
-          console.log('[3D Preview] Model centered and scaled. Size:', size, 'Scale:', scale);
+          console.log('[3D Preview] Model centered and scaled. Size:', size, 'Base Scale:', baseScale, 'User Scale:', currentModelScale);
 
           // Enable shadows
           model.traverse((child) => {
@@ -338,42 +391,27 @@ async function load3DModel(url) {
 }
 
 /**
- * Create default preview mesh (simplified hero)
+ * Create default preview mesh (using actual HeroMesh)
  */
 function createDefaultPreviewMesh() {
-  console.log('[3D Preview] Creating default mesh');
+  console.log('[3D Preview] Creating default HeroMesh');
   if (!previewScene) {
     console.warn('[3D Preview] Scene not ready for default mesh');
     return;
   }
 
-  const group = new THREE.Group();
-
-  // Simple capsule body
-  const bodyGeo = new THREE.CapsuleGeometry(0.4, 0.8, 4, 8);
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff6b35 });
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  group.add(body);
-
-  // Head
-  const headGeo = new THREE.SphereGeometry(0.3, 16, 16);
-  const headMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
-  const head = new THREE.Mesh(headGeo, headMat);
-  head.position.y = 1.1;
-  group.add(head);
-
-  // Simple crown
-  const crownGeo = new THREE.TorusGeometry(0.32, 0.04, 8, 16);
-  const crownMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.6 });
-  const crown = new THREE.Mesh(crownGeo, crownMat);
-  crown.position.y = 1.3;
-  crown.rotation.x = Math.PI / 2;
-  group.add(crown);
-
-  group.position.y = 1;
-  previewModel = group;
+  // Create the actual HeroMesh from meshes.js
+  const heroMesh = new HeroMesh();
+  
+  // Reset position (HeroMesh sets itself to 10, 1.1, 10 by default)
+  heroMesh.position.set(0, 0, 0);
+  
+  // Apply current scale
+  heroMesh.scale.setScalar(currentModelScale);
+  
+  previewModel = heroMesh;
   previewScene.add(previewModel);
-  console.log('[3D Preview] Default mesh added to scene');
+  console.log('[3D Preview] HeroMesh added to scene with scale:', currentModelScale);
 }
 
 /**
