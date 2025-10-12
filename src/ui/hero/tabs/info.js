@@ -409,9 +409,20 @@ function createDefaultPreviewMesh() {
   // Apply current scale
   heroMesh.scale.setScalar(currentModelScale);
   
+  // Ensure all parts are visible (override first-person hiding)
+  // fpHideParts contains: body, head, cloak, tunic, belt, shoulders, biceps, beard, crown, hairCap, pony
+  if (heroMesh.fpHideParts && Array.isArray(heroMesh.fpHideParts)) {
+    heroMesh.fpHideParts.forEach(part => {
+      if (part) part.visible = true;
+    });
+  }
+  
+  // Also ensure the main body is visible
+  if (heroMesh.body) heroMesh.body.visible = true;
+  
   previewModel = heroMesh;
   previewScene.add(previewModel);
-  console.log('[3D Preview] HeroMesh added to scene with scale:', currentModelScale);
+  console.log('[3D Preview] HeroMesh added to scene with scale:', currentModelScale, '(all parts visible)');
 }
 
 /**
