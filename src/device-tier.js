@@ -1,14 +1,14 @@
 /**
- * Device Tier Detection System
- * Classifies devices into tiers based on hardware capabilities
- * to apply appropriate performance optimizations
+ * Device Tier System
+ * Uses player-selected render quality from settings to apply
+ * appropriate performance optimizations
  */
 
 /**
- * Device tier levels:
- * - HIGH: High-end devices (120 FPS capable, powerful GPU)
- * - MEDIUM: Middle-class devices (60 FPS target, moderate GPU)
- * - LOW: Low-end devices (30 FPS target, weak GPU)
+ * Device tier levels (matches render quality settings):
+ * - HIGH: High quality rendering
+ * - MEDIUM: Medium quality rendering  
+ * - LOW: Low quality rendering
  */
 export const DEVICE_TIERS = {
   HIGH: 'high',
@@ -17,117 +17,30 @@ export const DEVICE_TIERS = {
 };
 
 /**
- * Detect device tier based on hardware capabilities
+ * Get device tier from localStorage render quality setting
+ * @param {string} storageKeyPrefix - The storage key prefix (e.g., 'gof_')
+ * @returns {string} Device tier based on user's render quality preference
  */
-export function detectDeviceTier() {
+function getDeviceTierFromSettings(storageKeyPrefix = 'gof_') {
   try {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const renderPrefsKey = `${storageKeyPrefix}renderPrefs`;
+    const stored = localStorage.getItem(renderPrefsKey);
     
-    // Get hardware info
-    const hardwareConcurrency = navigator.hardwareConcurrency || 2;
-    const deviceMemory = navigator.deviceMemory || 2; // GB
-    const screenWidth = window.screen.width;
-    const screenHeight = window.screen.height;
-    const pixelRatio = window.devicePixelRatio || 1;
-    
-    // Calculate a performance score
-    let score = 0;
-    
-    // CPU cores factor (0-40 points)
-    if (hardwareConcurrency >= 8) score += 40;
-    else if (hardwareConcurrency >= 6) score += 30;
-    else if (hardwareConcurrency >= 4) score += 20;
-    else score += 10;
-    
-    // Memory factor (0-30 points)
-    if (deviceMemory >= 8) score += 30;
-    else if (deviceMemory >= 6) score += 25;
-    else if (deviceMemory >= 4) score += 20;
-    else if (deviceMemory >= 2) score += 10;
-    else score += 5;
-    
-    // Screen resolution factor (0-20 points)
-    const totalPixels = screenWidth * screenHeight * pixelRatio;
-    if (totalPixels >= 4000000) score += 20; // 4K+ (FIX: was 10)
-    else if (totalPixels >= 2000000) score += 15; // FHD+ (FIX: was 20)
-    else if (totalPixels >= 1000000) score += 10; // HD+ (FIX: was 15)
-    else score += 5; // Low res (FIX: was 10)
-    
-    // Mobile penalty (0-10 points)
-    if (!isMobile) {
-      score += 10; // Desktop bonus
-    }
-    
-    // GPU detection via WebGL
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (gl) {
-      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-      if (debugInfo) {
-        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
-        
-        // High-end GPUs
-        if (renderer.includes('nvidia') || renderer.includes('geforce') || 
-            renderer.includes('radeon') || renderer.includes('adreno 7') ||
-            renderer.includes('mali-g78') || renderer.includes('apple a1') ||
-            renderer.includes('apple m')) {
-          score += 20;
-        }
-        // Mid-range GPUs
-        else if (renderer.includes('adreno 6') || renderer.includes('mali-g7') ||
-                 renderer.includes('apple a9') || renderer.includes('apple a10') ||
-                 renderer.includes('apple a11') || renderer.includes('apple a12')) {
-          score += 10;
-        }
-        // Low-end GPUs get no bonus
-      }
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      const quality = parsed.quality;
       
-      // Check max texture size as GPU capability indicator
-      const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-      if (maxTextureSize >= 8192) score += 10;
-      else if (maxTextureSize >= 4096) score += 5;
+      // Map render quality to device tier
+      if (quality === 'high') return DEVICE_TIERS.HIGH;
+      if (quality === 'low') return DEVICE_TIERS.LOW;
+      return DEVICE_TIERS.MEDIUM; // Default to medium
     }
-    
-    // Determine tier based on score
-    let tier;
-    if (score >= 80) {
-      tier = DEVICE_TIERS.HIGH;
-    } else if (score >= 50) {
-      tier = DEVICE_TIERS.MEDIUM;
-    } else {
-      tier = DEVICE_TIERS.LOW;
-    }
-    
-    // Get GPU info for logging
-    let gpuInfo = 'no-webgl';
-    if (gl) {
-      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-      gpuInfo = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown';
-    }
-    
-    console.info(`[DeviceTier] Detection Results:`, {
-      tier,
-      score,
-      breakdown: {
-        cpu: `${hardwareConcurrency} cores`,
-        memory: `${deviceMemory} GB`,
-        screen: `${screenWidth}x${screenHeight} (${totalPixels.toLocaleString()} pixels)`,
-        pixelRatio,
-        isMobile,
-        gpu: gpuInfo
-      },
-      thresholds: {
-        HIGH: '≥80 points',
-        MEDIUM: '50-79 points', 
-        LOW: '<50 points'
-      }
-    });
-    
-    return tier;
   } catch (error) {
-    console.warn('[DeviceTier] Detection failed, defaulting to MEDIUM', error);
-    return DEVICE_TIERS.MEDIUM;
+    console.warn('[DeviceTier] Failed to read settings, defaulting to MEDIUM', error);
   }
+  
+  // Default to medium if no settings found
+  return DEVICE_TIERS.MEDIUM;
 }
 
 /**
@@ -241,23 +154,21 @@ export function getTierOptimizations(tier) {
 }
 
 /**
- * Cached device tier
+ * Get current device tier from user settings
+ * @param {string} storageKeyPrefix - Optional storage key prefix
+ * @returns {string} Current device tier
  */
-let cachedTier = null;
-
-/**
- * Get current device tier (cached)
- */
-export function getDeviceTier() {
-  if (!cachedTier) {
-    cachedTier = detectDeviceTier();
-  }
-  return cachedTier;
+export function getDeviceTier(storageKeyPrefix) {
+  return getDeviceTierFromSettings(storageKeyPrefix);
 }
 
 /**
- * Get current tier optimizations (cached)
+ * Get current tier optimizations based on user settings
+ * @param {string} storageKeyPrefix - Optional storage key prefix
+ * @returns {object} Optimization settings for current tier
  */
-export function getCurrentTierOptimizations() {
-  return getTierOptimizations(getDeviceTier());
+export function getCurrentTierOptimizations(storageKeyPrefix) {
+  const tier = getDeviceTier(storageKeyPrefix);
+  console.info(`[DeviceTier] Applying optimizations for user-selected tier: ${tier}`);
+  return getTierOptimizations(tier);
 }
