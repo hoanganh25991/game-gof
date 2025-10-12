@@ -26,7 +26,7 @@ export function renderInfoTab(panelEl, ctx = {}) {
   const urlInput = panelEl.querySelector('#heroModelUrl');
   const loadButton = panelEl.querySelector('#heroModelLoad');
   const applyButton = panelEl.querySelector('#heroModelApply');
-  const infoContainer = panelEl.querySelector('.hero-info-right');
+  const infoContainer = panelEl.querySelector('.hero-info-left');
 
   // Setup 3D preview with existing elements
   if (canvas && loadingIndicator) {
@@ -125,16 +125,34 @@ async function init3DPreview(canvas) {
   // Clean up previous scene
   cleanup3DPreview();
 
-  // Wait for canvas to have dimensions
-  await new Promise(resolve => {
-    if (canvas.clientWidth > 0 && canvas.clientHeight > 0) {
-      resolve();
-    } else {
-      requestAnimationFrame(() => resolve());
+  // Wait for canvas to have proper dimensions (with retry logic)
+  await new Promise((resolve) => {
+    let attempts = 0;
+    const maxAttempts = 50; // max 1 second wait
+    
+    function checkDimensions() {
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      
+      console.log(`[3D Preview] Checking canvas dimensions (attempt ${attempts + 1}): ${width}x${height}`);
+      
+      if (width > 0 && height > 0) {
+        console.log('[3D Preview] Canvas has valid dimensions:', width, 'x', height);
+        resolve();
+      } else if (attempts < maxAttempts) {
+        attempts++;
+        // Wait 20ms and check again
+        setTimeout(checkDimensions, 20);
+      } else {
+        console.warn('[3D Preview] Timeout waiting for canvas dimensions, proceeding anyway');
+        resolve();
+      }
     }
+    
+    checkDimensions();
   });
 
-  console.log('[3D Preview] Canvas size:', canvas.clientWidth, 'x', canvas.clientHeight);
+  console.log('[3D Preview] Final canvas size:', canvas.clientWidth, 'x', canvas.clientHeight);
 
   // Scene setup
   previewScene = new THREE.Scene();
