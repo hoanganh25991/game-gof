@@ -108,9 +108,10 @@ export class EnemiesSystem {
     this.#tempC = new THREE.Vector3();
 
     // Initialize spatial grid for efficient proximity queries
-    // Cell size of 15 provides good balance between precision and performance
+    // Cell size of 25 units provides optimal clustering for ~100 enemies
+    // Larger cells = fewer occupied cells = better efficiency
     // World size of 500 covers the typical play area
-    this.#spatialGrid = new SpatialGrid({ cellSize: 15, worldSize: 500 });
+    this.#spatialGrid = new SpatialGrid({ cellSize: 25, worldSize: 500 });
   }
 
   /**
@@ -247,9 +248,25 @@ export class EnemiesSystem {
     const v = this.#dir2D(en.pos(), this.#player.pos());
     const spMul = en.slowUntil && this.#now() < en.slowUntil ? en.slowFactor || 0.5 : 1;
 
+    // Apply enemy-to-enemy separation using spatial grid (O(n log n) instead of O(n²))
+    const separationForce = this.#calculateSeparationForce(en);
+    
+    // Combine chase direction with separation force
+    const finalDir = {
+      x: v.x + separationForce.x * 0.5, // Separation has 50% influence
+      z: v.z + separationForce.z * 0.5
+    };
+    
+    // Normalize the final direction
+    const mag = Math.hypot(finalDir.x, finalDir.z);
+    if (mag > 0.001) {
+      finalDir.x /= mag;
+      finalDir.z /= mag;
+    }
+
     // Next tentative position
-    let nx = en.mesh.position.x + v.x * en.speed * spMul * dt;
-    let nz = en.mesh.position.z + v.z * en.speed * spMul * dt;
+    let nx = en.mesh.position.x + finalDir.x * en.speed * spMul * dt;
+    let nz = en.mesh.position.z + finalDir.z * en.speed * spMul * dt;
 
     // Clamp to fences (origin village)
     const nextDistToVillage = Math.hypot(nx - this.#VILLAGE_POS.x, nz - this.#VILLAGE_POS.z);
@@ -266,10 +283,53 @@ export class EnemiesSystem {
       }
     }
     
-    // Face direction
+    // Face direction (use original chase direction for orientation)
     const yaw = Math.atan2(v.x, v.z);
     const q = new this.#THREE.Quaternion().setFromEuler(new this.#THREE.Euler(0, yaw, 0));
     en.mesh.quaternion.slerp(q, 0.2);
+  }
+
+  /**
+   * Calculate separation force from nearby enemies using spatial grid
+   * This reduces collision checks from O(n²) to O(n log n)
+   * @private
+   * @param {Object} en - Enemy to calculate separation for
+   * @returns {{x: number, z: number}} Separation force vector
+   */
+  #calculateSeparationForce(en) {
+    const separationRadius = 2.5; // Min distance to maintain from other enemies
+    const nearby = this.#spatialGrid.getNearby(en.pos(), separationRadius);
+    
+    let forceX = 0;
+    let forceZ = 0;
+    let count = 0;
+    
+    for (const other of nearby) {
+      // Skip self
+      if (other === en) continue;
+      
+      const dx = en.mesh.position.x - other.mesh.position.x;
+      const dz = en.mesh.position.z - other.mesh.position.z;
+      const distSq = dx * dx + dz * dz;
+      
+      // Apply stronger force when closer
+      if (distSq < separationRadius * separationRadius && distSq > 0.01) {
+        const dist = Math.sqrt(distSq);
+        const strength = (separationRadius - dist) / separationRadius; // 0 to 1
+        
+        forceX += (dx / dist) * strength;
+        forceZ += (dz / dist) * strength;
+        count++;
+      }
+    }
+    
+    // Average the separation force
+    if (count > 0) {
+      forceX /= count;
+      forceZ /= count;
+    }
+    
+    return { x: forceX, z: forceZ };
   }
 
   /**

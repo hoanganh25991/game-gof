@@ -37,6 +37,8 @@ import { UIController } from "../managers/UIController.js";
 import { SettingsManager } from "../managers/SettingsManager.js";
 import { WorldManager } from "./WorldManager.js";
 import { GameLoop } from "./GameLoop.js";
+import { GPUCollisionSystem } from "../gpu-collision.js";
+import { EnemyInstancedRenderer } from "../gpu-instancing.js";
 
 // Coordinators
 import { AudioCoordinator } from "./coordinators/AudioCoordinator.js";
@@ -74,6 +76,8 @@ export class GameApp {
     this.enemiesSystem = null;
     this.skillsSystem = null;
     this.respawnSystem = null;
+    this.gpuCollision = null;
+    this.gpuInstancing = null;
 
     // World components
     this.scene = null;
@@ -202,6 +206,22 @@ export class GameApp {
       applyMapEnemyCss(this.mapManager.getModifiers());
     } catch (_) {}
 
+    // GPU Collision System (Phase 3)
+    this.gpuCollision = new GPUCollisionSystem({
+      THREE,
+      scene: this.scene,
+      renderer: this.renderer,
+      worldSize: 500,
+      textureSize: 512
+    });
+
+    // GPU Instancing for Enemies (Phase 3) - Reduces draw calls from 60+ to 1
+    this.gpuInstancing = new EnemyInstancedRenderer({
+      THREE,
+      scene: this.scene,
+      maxEnemies: 200
+    });
+
     // Splash and I18n
     initSplash();
     initI18n();
@@ -290,10 +310,22 @@ export class GameApp {
       shouldSpawnVfx: this.shouldSpawnVfx,
       applyMapModifiersToEnemy: this.mapManager.applyMapModifiersToEnemy?.bind(this.mapManager),
       chunkMgr: this.environmentCoordinator.getChunkManager(),
+      gpuCollision: this.gpuCollision,
     });
 
     // Connect enemies system to performance tracker for spatial grid stats
     this.perfTracker.setEnemiesSystem(this.enemiesSystem);
+
+    // Bake initial collision map (Phase 3)
+    if (this.gpuCollision.isSupported()) {
+      const REST_RADIUS = (await import("../../config/index.js")).REST_RADIUS;
+      this.gpuCollision.bakeCollisionMap({
+        villages,
+        structures: this.environmentCoordinator.getChunkManager()?.getStructuresAPI?.()?.listStructures?.() || [],
+        villagePos: VILLAGE_POS,
+        restRadius: REST_RADIUS
+      });
+    }
 
     // Skills System
     this.skillsSystem = new SkillsSystem(
@@ -418,6 +450,7 @@ export class GameApp {
       perfTracker: this.perfTracker,
       indicators: this.indicators,
       skillsSystem: this.skillsSystem,
+      gpuInstancing: this.gpuInstancing,
     });
 
     // Set strides

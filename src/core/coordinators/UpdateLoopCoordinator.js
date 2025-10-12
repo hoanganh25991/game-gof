@@ -28,6 +28,7 @@ export class UpdateLoopCoordinator {
     perfTracker,
     indicators,
     skillsSystem,
+    gpuInstancing,
   }) {
     this.worldManager = worldManager;
     this.cameraSystem = cameraSystem;
@@ -47,6 +48,7 @@ export class UpdateLoopCoordinator {
     this.perfTracker = perfTracker;
     this.indicators = indicators;
     this.skillsSystem = skillsSystem;
+    this.gpuInstancing = gpuInstancing;
 
     // State
     this.lastMoveDir = new THREE.Vector3(0, 0, 0);
@@ -166,6 +168,11 @@ export class UpdateLoopCoordinator {
 
     if (!isOverBudget()) {
       this.bbOffset = (this.bbOffset + 1) % this.bbStride;
+    }
+
+    // GPU Instancing: Update enemy instances (Phase 3 optimization)
+    if (this.gpuInstancing && this.gpuInstancing.isSupported()) {
+      this.gpuInstancing.updateInstances(enemies);
     }
 
     // Render

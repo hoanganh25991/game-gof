@@ -22,7 +22,9 @@ export class SpatialGrid {
       totalEntities: 0,
       activeCells: 0,
       maxEntitiesPerCell: 0,
-      averageEntitiesPerCell: 0
+      averageEntitiesPerCell: 0,
+      queriesThisFrame: 0,
+      entitiesCheckedThisFrame: 0
     };
   }
 
@@ -53,6 +55,8 @@ export class SpatialGrid {
     this.stats.totalEntities = 0;
     this.stats.activeCells = 0;
     this.stats.maxEntitiesPerCell = 0;
+    this.stats.queriesThisFrame = 0;
+    this.stats.entitiesCheckedThisFrame = 0;
   }
 
   /**
@@ -109,6 +113,10 @@ export class SpatialGrid {
         }
       }
     }
+
+    // Track actual collision checks performed
+    this.stats.queriesThisFrame++;
+    this.stats.entitiesCheckedThisFrame += nearby.length;
 
     return nearby;
   }
@@ -196,21 +204,21 @@ export class SpatialGrid {
    * @returns {Object} Comparison of checks
    */
   getEfficiency(entityCount) {
-    const withoutGrid = entityCount * (entityCount - 1) / 2; // O(n²) checks
+    // Theoretical O(n²) checks without spatial grid
+    const withoutGrid = entityCount * (entityCount - 1) / 2;
     
-    // With grid: average entities per cell × nearby cells
-    const avgPerCell = this.stats.averageEntitiesPerCell || 1;
-    const cellsToCheck = 9; // 3x3 grid around entity
-    const withGrid = entityCount * avgPerCell * cellsToCheck;
+    // Actual checks performed this frame using spatial grid
+    const withGrid = this.stats.entitiesCheckedThisFrame || 0;
     
-    const saved = withoutGrid - withGrid;
+    const saved = Math.max(0, withoutGrid - withGrid);
     const percent = withoutGrid > 0 ? (saved / withoutGrid) * 100 : 0;
 
     return {
       withoutGrid,
       withGrid,
       checksSaved: saved,
-      percentSaved: percent
+      percentSaved: percent,
+      queries: this.stats.queriesThisFrame
     };
   }
 }

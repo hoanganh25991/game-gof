@@ -243,10 +243,10 @@ export function renderInfoTab(panelEl, ctx = {}) {
       if (perf && perf.spatialGrid) {
         const sg = perf.spatialGrid;
         if ($spatialEnemies) $spatialEnemies.textContent = String(sg.aliveEnemies || 0);
-        if ($spatialCells) $spatialCells.textContent = String(sg.occupiedCells || 0);
+        if ($spatialCells) $spatialCells.textContent = String(sg.activeCells || 0);
         if ($spatialTotal) $spatialTotal.textContent = String(sg.totalEntities || 0);
-        if ($spatialWithout) $spatialWithout.textContent = sg.efficiency ? String(sg.efficiency.withoutGrid || 0) : '—';
-        if ($spatialWith) $spatialWith.textContent = sg.efficiency ? String(sg.efficiency.withGrid || 0) : '—';
+        if ($spatialWithout) $spatialWithout.textContent = sg.efficiency ? String(Math.round(sg.efficiency.withoutGrid) || 0) : '—';
+        if ($spatialWith) $spatialWith.textContent = sg.efficiency ? String(Math.round(sg.efficiency.withGrid) || 0) : '—';
         if ($spatialEfficiency) {
           const eff = sg.efficiency ? sg.efficiency.percentSaved : 0;
           $spatialEfficiency.textContent = `${round(eff, 1)}`;
