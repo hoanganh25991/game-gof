@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three/build/three.module.js";
-import { storageKey } from "./storage.js";
+import { storageKey, STORAGE_KEYS } from "./storage.js";
 
 export const WORLD = {
   groundSize: 500,     // local visual grid chunk size
@@ -49,4 +49,16 @@ export const WORLD = {
 // Village and recall/portals
 export const VILLAGE_POS = new THREE.Vector3(0, 0, 0);
 export const REST_RADIUS = 20;
-export const HERO_MODEL_URL = null;
+
+// Hero model URL - load from localStorage if available
+function getHeroModelUrl() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.heroModelUrl);
+    return saved || null;
+  } catch (e) {
+    console.warn("Failed to load hero model URL from localStorage:", e);
+    return null;
+  }
+}
+
+export const HERO_MODEL_URL = getHeroModelUrl();
