@@ -10,9 +10,9 @@ let previewAnimationId = null;
 // Available default models
 const DEFAULT_MODELS = [
   { label: "Default (Built-in 3D)", value: null },
-  { label: "Model 1", value: "model/game-gof-model.glb" },
-  { label: "Model 2", value: "model/game-gof-model-01.glb" },
-  { label: "Model 3", value: "model/game-gof-model-03.glb" }
+  { label: "Model 1", value: "http://localhost/game-gof/model/game-gof-model-01.glb" },
+  { label: "Model 2", value: "http://localhost/game-gof/model/game-gof-model-02.glb" },
+  { label: "Model 3", value: "http://localhost/game-gof/model/game-gof-model-03.glb" }
 ];
 
 /**
@@ -214,7 +214,7 @@ async function init3DPreview(canvas) {
   previewScene.add(fillLight);
 
   // OrbitControls
-  const { OrbitControls } = await import("../../../vendor/three/examples/jsm/controls/OrbitControls.js");
+  const { OrbitControls } = await import("../../../../vendor/three/examples/jsm/controls/OrbitControls.js");
   previewControls = new OrbitControls(previewCamera, canvas);
   previewControls.enableDamping = true;
   previewControls.dampingFactor = 0.05;
@@ -262,7 +262,7 @@ async function load3DModel(url) {
   }
 
   try {
-    const { GLTFLoader } = await import("../../../vendor/three/examples/jsm/loaders/GLTFLoader.js");
+    const { GLTFLoader } = await import("../../../../vendor/three/examples/jsm/loaders/GLTFLoader.js");
     const loader = new GLTFLoader();
 
     loader.load(
