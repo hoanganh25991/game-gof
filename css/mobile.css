@@ -76,9 +76,22 @@
   cursor: pointer;
 }
 
-@media (max-height: 500px) {
+@media (pointer: coarse) {
+  /* Mobile: ensure bottom-middle hidden and original mobile UI visible */
+  #bottomMiddle {
+    display: none !important;
+  }
+
   .skill-btn .key{
     visibility: hidden;
+  }
+
+  #bottomLeftGroup {
+    display: flex;
+  }
+
+  #bottomRightGroup {
+    display: flex;
   }
 
   #hud {
@@ -105,20 +118,5 @@
 @media (max-height: 420px) {
   #minimap {
     max-height: 160px;
-  }
-}
-
-@media (pointer: coarse) {
-  /* Mobile: ensure bottom-middle hidden and original mobile UI visible */
-  #bottomMiddle {
-    display: none !important;
-  }
-
-  #bottomLeftGroup {
-    display: flex;
-  }
-
-  #bottomRightGroup {
-    display: flex;
   }
 }
