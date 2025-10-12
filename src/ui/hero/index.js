@@ -68,11 +68,24 @@ export function renderHeroScreen(initialTab = "skills", ctx = {}) {
     tabBtns.forEach((b) => b.classList.remove("active"));
     const activeBtn = tabBtns.find((b) => b.getAttribute("aria-controls") === id);
     if (activeBtn) activeBtn.classList.add("active");
+    
+    // Save the active tab to localStorage
+    try {
+      const tabName = id.replace('heroTab', '').toLowerCase();
+      localStorage.setItem("gof.heroScreenTab", tabName);
+    } catch (_) {}
   }
 
-  // Initial activation based on initialTab
+  // Initial activation based on initialTab (prefer saved tab from localStorage)
   const tabMap = { skills: "heroTabSkills", info: "heroTabInfo", book: "heroTabBook", maps: "heroTabMaps", marks: "heroTabMarks" };
-  showPanelById(tabMap[initialTab] || "heroTabSkills");
+  let activeTab = initialTab;
+  try {
+    const savedTab = localStorage.getItem("gof.heroScreenTab");
+    if (savedTab && tabMap[savedTab]) {
+      activeTab = savedTab;
+    }
+  } catch (_) {}
+  showPanelById(tabMap[activeTab] || "heroTabSkills");
 
   // Bind tab buttons
   tabBtns.forEach((btn) => {

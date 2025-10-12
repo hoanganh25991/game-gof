@@ -69,7 +69,7 @@ export class UISetupCoordinator {
   /**
    * Show hero screen
    */
-  showHeroScreen(initialTab = "skills") {
+  showHeroScreen(initialTab = null) {
     const player = this.entityCoordinator.getPlayer();
     const enemies = this.entityCoordinator.getEnemies();
     const portals = this.entityCoordinator.getPortals();
@@ -108,7 +108,7 @@ export class UISetupCoordinator {
     } catch (_) {}
 
     try {
-      renderHeroScreenUI(initialTab, ctx);
+      renderHeroScreenUI(initialTab || "skills", ctx);
     } catch (_) {}
   }
 
@@ -242,7 +242,7 @@ export class UISetupCoordinator {
         btnMark,
       },
       actions: {
-        showHeroScreen: () => this.showHeroScreen("skills"),
+        showHeroScreen: () => this.showHeroScreen(),
         setFirstPerson: (enabled) =>
           this.worldManager.setFirstPersonMode(enabled, player, heroBars),
         getFirstPerson: () => this.worldManager.isFirstPersonMode(),

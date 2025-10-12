@@ -8,6 +8,9 @@ import { HeroMesh } from "../../../meshes.js";
 let previewScene, previewCamera, previewRenderer, previewControls, previewModel;
 let previewAnimationId = null;
 let currentModelScale = 1.0; // Current scale value
+let currentLoadToken = 0; // Track current load operation to cancel old ones
+let isPreviewInitialized = false; // Track if preview has been initialized
+let previewCanvas = null; // Store canvas reference
 
 /**
  * Render the Info tab: basic hero info (level, HP/MP).
@@ -41,6 +44,51 @@ export function renderInfoTab(panelEl, ctx = {}) {
  * Setup the 3D model preview using existing DOM elements
  */
 async function setup3DModelPreview(canvas, loadingIndicator, select, scaleValue, scaleSlider, urlInput, loadButton, applyButton) {
+  // Store canvas reference
+  previewCanvas = canvas;
+
+  // If already initialized, just handle resize and reload model
+  if (isPreviewInitialized && previewRenderer && previewCamera) {
+    console.log('[3D Preview] Already initialized, handling resize and reloading model');
+    
+    // Wait for canvas to become visible again
+    await new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 50;
+      
+      function checkDimensions() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        
+        if (width > 0 && height > 0) {
+          console.log('[3D Preview] Canvas visible again:', width, 'x', height);
+          // Update renderer size
+          previewCamera.aspect = width / height;
+          previewCamera.updateProjectionMatrix();
+          previewRenderer.setSize(width, height);
+          resolve();
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(checkDimensions, 20);
+        } else {
+          console.warn('[3D Preview] Timeout waiting for canvas to become visible');
+          resolve();
+        }
+      }
+      
+      checkDimensions();
+    });
+    
+    // Reload the current model
+    const savedUrl = localStorage.getItem(STORAGE_KEYS.heroModelUrl);
+    load3DModel(savedUrl, loadingIndicator);
+    
+    return;
+  }
+
+  // First time initialization
+  console.log('[3D Preview] First time initialization');
+  
   // Initialize 3D preview and wait for it to complete
   await init3DPreview(canvas);
 
@@ -58,7 +106,7 @@ async function setup3DModelPreview(canvas, loadingIndicator, select, scaleValue,
   scaleValue.textContent = currentModelScale.toFixed(1) + "x";
   scaleSlider.value = currentModelScale;
 
-  // Setup event listeners
+  // Setup event listeners (only once)
   select.addEventListener("change", (e) => {
     const url = e.target.value || null;
     if (url) {
@@ -104,6 +152,9 @@ async function setup3DModelPreview(canvas, loadingIndicator, select, scaleValue,
 
   // Load initial model after scene is ready
   load3DModel(savedUrl, loadingIndicator);
+  
+  // Mark as initialized
+  isPreviewInitialized = true;
 }
 
 /**
@@ -261,6 +312,11 @@ async function load3DModel(url, loadingIndicator) {
     return;
   }
 
+  // Increment token to cancel any in-flight async loads
+  currentLoadToken++;
+  const thisLoadToken = currentLoadToken;
+  console.log('[3D Preview] Starting load with token:', thisLoadToken);
+
   // Clear ALL models from the scene (in case of overlapping async loads)
   clearAllModelsFromScene();
 
@@ -287,6 +343,12 @@ async function load3DModel(url, loadingIndicator) {
     loader.load(
       url,
       (gltf) => {
+        // Check if this load is still valid (not cancelled by a newer load)
+        if (thisLoadToken !== currentLoadToken) {
+          console.log('[3D Preview] Load cancelled - token mismatch:', thisLoadToken, 'vs', currentLoadToken);
+          return;
+        }
+
         console.log('[3D Preview] Model loaded successfully:', gltf);
         const model = gltf.scene || (gltf.scenes && gltf.scenes[0]);
         if (model) {
@@ -324,6 +386,11 @@ async function load3DModel(url, loadingIndicator) {
         }
       },
       (progress) => {
+        // Check if this load is still valid
+        if (thisLoadToken !== currentLoadToken) {
+          return;
+        }
+
         const percent = (progress.loaded / progress.total * 100).toFixed(0);
         console.log('[3D Preview] Loading progress:', percent + '%');
         
@@ -333,6 +400,12 @@ async function load3DModel(url, loadingIndicator) {
         }
       },
       (error) => {
+        // Check if this load is still valid
+        if (thisLoadToken !== currentLoadToken) {
+          console.log('[3D Preview] Error ignored - load was cancelled');
+          return;
+        }
+
         console.warn("[3D Preview] Failed to load model:", url, error);
         
         // Hide loading indicator on error
@@ -340,10 +413,16 @@ async function load3DModel(url, loadingIndicator) {
           loadingIndicator.style.display = "none";
         }
         
-        createDefaultPreviewMesh();
+        createDefaultPreviewMesh(loadingIndicator);
       }
     );
   } catch (error) {
+    // Check if this load is still valid
+    if (thisLoadToken !== currentLoadToken) {
+      console.log('[3D Preview] Error ignored - load was cancelled');
+      return;
+    }
+
     console.warn("[3D Preview] Error loading model:", url, error);
     
     // Hide loading indicator on error
@@ -351,7 +430,7 @@ async function load3DModel(url, loadingIndicator) {
       loadingIndicator.style.display = "none";
     }
     
-    createDefaultPreviewMesh();
+    createDefaultPreviewMesh(loadingIndicator);
   }
 }
 
