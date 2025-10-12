@@ -522,28 +522,48 @@ function clearAllModelsFromScene() {
   // Remove the current tracked model
   if (previewModel) {
     previewScene.remove(previewModel);
+    
+    // Dispose geometry and materials to free memory
+    previewModel.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(mat => mat.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+    });
+    
     previewModel = null;
   }
   
-  // Remove ALL mesh objects from scene (in case some weren't tracked)
-  const objectsToRemove = [];
-  previewScene.traverse((object) => {
-    // Don't remove lights or camera
-    if (object.isMesh || object.isGroup || object.isObject3D) {
-      // Skip lights and camera
-      if (!object.isLight && !object.isCamera) {
-        objectsToRemove.push(object);
+  // Remove ALL children from scene that are meshes or groups (but keep lights)
+  const childrenToRemove = [];
+  previewScene.children.forEach((child) => {
+    // Keep lights, cameras, and the scene itself
+    if (!child.isLight && !child.isCamera && child !== previewScene) {
+      childrenToRemove.push(child);
+    }
+  });
+  
+  childrenToRemove.forEach(child => {
+    previewScene.remove(child);
+    
+    // Dispose geometry and materials
+    child.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach(mat => mat.dispose());
+        } else {
+          obj.material.dispose();
+        }
       }
-    }
+    });
   });
   
-  objectsToRemove.forEach(obj => {
-    if (obj.parent) {
-      obj.parent.remove(obj);
-    }
-  });
-  
-  console.log('[3D Preview] Cleared', objectsToRemove.length, 'objects from scene');
+  console.log('[3D Preview] Cleared', childrenToRemove.length, 'model(s) from scene');
 }
 
 /**
