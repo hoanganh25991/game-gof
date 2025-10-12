@@ -8,6 +8,7 @@ import { THEME_COLORS } from "../config/index.js";
 import { HERO_MODEL_URL } from "../config/index.js";
 import { parseThreeColor } from "./utils.js";
 import { getCurrentTierOptimizations, DEVICE_TIERS } from "./device-tier.js";
+import { STORAGE_KEYS } from "../config/storage.js";
 
 /**
  * Get optimized segment counts based on device tier
@@ -327,6 +328,11 @@ export class HeroMesh extends THREE.Group {
   async _loadGLTFModel() {
     const { GLTFLoader } = await import("../vendor/three/examples/jsm/loaders/GLTFLoader.js");
     const loader = new GLTFLoader();
+    
+    // Load saved scale from localStorage (default to 1.0)
+    const savedScale = localStorage.getItem(STORAGE_KEYS.heroModelScale);
+    const userScale = savedScale ? parseFloat(savedScale) : 1.0;
+    
     loader.load(
       HERO_MODEL_URL,
       (gltf) => {
@@ -342,11 +348,15 @@ export class HeroMesh extends THREE.Group {
           const size = new THREE.Vector3();
           box.getSize(size);
           const targetHeight = 2.2;
-          const s = size.y > 0 ? targetHeight / size.y : 1;
-          model.scale.setScalar(s);
+          const baseScale = size.y > 0 ? targetHeight / size.y : 1;
+          
+          // Apply base scale normalized to target height, then apply user scale
+          model.scale.setScalar(baseScale * userScale);
           model.position.set(0, 0, 0);
           this.add(model);
           this.body.visible = false;
+          
+          console.log('[HeroMesh] GLTF model loaded with base scale:', baseScale, 'user scale:', userScale);
         }
       },
       undefined,
