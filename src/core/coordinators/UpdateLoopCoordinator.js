@@ -171,10 +171,10 @@ export class UpdateLoopCoordinator {
     }
 
     // GPU Instancing: Update enemy instances (Phase 3 optimization)
-    // DISABLED: Causes enemies to render as boxes and hides health bars
-    // if (this.gpuInstancing && this.gpuInstancing.isSupported()) {
-    //   this.gpuInstancing.updateInstances(enemies);
-    // }
+    // Batches all enemies into 1 draw call, keeps health bars visible
+    if (this.gpuInstancing && this.gpuInstancing.isSupported()) {
+      this.gpuInstancing.updateInstances(enemies);
+    }
 
     // Render
     this.renderer.render(this.scene, this.camera);

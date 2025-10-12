@@ -63,10 +63,11 @@ export class EnemyInstancedRenderer {
    * @private
    */
   #initInstancedMesh() {
-    // Create shared geometry (simple cube for enemies)
-    this.#geometry = new this.#THREE.BoxGeometry(1, 2, 1);
+    // Use actual enemy geometry (CapsuleGeometry) for visual consistency
+    // Reduced segments for performance while maintaining quality
+    this.#geometry = new this.#THREE.CapsuleGeometry(0.6, 0.8, 4, 10);
     
-    // Create shared material with vertex colors
+    // Create shared material with vertex colors for per-enemy variety
     this.#material = new this.#THREE.MeshStandardMaterial({
       vertexColors: true,
       roughness: 0.7,
@@ -82,14 +83,14 @@ export class EnemyInstancedRenderer {
     
     // Enable frustum culling per instance
     this.#instancedMesh.frustumCulled = true;
+    this.#instancedMesh.castShadow = true;
     
     // Initialize color attribute for per-instance colors
     const colors = new Float32Array(this.#maxEnemies * 3);
     for (let i = 0; i < this.#maxEnemies; i++) {
-      // Default color (will be updated per enemy)
       colors[i * 3 + 0] = 1.0; // R
-      colors[i * 3 + 1] = 0.3; // G
-      colors[i * 3 + 2] = 0.2; // B - orange-ish default
+      colors[i * 3 + 1] = 0.3; // G  
+      colors[i * 3 + 2] = 0.2; // B
     }
     
     this.#colorAttribute = new this.#THREE.InstancedBufferAttribute(colors, 3);
@@ -100,7 +101,7 @@ export class EnemyInstancedRenderer {
     
     // Initially hide all instances
     for (let i = 0; i < this.#maxEnemies; i++) {
-      this.#dummy.position.set(0, -1000, 0); // Move far below ground
+      this.#dummy.position.set(0, -1000, 0);
       this.#dummy.updateMatrix();
       this.#instancedMesh.setMatrixAt(i, this.#dummy.matrix);
     }
@@ -126,19 +127,27 @@ export class EnemyInstancedRenderer {
       // Update dummy object with enemy transform
       this.#dummy.position.copy(enemy.mesh.position);
       this.#dummy.rotation.copy(enemy.mesh.rotation);
-      this.#dummy.scale.set(1, 1, 1);
+      
+      // Preserve enemy scale for visual variety (brute=1.25x, raider=1.05x, etc)
+      const scale = enemy.mesh.scale;
+      this.#dummy.scale.set(scale.x, scale.y, scale.z);
       this.#dummy.updateMatrix();
       
       // Set instance matrix
       this.#instancedMesh.setMatrixAt(instanceIndex, this.#dummy.matrix);
       
-      // Update instance color based on enemy type
+      // Update instance color based on enemy tier and type
       const color = this.#getEnemyColor(enemy);
       this.#colorAttribute.setXYZ(instanceIndex, color.r, color.g, color.b);
       
-      // Hide original mesh (we're rendering via instancing now)
-      if (enemy.mesh.visible !== false) {
-        enemy.mesh.visible = false;
+      // Hide enemy body material but keep mesh and children (health bar, eye) visible
+      // This allows health bars to remain visible while the body is rendered via instancing
+      if (enemy.mesh.material && enemy.mesh.material.visible !== false) {
+        // Make the original mesh material invisible instead of hiding the entire mesh
+        // This keeps the mesh transform active for health bars while hiding the geometry
+        enemy.mesh.material.colorWrite = false;
+        enemy.mesh.material.depthWrite = false;
+        enemy.mesh.renderOrder = -1; // Render first to not interfere with depth
       }
       
       instanceIndex++;
@@ -160,39 +169,41 @@ export class EnemyInstancedRenderer {
   }
 
   /**
-   * Get color for enemy based on type
+   * Get color for enemy based on tier
    * @private
    */
   #getEnemyColor(enemy) {
-    // Default enemy color
-    let r = 1.0, g = 0.3, b = 0.2; // Orange
+    // Tier-based colors matching entities.js
+    const TIER_COLORS = {
+      normal: { r: 0.53, g: 0.27, b: 0.20 }, // #884433 (THEME_COLORS.enemyDark)
+      tough: { r: 1.0, g: 0.54, b: 0.31 },   // #ff8a50
+      elite: { r: 1.0, g: 0.85, b: 0.42 },   // #ffd86a
+      boss: { r: 1.0, g: 0.92, b: 0.60 }     // #ffeb99
+    };
+    
+    let color = TIER_COLORS.normal; // Default
     
     try {
-      // Check enemy type or level for color variation
-      if (enemy.level) {
-        const level = enemy.level;
-        if (level >= 10) {
-          r = 0.8; g = 0.1; b = 0.1; // Dark red for high level
-        } else if (level >= 5) {
-          r = 1.0; g = 0.4; b = 0.1; // Orange-red for mid level
-        } else {
-          r = 1.0; g = 0.5; b = 0.2; // Light orange for low level
-        }
+      // Use enemy tier for consistent coloring
+      if (enemy.tier && TIER_COLORS[enemy.tier]) {
+        color = TIER_COLORS[enemy.tier];
       }
       
-      // Health-based color (fade to dark when low HP)
+      // Slight darkening for low health (visual feedback)
       if (enemy.hp !== undefined && enemy.maxHp !== undefined) {
         const healthPct = enemy.hp / enemy.maxHp;
         if (healthPct < 0.3) {
-          // Darken when low health
-          r *= 0.6;
-          g *= 0.6;
-          b *= 0.6;
+          const factor = 0.7;
+          color = {
+            r: color.r * factor,
+            g: color.g * factor,
+            b: color.b * factor
+          };
         }
       }
     } catch (_) {}
     
-    return { r, g, b };
+    return color;
   }
 
   /**
