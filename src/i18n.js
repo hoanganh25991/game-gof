@@ -101,10 +101,14 @@ export class I18n {
 
   /**
    * Apply translations to all elements with [data-i18n] within root.
-   * If translations are not yet loaded, the elements will receive the raw key text.
+   * Waits for the current language to be loaded before applying translations.
    */
-  applyTranslations(root = document) {
+  async applyTranslations(root = document) {
     if (!root || !root.querySelectorAll) return;
+    
+    // Wait for the current language to load if not already loaded
+    await this.loadLocale(this.currentLang);
+    
     root.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       const val = this.t(key);
@@ -154,14 +158,9 @@ export class I18n {
       // ignore
     }
 
-    // Apply immediate (will show keys if not loaded)
-    this.applyTranslations(document);
+    // Apply translations (will wait for locale to load)
+    await this.applyTranslations(document);
     const instr = document.getElementById("settingsInstructions");
-    if (instr) this.renderInstructions(instr);
-
-    // Load and re-apply when ready
-    await this.loadLocale(lang);
-    this.applyTranslations(document);
     if (instr) this.renderInstructions(instr);
   }
 
@@ -186,14 +185,9 @@ export class I18n {
       }
     } catch (e) {}
 
-    // Apply keys immediately so the UI is populated
-    this.applyTranslations(document);
+    // Apply translations (will wait for locale to load)
+    await this.applyTranslations(document);
     const instr = document.getElementById("settingsInstructions");
-    if (instr) this.renderInstructions(instr);
-
-    // Load selected locale and re-apply once it's available
-    await this.loadLocale(this.currentLang);
-    this.applyTranslations(document);
     if (instr) this.renderInstructions(instr);
   }
 
