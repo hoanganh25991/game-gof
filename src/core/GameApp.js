@@ -292,6 +292,9 @@ export class GameApp {
       chunkMgr: this.environmentCoordinator.getChunkManager(),
     });
 
+    // Connect enemies system to performance tracker for spatial grid stats
+    this.perfTracker.setEnemiesSystem(this.enemiesSystem);
+
     // Skills System
     this.skillsSystem = new SkillsSystem(
       player,

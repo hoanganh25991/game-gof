@@ -3,6 +3,7 @@
  * - Updates enemy AI, movement, attacks, death/respawn, despawn, and HP bar billboarding.
  * - Mobile culling: freezes enemies beyond a cull distance to save CPU on low-end devices.
  * - VFX gating: defers heavy effects based on performance tracker policy provided by main.
+ * - Spatial partitioning: Uses spatial grid to reduce collision checks from O(n²) to O(n log n)
  *
  * Public API:
  *   import { EnemiesSystem } from './enemies_system.js';
@@ -16,6 +17,7 @@
  */
 
 import { THEME_COLORS } from "../config/index.js";
+import { SpatialGrid } from "./spatial-grid.js";
 
 export class EnemiesSystem {
   // Private fields for dependencies
@@ -52,6 +54,9 @@ export class EnemiesSystem {
 
   // Private field for AI stride offset
   #aiOffset = 0;
+
+  // Private field for spatial partitioning
+  #spatialGrid;
 
   constructor({
     THREE,
@@ -101,6 +106,11 @@ export class EnemiesSystem {
     this.#tempA = new THREE.Vector3();
     this.#tempB = new THREE.Vector3();
     this.#tempC = new THREE.Vector3();
+
+    // Initialize spatial grid for efficient proximity queries
+    // Cell size of 15 provides good balance between precision and performance
+    // World size of 500 covers the typical play area
+    this.#spatialGrid = new SpatialGrid({ cellSize: 15, worldSize: 500 });
   }
 
   /**
@@ -418,6 +428,14 @@ export class EnemiesSystem {
 
     this.#aiOffset = (this.#aiOffset + 1) % aiStride;
 
+    // Rebuild spatial grid for this frame
+    this.#spatialGrid.clear();
+    for (const en of this.#enemies) {
+      if (en && en.alive && !en._despawned) {
+        this.#spatialGrid.insert(en);
+      }
+    }
+
     // Mobile: periodic culling update
     this.#updateMobileCulling();
 
@@ -506,6 +524,19 @@ export class EnemiesSystem {
    */
   getFrozenEnemies() {
     return this.#frozenEnemies;
+  }
+
+  /**
+   * Get spatial grid statistics (for debugging/profiling)
+   * @returns {Object} Grid statistics including checks saved
+   */
+  getSpatialGridStats() {
+    const aliveEnemies = this.#enemies.filter(e => e && e.alive && !e._despawned).length;
+    return {
+      ...this.#spatialGrid.getStats(),
+      efficiency: this.#spatialGrid.getEfficiency(aliveEnemies),
+      aliveEnemies
+    };
   }
 }
 

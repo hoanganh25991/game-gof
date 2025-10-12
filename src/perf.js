@@ -8,6 +8,7 @@
 export function createPerformanceTracker(renderer, opts = {}) {
   const targetFPS = Number.isFinite(opts.targetFPS) ? opts.targetFPS : 90;
   let autoAdjust = opts.autoAdjust === true; // DISABLED BY DEFAULT - user controls via settings
+  let enemiesSystemRef = null; // Reference to enemies system for spatial grid stats
 
   const state = {
     prevMs: performance.now(),
@@ -15,7 +16,8 @@ export function createPerformanceTracker(renderer, opts = {}) {
     fps: 0,
     fpsLow1: 0,
     ms: 0,
-    avgMs: 0
+    avgMs: 0,
+    spatialGrid: null // Spatial grid statistics
   };
 
   function update(nowMs) {
@@ -51,7 +53,23 @@ export function createPerformanceTracker(renderer, opts = {}) {
       geometries: ri.memory.geometries,
       textures: ri.memory.textures
     } : undefined;
-    return { fps: state.fps, fpsLow1: state.fpsLow1, ms: state.ms, avgMs: state.avgMs, renderer: r };
+    
+    // Get spatial grid stats if available
+    let spatialGrid = null;
+    try {
+      if (enemiesSystemRef && typeof enemiesSystemRef.getSpatialGridStats === 'function') {
+        spatialGrid = enemiesSystemRef.getSpatialGridStats();
+      }
+    } catch (_) {}
+    
+    return { 
+      fps: state.fps, 
+      fpsLow1: state.fpsLow1, 
+      ms: state.ms, 
+      avgMs: state.avgMs, 
+      renderer: r,
+      spatialGrid 
+    };
   }
 
   function maybeAutoAdjustVfxQuality() {
@@ -94,6 +112,7 @@ export function createPerformanceTracker(renderer, opts = {}) {
     getAutoAdjust() { return autoAdjust; },
     setAutoAdjust(v) { autoAdjust = !!v; },
     maybeAutoAdjustVfxQuality,
+    setEnemiesSystem(enemiesSystem) { enemiesSystemRef = enemiesSystem; },
   };
 }
 

@@ -51,6 +51,14 @@ export function renderInfoTab(panelEl, ctx = {}) {
   const $gpuWarnings = el("#gpuWarnings");
   const $gpuWarningsList = el("#gpuWarningsList");
 
+  // Spatial Grid UI elements (Phase 2 optimization)
+  const $spatialEnemies = el("#spatialEnemies");
+  const $spatialCells = el("#spatialCells");
+  const $spatialTotal = el("#spatialTotal");
+  const $spatialWithout = el("#spatialWithout");
+  const $spatialWith = el("#spatialWith");
+  const $spatialEfficiency = el("#spatialEfficiency");
+
   // Initialize GPU detector and display static info
   if (gpuDetector) {
     try {
@@ -229,6 +237,37 @@ export function renderInfoTab(panelEl, ctx = {}) {
         } catch (_) {
           if ($gpuUsage) $gpuUsage.textContent = '—';
         }
+      }
+
+      // Spatial Grid stats (Phase 2 optimization)
+      if (perf && perf.spatialGrid) {
+        const sg = perf.spatialGrid;
+        if ($spatialEnemies) $spatialEnemies.textContent = String(sg.aliveEnemies || 0);
+        if ($spatialCells) $spatialCells.textContent = String(sg.occupiedCells || 0);
+        if ($spatialTotal) $spatialTotal.textContent = String(sg.totalEntities || 0);
+        if ($spatialWithout) $spatialWithout.textContent = sg.efficiency ? String(sg.efficiency.withoutGrid || 0) : '—';
+        if ($spatialWith) $spatialWith.textContent = sg.efficiency ? String(sg.efficiency.withGrid || 0) : '—';
+        if ($spatialEfficiency) {
+          const eff = sg.efficiency ? sg.efficiency.percentSaved : 0;
+          $spatialEfficiency.textContent = `${round(eff, 1)}`;
+          // Color code efficiency: green for good (>90%), yellow for medium (>70%), red for poor
+          if (eff > 90) {
+            $spatialEfficiency.style.color = '#4CAF50';
+          } else if (eff > 70) {
+            $spatialEfficiency.style.color = '#FF9800';
+          } else {
+            $spatialEfficiency.style.color = '#F44336';
+          }
+          $spatialEfficiency.style.fontWeight = 'bold';
+        }
+      } else {
+        // No spatial grid data available
+        if ($spatialEnemies) $spatialEnemies.textContent = '—';
+        if ($spatialCells) $spatialCells.textContent = '—';
+        if ($spatialTotal) $spatialTotal.textContent = '—';
+        if ($spatialWithout) $spatialWithout.textContent = '—';
+        if ($spatialWith) $spatialWith.textContent = '—';
+        if ($spatialEfficiency) $spatialEfficiency.textContent = '—';
       }
     } catch (_) {}
   }
