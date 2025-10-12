@@ -9,15 +9,6 @@ let previewScene, previewCamera, previewRenderer, previewControls, previewModel;
 let previewAnimationId = null;
 let currentModelScale = 1.0; // Current scale value
 
-// Available default models
-const DEFAULT_MODELS = [
-  { label: "Default (Built-in 3D)", value: null },
-  { label: "Model 1", value: "model/game-gof-model-01.glb" },
-  { label: "Model 2", value: "model/game-gof-model-02.glb" },
-  { label: "Model 3", value: "model/game-gof-model-03.glb" },
-  { label: "Model 4", value: "model/game-gof-model-04.glb" }
-];
-
 /**
  * Render the Info tab: basic hero info (level, HP/MP).
  * Expects the panel element to be #heroTabInfo.
@@ -26,114 +17,48 @@ export function renderInfoTab(panelEl, ctx = {}) {
   const { t, player } = ctx;
   if (!panelEl) return;
 
-  // Clear previous content
-  panelEl.innerHTML = "";
+  // Get existing DOM elements
+  const canvas = panelEl.querySelector('#heroModelCanvas');
+  const loadingIndicator = panelEl.querySelector('.model-loading-indicator');
+  const select = panelEl.querySelector('#heroModelSelect');
+  const scaleValue = panelEl.querySelector('.model-scale-value');
+  const scaleSlider = panelEl.querySelector('#heroModelScale');
+  const urlInput = panelEl.querySelector('#heroModelUrl');
+  const loadButton = panelEl.querySelector('#heroModelLoad');
+  const applyButton = panelEl.querySelector('#heroModelApply');
+  const infoContainer = panelEl.querySelector('.hero-info-right');
 
-  // Create main layout wrapper (1/3 + 2/3)
-  const mainLayout = document.createElement("div");
-  mainLayout.style.display = "flex";
-  mainLayout.style.gap = "16px";
-  mainLayout.style.height = "100%";
-  mainLayout.style.overflow = "hidden";
-
-  // Left section: 3D Model Preview (1/3)
-  const leftSection = document.createElement("div");
-  leftSection.style.flex = "0 0 33.333%";
-  leftSection.style.display = "flex";
-  leftSection.style.flexDirection = "column";
-  leftSection.style.gap = "12px";
-  leftSection.style.overflowX = "hidden";
-  leftSection.style.overflowX = "scroll";
-
-  // Right section: Info (2/3)
-  const rightSection = document.createElement("div");
-  rightSection.style.flex = "1";
-  rightSection.style.overflowX = "hidden";
-  rightSection.style.overflowY = "scroll";
-
-  // Build 3D model preview section
-  build3DModelPreview(leftSection);
+  // Setup 3D preview with existing elements
+  if (canvas && loadingIndicator) {
+    setup3DModelPreview(canvas, loadingIndicator, select, scaleValue, scaleSlider, urlInput, loadButton, applyButton);
+  }
 
   // Build info section
-  buildInfoSection(rightSection, ctx);
-
-  mainLayout.appendChild(leftSection);
-  mainLayout.appendChild(rightSection);
-  panelEl.appendChild(mainLayout);
+  buildInfoSection(infoContainer, ctx);
 }
 
 /**
- * Build the 3D model preview and controls
+ * Setup the 3D model preview using existing DOM elements
  */
-async function build3DModelPreview(container) {
-  // Canvas container - square and big for mobile
-  const canvasContainer = document.createElement("div");
-  canvasContainer.style.width = "100%";
-  canvasContainer.style.aspectRatio = "1 / 1"; // Square
-  canvasContainer.style.backgroundColor = "#1a1a1a";
-  canvasContainer.style.borderRadius = "8px";
-  canvasContainer.style.position = "relative";
-  canvasContainer.style.overflow = "hidden";
-
-  // Loading indicator
-  const loadingIndicator = document.createElement("div");
-  loadingIndicator.style.position = "absolute";
-  loadingIndicator.style.top = "50%";
-  loadingIndicator.style.left = "50%";
-  loadingIndicator.style.transform = "translate(-50%, -50%)";
-  loadingIndicator.style.color = "#ff6b35";
-  loadingIndicator.style.fontSize = "16px";
-  loadingIndicator.style.fontWeight = "bold";
-  loadingIndicator.style.display = "none";
-  loadingIndicator.style.zIndex = "10";
-  loadingIndicator.style.textAlign = "center";
-  loadingIndicator.innerHTML = '<div style="margin-bottom: 8px;">⏳</div><div>Loading model...</div>';
-  canvasContainer.appendChild(loadingIndicator);
-
-  const canvas = document.createElement("canvas");
-  canvas.style.width = "100%";
-  canvas.style.height = "100%";
-  canvas.style.display = "block";
-  canvasContainer.appendChild(canvas);
-  container.appendChild(canvasContainer);
-
-  // Store reference to loading indicator for later use
-  container._loadingIndicator = loadingIndicator;
-
+async function setup3DModelPreview(canvas, loadingIndicator, select, scaleValue, scaleSlider, urlInput, loadButton, applyButton) {
   // Initialize 3D preview and wait for it to complete
-  await init3DPreview(canvas, loadingIndicator);
+  await init3DPreview(canvas);
 
-  // Load saved selection
+  // Load saved values
   const savedUrl = localStorage.getItem(STORAGE_KEYS.heroModelUrl);
+  const savedScale = localStorage.getItem(STORAGE_KEYS.heroModelScale);
+  currentModelScale = savedScale ? parseFloat(savedScale) : 1.0;
 
-  // Model selection row: select + scale slider in 1 row
-  const selectRow = document.createElement("div");
-  selectRow.style.display = "flex";
-  selectRow.style.gap = "8px";
-  selectRow.style.marginTop = "12px";
-  selectRow.style.alignItems = "center";
-
-  const select = document.createElement("select");
-  select.style.flex = "1";
-  select.style.padding = "8px";
-  select.style.fontSize = "14px";
-  select.style.borderRadius = "4px";
-  select.style.border = "1px solid #444";
-  select.style.backgroundColor = "#2a2a2a";
-  select.style.color = "#fff";
-  select.style.cursor = "pointer";
-
-  DEFAULT_MODELS.forEach(model => {
-    const option = document.createElement("option");
-    option.value = model.value || "";
-    option.textContent = model.label;
-    select.appendChild(option);
-  });
-
+  // Set saved selection (options are pre-defined in HTML)
   if (savedUrl) {
     select.value = savedUrl;
   }
 
+  // Update scale display
+  scaleValue.textContent = currentModelScale.toFixed(1) + "x";
+  scaleSlider.value = currentModelScale;
+
+  // Setup event listeners
   select.addEventListener("change", (e) => {
     const url = e.target.value || null;
     if (url) {
@@ -143,32 +68,6 @@ async function build3DModelPreview(container) {
     }
     load3DModel(url, loadingIndicator);
   });
-
-  // Scale control in same row
-  const scaleContainer = document.createElement("div");
-  scaleContainer.style.display = "flex";
-  scaleContainer.style.alignItems = "center";
-  scaleContainer.style.gap = "6px";
-  scaleContainer.style.minWidth = "100px";
-
-  const scaleValue = document.createElement("span");
-  scaleValue.style.fontWeight = "bold";
-  scaleValue.style.color = "#ff6b35";
-  scaleValue.style.fontSize = "12px";
-  scaleValue.style.minWidth = "32px";
-
-  const savedScale = localStorage.getItem(STORAGE_KEYS.heroModelScale);
-  currentModelScale = savedScale ? parseFloat(savedScale) : 1.0;
-  scaleValue.textContent = currentModelScale.toFixed(1) + "x";
-
-  const scaleSlider = document.createElement("input");
-  scaleSlider.type = "range";
-  scaleSlider.min = "0.1";
-  scaleSlider.max = "3.0";
-  scaleSlider.step = "0.1";
-  scaleSlider.value = currentModelScale;
-  scaleSlider.style.width = "80px";
-  scaleSlider.style.cursor = "pointer";
 
   scaleSlider.addEventListener("input", (e) => {
     const scale = parseFloat(e.target.value);
@@ -181,41 +80,6 @@ async function build3DModelPreview(container) {
     }
   });
 
-  scaleContainer.appendChild(scaleValue);
-  scaleContainer.appendChild(scaleSlider);
-  selectRow.appendChild(select);
-  selectRow.appendChild(scaleContainer);
-  container.appendChild(selectRow);
-
-  // Custom URL row: input + Load button in 1 row
-  const urlRow = document.createElement("div");
-  urlRow.style.display = "flex";
-  urlRow.style.gap = "8px";
-  urlRow.style.marginTop = "8px";
-
-  const urlInput = document.createElement("input");
-  urlInput.type = "text";
-  urlInput.placeholder = "Custom model URL";
-  urlInput.style.flex = "1";
-  urlInput.style.padding = "8px";
-  urlInput.style.fontSize = "14px";
-  urlInput.style.borderRadius = "4px";
-  urlInput.style.border = "1px solid #444";
-  urlInput.style.backgroundColor = "#2a2a2a";
-  urlInput.style.color = "#fff";
-
-  const loadButton = document.createElement("button");
-  loadButton.textContent = "Load";
-  loadButton.style.padding = "8px 16px";
-  loadButton.style.fontSize = "14px";
-  loadButton.style.borderRadius = "4px";
-  loadButton.style.border = "1px solid #ff6b35";
-  loadButton.style.backgroundColor = "#ff6b35";
-  loadButton.style.color = "#fff";
-  loadButton.style.cursor = "pointer";
-  loadButton.style.fontWeight = "bold";
-  loadButton.style.whiteSpace = "nowrap";
-
   loadButton.addEventListener("click", () => {
     const customUrl = urlInput.value.trim();
     if (customUrl) {
@@ -225,27 +89,7 @@ async function build3DModelPreview(container) {
     }
   });
 
-  urlRow.appendChild(urlInput);
-  urlRow.appendChild(loadButton);
-  container.appendChild(urlRow);
-
-  // Apply button - full width at the end
-  const applyButton = document.createElement("button");
-  applyButton.textContent = "Apply & Reload Game";
-  applyButton.style.width = "100%";
-  applyButton.style.marginTop = "12px";
-  applyButton.style.padding = "12px";
-  applyButton.style.fontSize = "16px";
-  applyButton.style.borderRadius = "8px";
-  applyButton.style.border = "1px solid #ff6b35";
-  applyButton.style.background = "linear-gradient(180deg, #ff8c5a, #ff6b35)";
-  applyButton.style.color = "#fff";
-  applyButton.style.cursor = "pointer";
-  applyButton.style.fontWeight = "bold";
-  applyButton.style.boxShadow = "0 4px 12px rgba(255, 107, 53, 0.3)";
-
   applyButton.addEventListener("click", async () => {
-    // Show confirmation dialog
     const shouldReload = await showApplyConfirm();
     if (shouldReload) {
       try {
@@ -257,8 +101,6 @@ async function build3DModelPreview(container) {
       }
     }
   });
-
-  container.appendChild(applyButton);
 
   // Load initial model after scene is ready
   load3DModel(savedUrl, loadingIndicator);
@@ -480,7 +322,8 @@ function createDefaultPreviewMesh(loadingIndicator) {
   const heroMesh = new HeroMesh();
   
   // Reset position (HeroMesh sets itself to 10, 1.1, 10 by default)
-  heroMesh.position.set(0, 0, 0);
+  // Set Y=1 to match camera lookAt position
+  heroMesh.position.set(0, 1, 0);
   
   // Apply current scale
   heroMesh.scale.setScalar(currentModelScale);
@@ -540,9 +383,12 @@ function cleanup3DPreview() {
 function buildInfoSection(container, ctx) {
   const { t, player } = ctx;
 
-  // Create items list
-  const list = document.createElement("div");
-  list.className = "items-list";
+  // Get existing items list from HTML
+  const list = container.querySelector('.items-list');
+  if (!list) return;
+  
+  // Clear existing content
+  list.innerHTML = '';
 
   try {
     const tt = typeof t === "function" ? t : (x) => x;
@@ -686,6 +532,6 @@ function buildInfoSection(container, ctx) {
     row.appendChild(actions);
     list.appendChild(row);
   }
-
-  container.appendChild(list);
+  
+  // List is already in the DOM, no need to append
 }

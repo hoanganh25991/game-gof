@@ -3,7 +3,7 @@
 
 <head>
   <title>GoF RPG</title>
-  
+
   <!-- Inline critical CSS for splash screen to avoid render-blocking -->
   <style>
     /* Minimal critical styles for splash screen - inlined for fast LCP */
@@ -15,51 +15,65 @@
       place-items: center;
       z-index: 9999;
     }
+
     .flash-card {
       text-align: center;
       color: var(--system-text);
       padding: 2rem;
       max-width: 500px;
     }
+
     .flash-title {
       font-size: 1.8rem;
       margin-bottom: 1rem;
       font-weight: bold;
     }
+
     .flash-desc {
       font-size: 1rem;
       margin-bottom: 1.5rem;
       opacity: 0.9;
     }
+
     .progress {
       width: 100%;
       height: 8px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 4px;
       overflow: hidden;
     }
+
     .progress .bar {
       height: 100%;
       background: linear-gradient(90deg, var(--theme-orange), var(--theme-light-orange));
       transition: width 0.3s ease;
     }
+
     .flash-note {
       margin-top: 10px;
       font-size: 12px;
       color: var(--system-text);
       opacity: 0.6;
     }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-display: swap; /* Ensure text remains visible during font load */
+      font-display: swap;
+      /* Ensure text remains visible during font load */
       overflow: hidden;
     }
+
     /* Hide non-critical content initially */
-    #hud, #topRightGroup, #bottomLeftGroup, #bottomRightGroup, #bottomMiddle {
+    #hud,
+    #topRightGroup,
+    #bottomLeftGroup,
+    #bottomRightGroup,
+    #bottomMiddle {
       opacity: 0;
       transition: opacity 0.3s ease;
     }
+
     .splash-active #hud,
     .splash-active #topRightGroup,
     .splash-active #bottomLeftGroup,
@@ -67,30 +81,33 @@
     .splash-active #bottomMiddle {
       opacity: 0;
     }
-    
+
     /* Notification animations */
     @keyframes notifFadeIn {
       from {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.8);
       }
+
       to {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
       }
     }
+
     @keyframes notifFadeOut {
       from {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
       }
+
       to {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.8);
       }
     }
   </style>
-  
+
   <!-- Defer non-critical stylesheets to avoid blocking LCP -->
   <link rel="preload" href="css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <link rel="preload" href="css/landscape.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
@@ -178,7 +195,8 @@
       <div class="panel-content">
         <div class="tab-bar">
           <button class="tab-btn active" data-i18n="settings.tabs.general" aria-controls="tabGeneral">General</button>
-          <button class="tab-btn" data-i18n="settings.tabs.environment" aria-controls="tabEnvironment">Environment</button>
+          <button class="tab-btn" data-i18n="settings.tabs.environment"
+            aria-controls="tabEnvironment">Environment</button>
           <button class="tab-btn" data-i18n="settings.tabs.info" aria-controls="tabInfo">Info</button>
         </div>
 
@@ -225,7 +243,9 @@
           <div class="row">
             <span class="row-label" data-i18n="settings.factoryReset.button">Factory Reset</span>
             <div style="display:flex;align-items:center;gap:8px;">
-              <button id="factoryResetBtn" class="primary" style="background: linear-gradient(180deg, #d32f2f, #b71c1c); border-color: #d32f2f;">Factory Reset</button>
+              <button id="factoryResetBtn" class="primary"
+                style="background: linear-gradient(180deg, #d32f2f, #b71c1c); border-color: #d32f2f;">Factory
+                Reset</button>
             </div>
           </div>
         </div>
@@ -275,7 +295,8 @@
                 <div><b>GPU Memory:</b> <span id="gpuMemory">--</span></div>
                 <div><b>Max Texture:</b> <span id="gpuMaxTexture">--</span></div>
               </div>
-              <div id="gpuWarnings" style="margin-top: 8px; padding: 8px; background: rgba(255, 100, 0, 0.1); border-radius: 4px; display: none;">
+              <div id="gpuWarnings"
+                style="margin-top: 8px; padding: 8px; background: rgba(255, 100, 0, 0.1); border-radius: 4px; display: none;">
                 <div style="font-weight: bold; margin-bottom: 4px; color: #ff6400;">⚠️ GPU Warnings:</div>
                 <div id="gpuWarningsList" style="font-size: 11px;"></div>
               </div>
@@ -374,8 +395,51 @@
           </div>
         </div>
         <div id="heroTabInfo" class="tab-panel">
-          <div class="items-panel">
-            <div class="items-list"></div>
+          <!-- Hero info layout with 3D preview on left and info on right -->
+          <div class="hero-info-layout">
+            <!-- Left section: 3D Model Preview -->
+            <div class="hero-info-left">
+              <!-- Canvas container with loading indicator -->
+              <div class="model-canvas-container">
+                <div class="model-loading-indicator">
+                  <div style="margin-bottom: 8px;">⏳</div>
+                  <div>Loading model...</div>
+                </div>
+                <canvas id="heroModelCanvas"></canvas>
+              </div>
+
+              <div class="hero-model-control">
+                <!-- Model selection row -->
+                <div class="model-select-row">
+                  <select id="heroModelSelect">
+                    <option value="">Default 3D</option>
+                    <option value="model/game-gof-model-01.glb">Model 1</option>
+                    <option value="model/game-gof-model-02.glb">Model 2</option>
+                    <option value="model/game-gof-model-03.glb">Model 3</option>
+                    <option value="model/game-gof-model-04.glb">Model 4</option>
+                  </select>
+                  <div class="model-scale-container">
+                    <span class="model-scale-value">1.0x</span>
+                    <input type="range" id="heroModelScale" class="model-scale-slider" min="0.1" max="3.0" step="0.1"
+                      value="1.0">
+                  </div>
+                </div>
+
+                <!-- Custom URL row -->
+                <div class="model-url-row">
+                  <input type="text" id="heroModelUrl" class="model-url-input" placeholder="Custom model URL">
+                  <button id="heroModelLoad" class="model-load-btn">Load</button>
+                </div>
+
+                <!-- Apply button -->
+                <button id="heroModelApply" class="model-apply-btn">Apply & Reload Game</button>
+              </div>
+            </div>
+
+            <!-- Right section: Info -->
+            <div class="hero-info-right">
+              <div class="items-list"></div>
+            </div>
           </div>
         </div>
         <div id="heroTabBook" class="tab-panel"></div>
@@ -395,13 +459,16 @@
         <div class="bar" id="flashProgressBar" style="width: 0%" role="progressbar" aria-valuemin="0"
           aria-valuemax="100" aria-valuenow="0"></div>
       </div>
-      <div class="flash-note" style="margin-top:10px;font-size:12px;opacity:0.6;color:var(--system-text)" data-i18n="flash.note">
+      <div class="flash-note" style="margin-top:10px;font-size:12px;opacity:0.6;color:var(--system-text)"
+        data-i18n="flash.note">
         Loading modules…</div>
 
       <!-- Start screen (pre-rendered in HTML for better LCP) -->
       <div id="startScreen" class="start-screen" style="display:none; margin-top:12px;">
         <h2 id="startTitle" data-i18n="start.title">Hành trình của Hoả Thần</h2>
-        <p id="startStory" data-i18n="start.story">Thế giới chìm trong u ám. Những bóng đêm tỉnh dậy, và chỉ một vị thần có thể gọi hoả cầu trở lại. Hãy dẫn GoF — vị hoả thần — qua rừng hoang, làng mạc đổ nát và chiến trường, tiêu diệt lũ quái và khôi phục trật tự.</p>
+        <p id="startStory" data-i18n="start.story">Thế giới chìm trong u ám. Những bóng đêm tỉnh dậy, và chỉ một vị thần
+          có thể gọi hoả cầu trở lại. Hãy dẫn GoF — vị hoả thần — qua rừng hoang, làng mạc đổ nát và chiến trường, tiêu
+          diệt lũ quái và khôi phục trật tự.</p>
         <button id="btnStartGame" class="primary" data-i18n="btn.start">Bắt đầu</button>
       </div>
     </div>
@@ -570,7 +637,8 @@
   <div id="upliftToast" role="status" aria-live="polite"></div>
 
   <!-- Skill Assign Modal -->
-  <div id="skillAssignModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="skillAssignTitle">
+  <div id="skillAssignModal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="skillAssignTitle">
     <div class="modal-box skill-assign-box">
       <button class="modal-close-btn" aria-label="Close">✕</button>
       <div id="skillAssignTitle" class="skill-assign-title"></div>
@@ -605,7 +673,7 @@
     }
 
     // Progressive loading strategy: show splash immediately, defer heavy modules
-    (function() {
+    (function () {
       // Import map must be defined before any module scripts
       const importMap = document.createElement('script');
       importMap.type = 'importmap';
@@ -628,17 +696,17 @@
         if (window.performance && performance.mark) {
           performance.mark('modules-load-start');
         }
-        
+
         const script = document.createElement('script');
         script.type = 'module';
         script.src = 'src/main.js';
-        
+
         // Show UI elements after game is ready
-        script.onload = function() {
+        script.onload = function () {
           if (window.performance && performance.mark) {
             performance.mark('modules-loaded');
           }
-          
+
           // Fade in UI elements
           setTimeout(() => {
             const elements = ['hud', 'topRightGroup', 'bottomLeftGroup', 'bottomRightGroup', 'bottomMiddle'];
@@ -648,14 +716,15 @@
             });
           }, 100);
         };
-        
+
         document.body.appendChild(script);
       }
     })();
   </script>
 
   <!-- Update available modal -->
-  <div id="updateAvailableModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="updateAvailableTitle">
+  <div id="updateAvailableModal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="updateAvailableTitle">
     <div class="modal-box">
       <h3 id="updateAvailableTitle">Update Available</h3>
       <div class="modal-desc">A new version of the app is available. Would you like to reload and update now?</div>
@@ -678,16 +747,16 @@
           const modal = document.getElementById("updateAvailableModal");
           const updateNowBtn = document.getElementById("updateNow");
           const updateLaterBtn = document.getElementById("updateLater");
-          
+
           if (modal && updateNowBtn && updateLaterBtn) {
             modal.classList.remove("hidden");
-            
+
             // Handle "Update Now" button
             updateNowBtn.onclick = () => {
               modal.classList.add("hidden");
               window.location.reload();
             };
-            
+
             // Handle "Later" button
             updateLaterBtn.onclick = () => {
               modal.classList.add("hidden");
@@ -702,7 +771,7 @@
           navigator.serviceWorker.register("serviceworker.js").then((reg) => {
             // If an updated worker is already waiting, activate it immediately
             if (reg.waiting) {
-              try { reg.waiting.postMessage("skipWaiting"); } catch (_) {}
+              try { reg.waiting.postMessage("skipWaiting"); } catch (_) { }
             }
             // When a new SW is found, request it to activate ASAP after install
             reg.addEventListener("updatefound", () => {
@@ -710,14 +779,14 @@
               if (!nw) return;
               nw.addEventListener("statechange", () => {
                 if (nw.state === "installed" && navigator.serviceWorker.controller) {
-                  try { reg.waiting && reg.waiting.postMessage("skipWaiting"); } catch (_) {}
+                  try { reg.waiting && reg.waiting.postMessage("skipWaiting"); } catch (_) { }
                 }
               });
             });
           }).catch(() => { /* ignore registration failures in non-secure contexts */ });
         });
       }
-    } catch (_) {}
+    } catch (_) { }
   </script>
 </body>
 
