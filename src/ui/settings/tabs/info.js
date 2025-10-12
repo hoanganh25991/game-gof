@@ -18,6 +18,7 @@ export function renderInfoTab(panelEl, ctx = {}) {
   const $fpsLow = el("#perfFpsLow");
   const $avg = el("#perfAvgMs");
   const $ms = el("#perfMs");
+  const $cpu = el("#perfCpu");
   const $calls = el("#perfCalls");
   const $tris = el("#perfTriangles");
   const $lines = el("#perfLines");
@@ -60,6 +61,10 @@ export function renderInfoTab(panelEl, ctx = {}) {
     }
   } catch (_) {}
 
+  // CPU usage tracking
+  let lastCpuTime = performance.now();
+  let cpuUsagePercent = 0;
+
   // Live update loop
   function round(n, d = 0) {
     const m = Math.pow(10, d);
@@ -75,12 +80,27 @@ export function renderInfoTab(panelEl, ctx = {}) {
   }
   function update() {
     try {
+      // Get performance metrics
       const perf = typeof getPerf === "function" ? getPerf() : (window.__perfMetrics || null);
+      
+      // Calculate CPU usage based on frame time
+      if (perf && perf.ms) {
+        // CPU usage = (frame time / target frame time) * 100
+        // Target is 16.67ms for 60 FPS
+        const targetFrameTime = 16.67;
+        const rawCpuUsage = (perf.ms / targetFrameTime) * 100;
+        // Smooth the value using exponential moving average
+        cpuUsagePercent = cpuUsagePercent * 0.8 + rawCpuUsage * 0.2;
+        // Clamp to 0-100% range
+        cpuUsagePercent = Math.min(100, Math.max(0, cpuUsagePercent));
+      }
+      
       if (perf) {
         if ($fps) $fps.textContent = String(round(perf.fps || 0, 1));
         if ($fpsLow) $fpsLow.textContent = String(round(perf.fpsLow1 || 0, 1));
         if ($avg) $avg.textContent = `${round(perf.avgMs || perf.ms || 0, 2)} ms`;
         if ($ms) $ms.textContent = `${round(perf.ms || perf.avgMs || 0, 2)} ms`;
+        if ($cpu) $cpu.textContent = `${round(cpuUsagePercent, 1)}%`;
 
         const ri = perf.renderer || {};
         if ($calls) $calls.textContent = String(ri.calls || 0);
