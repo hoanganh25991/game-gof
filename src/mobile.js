@@ -28,7 +28,7 @@ export const MOBILE_OPTIMIZATIONS = {
   minimapUpdateMs: deviceTier === DEVICE_TIERS.LOW ? 400 : 300,
   aiStrideMultiplier: tierOpts.aiStrideMultiplier,
   frameBudgetMs: tierOpts.frameBudgetMs,
-  envDensityReduction: 1.0 - tierOpts.meshQuality,
+  envDensityReduction: tierOpts.meshQuality < 1.0 ? (1.0 - tierOpts.meshQuality) : 0.0,
   disableShadows: !tierOpts.shadowsEnabled,
   reduceDrawCalls: tierOpts.batchDrawCalls || false,
   cullDistance: tierOpts.maxDrawDistance || 100,

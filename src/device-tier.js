@@ -98,15 +98,29 @@ export function detectDeviceTier() {
       tier = DEVICE_TIERS.LOW;
     }
     
-    console.info(`[DeviceTier] Detected tier: ${tier} (score: ${score})`, {
-      cores: hardwareConcurrency,
-      memory: deviceMemory,
-      screen: `${screenWidth}x${screenHeight}`,
-      pixelRatio,
-      totalPixels,
-      isMobile,
-      gpu: gl ? (gl.getExtension('WEBGL_debug_renderer_info') ? 
-        gl.getParameter(gl.getExtension('WEBGL_debug_renderer_info').UNMASKED_RENDERER_WEBGL) : 'unknown') : 'no-webgl'
+    // Get GPU info for logging
+    let gpuInfo = 'no-webgl';
+    if (gl) {
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      gpuInfo = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown';
+    }
+    
+    console.info(`[DeviceTier] Detection Results:`, {
+      tier,
+      score,
+      breakdown: {
+        cpu: `${hardwareConcurrency} cores`,
+        memory: `${deviceMemory} GB`,
+        screen: `${screenWidth}x${screenHeight} (${totalPixels.toLocaleString()} pixels)`,
+        pixelRatio,
+        isMobile,
+        gpu: gpuInfo
+      },
+      thresholds: {
+        HIGH: '≥80 points',
+        MEDIUM: '50-79 points', 
+        LOW: '<50 points'
+      }
     });
     
     return tier;

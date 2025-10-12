@@ -57,6 +57,28 @@ export class UpdateLoopCoordinator {
     this.adaptNextT = 0;
     this.aiStride = 1;
     this.bbStride = 2;
+    
+    // Cached references (initialized lazily on first update)
+    this._cachedRefs = null;
+  }
+  
+  /**
+   * Initialize cached references (called once on first update)
+   * @private
+   */
+  _initCachedRefs() {
+    this._cachedRefs = {
+      player: this.entityCoordinator.getPlayer(),
+      enemies: this.entityCoordinator.getEnemies(),
+      selectedUnit: this.entityCoordinator.getSelectedUnit(),
+      portals: this.entityCoordinator.getPortals(),
+      villages: this.entityCoordinator.getVillages(),
+      spawner: this.entityCoordinator.getSpawner(),
+      chunkMgr: this.environmentCoordinator.getChunkManager(),
+      env: this.environmentCoordinator.getEnv(),
+      inputService: this.inputCoordinator.getInputService(),
+      touch: this.inputCoordinator.getTouchControls(),
+    };
   }
 
   /**
@@ -71,16 +93,13 @@ export class UpdateLoopCoordinator {
    * Main update function called by GameLoop
    */
   update(dt, t, { isOverBudget }) {
-    const player = this.entityCoordinator.getPlayer();
-    const enemies = this.entityCoordinator.getEnemies();
-    const selectedUnit = this.entityCoordinator.getSelectedUnit();
-    const portals = this.entityCoordinator.getPortals();
-    const villages = this.entityCoordinator.getVillages();
-    const spawner = this.entityCoordinator.getSpawner();
-    const chunkMgr = this.environmentCoordinator.getChunkManager();
-    const env = this.environmentCoordinator.getEnv();
-    const inputService = this.inputCoordinator.getInputService();
-    const touch = this.inputCoordinator.getTouchControls();
+    // Initialize cached references on first update
+    if (!this._cachedRefs) {
+      this._initCachedRefs();
+    }
+    
+    // Use cached references (no method calls per frame!)
+    const { player, enemies, selectedUnit, portals, villages, spawner, chunkMgr, env, inputService, touch } = this._cachedRefs;
 
     // Performance tracking
     this._updatePerformance();
