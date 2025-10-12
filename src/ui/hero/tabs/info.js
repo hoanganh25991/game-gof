@@ -10,9 +10,10 @@ let previewAnimationId = null;
 // Available default models
 const DEFAULT_MODELS = [
   { label: "Default (Built-in 3D)", value: null },
-  { label: "Model 1", value: "http://localhost/game-gof/model/game-gof-model-01.glb" },
-  { label: "Model 2", value: "http://localhost/game-gof/model/game-gof-model-02.glb" },
-  { label: "Model 3", value: "http://localhost/game-gof/model/game-gof-model-03.glb" }
+  { label: "Model 1", value: "model/game-gof-model-01.glb" },
+  { label: "Model 2", value: "model/game-gof-model-02.glb" },
+  { label: "Model 3", value: "model/game-gof-model-03.glb" },
+  { label: "Model 4", value: "model/game-gof-model-04.glb" }
 ];
 
 /**
