@@ -61,9 +61,24 @@ export function renderInfoTab(panelEl, ctx = {}) {
     }
   } catch (_) {}
 
-  // CPU usage tracking
-  let lastCpuTime = performance.now();
+  // CPU usage tracking - measures actual CPU time vs wall clock time
+  let lastUpdateTime = performance.now();
+  let lastIdleTime = 0;
   let cpuUsagePercent = 0;
+  let cpuBusyTime = 0;
+  let cpuTotalTime = 0;
+  
+  // Use requestIdleCallback to track idle time (when browser is not busy)
+  function trackIdleTime() {
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback((deadline) => {
+        const idleDuration = deadline.timeRemaining();
+        lastIdleTime = idleDuration;
+        trackIdleTime(); // Continue tracking
+      }, { timeout: 100 });
+    }
+  }
+  trackIdleTime();
 
   // Live update loop
   function round(n, d = 0) {
@@ -80,20 +95,30 @@ export function renderInfoTab(panelEl, ctx = {}) {
   }
   function update() {
     try {
+      // Calculate CPU usage based on execution time vs wall clock time
+      const now = performance.now();
+      const wallClockDelta = now - lastUpdateTime;
+      
       // Get performance metrics
       const perf = typeof getPerf === "function" ? getPerf() : (window.__perfMetrics || null);
       
-      // Calculate CPU usage based on frame time
-      if (perf && perf.ms) {
-        // CPU usage = (frame time / target frame time) * 100
-        // Target is 16.67ms for 60 FPS
-        const targetFrameTime = 16.67;
-        const rawCpuUsage = (perf.ms / targetFrameTime) * 100;
+      if (perf && perf.ms && wallClockDelta > 0) {
+        // Estimate CPU usage: (frame time / wall clock time between updates) * 100
+        // This gives us the percentage of time the CPU is actively working
+        // Frame time represents active CPU work per frame
+        // We multiply by FPS to get total CPU work time per second
+        const fps = perf.fps || 60;
+        const cpuWorkTime = perf.ms * fps; // Total ms of CPU work per second
+        const rawCpuUsage = Math.min(100, (cpuWorkTime / 1000) * 100); // Convert to percentage
+        
         // Smooth the value using exponential moving average
-        cpuUsagePercent = cpuUsagePercent * 0.8 + rawCpuUsage * 0.2;
+        cpuUsagePercent = cpuUsagePercent * 0.85 + rawCpuUsage * 0.15;
+        
         // Clamp to 0-100% range
         cpuUsagePercent = Math.min(100, Math.max(0, cpuUsagePercent));
       }
+      
+      lastUpdateTime = now;
       
       if (perf) {
         if ($fps) $fps.textContent = String(round(perf.fps || 0, 1));
