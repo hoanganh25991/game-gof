@@ -9,6 +9,7 @@ import { t as tI18n } from "../../i18n.js";
 import { renderGeneralTab } from "./tabs/general.js";
 import { renderEnvironmentTab } from "./tabs/environment.js";
 import { renderInfoTab } from "./tabs/info.js";
+import { gpuDetector } from "../gpu-detector.js";
 
 export function setupSettingsScreen({
   t = tI18n,
@@ -61,7 +62,11 @@ export function setupSettingsScreen({
     const infoPanel = content?.querySelector("#tabInfo");
     renderGeneralTab(generalPanel, { t, audioCtl, render });
     renderEnvironmentTab(envPanel, { environment });
-    renderInfoTab && renderInfoTab(infoPanel, { renderer: render?.renderer, getPerf: render?.getPerf });
+    renderInfoTab && renderInfoTab(infoPanel, { 
+      renderer: render?.renderer, 
+      getPerf: render?.getPerf,
+      gpuDetector: gpuDetector 
+    });
   } catch (_) {}
 }
 

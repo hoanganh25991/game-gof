@@ -254,17 +254,34 @@
           </div>
 
           <div class="row">
-            <span class="row-label">WebGL</span>
+            <span class="row-label">GPU Info</span>
+            <div class="gpu-block" style="font-size: 12px;">
+              <div>
+                <div><b>GPU:</b> <span id="gpuRenderer">--</span></div>
+                <div><b>Vendor:</b> <span id="gpuVendor">--</span></div>
+                <div><b>Tier:</b> <span id="gpuTier">--</span></div>
+                <div><b>WebGL:</b> <span id="gpuWebGL">--</span></div>
+              </div>
+              <br>
+              <div>
+                <div><b>GPU Usage:</b> <span id="gpuUsage">--</span></div>
+                <div><b>GPU Memory:</b> <span id="gpuMemory">--</span></div>
+                <div><b>Max Texture:</b> <span id="gpuMaxTexture">--</span></div>
+              </div>
+              <div id="gpuWarnings" style="margin-top: 8px; padding: 8px; background: rgba(255, 100, 0, 0.1); border-radius: 4px; display: none;">
+                <div style="font-weight: bold; margin-bottom: 4px; color: #ff6400;">⚠️ GPU Warnings:</div>
+                <div id="gpuWarningsList" style="font-size: 11px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="row-label">WebGL Details</span>
             <div class="gl-block" style="font-size: 12px;">
               <div>
                 <div><b>API:</b> <span id="glApi">--</span></div>
                 <div><b>Antialias:</b> <span id="glAA">--</span></div>
                 <div><b>Power:</b> <span id="glPower">--</span></div>
-              </div>
-              <br>
-              <div>
-                <div><b>Vendor:</b> <span id="glVendor">--</span></div>
-                <div><b>Renderer:</b> <span id="glRenderer">--</span></div>
               </div>
             </div>
           </div>

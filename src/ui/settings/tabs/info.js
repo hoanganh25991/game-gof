@@ -1,9 +1,10 @@
 /**
  * Settings -> Info tab
  * Shows live FPS and renderer stats from three.js, plus WebGL context info.
+ * Now includes GPU detection and utilization metrics.
  */
 export function renderInfoTab(panelEl, ctx = {}) {
-  const { renderer, getPerf } = ctx;
+  const { renderer, getPerf, gpuDetector } = ctx;
   if (!panelEl || panelEl.dataset.rendered === "1") return;
 
   // Require static markup in index.html (css/info.css provides styles).
@@ -38,6 +39,59 @@ export function renderInfoTab(panelEl, ctx = {}) {
   const $memPct = el("#memPct");
   const $memLimit = el("#memLimit");
   const $deviceMemory = el("#deviceMemory");
+
+  // GPU UI elements
+  const $gpuRenderer = el("#gpuRenderer");
+  const $gpuVendor = el("#gpuVendor");
+  const $gpuTier = el("#gpuTier");
+  const $gpuWebGL = el("#gpuWebGL");
+  const $gpuUsage = el("#gpuUsage");
+  const $gpuMemory = el("#gpuMemory");
+  const $gpuMaxTexture = el("#gpuMaxTexture");
+  const $gpuWarnings = el("#gpuWarnings");
+  const $gpuWarningsList = el("#gpuWarningsList");
+
+  // Initialize GPU detector and display static info
+  if (gpuDetector) {
+    try {
+      const caps = gpuDetector.getCapabilities() || gpuDetector.detect();
+      
+      if (caps && caps.supported) {
+        if ($gpuRenderer) $gpuRenderer.textContent = caps.renderer || 'Unknown';
+        if ($gpuVendor) $gpuVendor.textContent = caps.vendor || 'Unknown';
+        if ($gpuTier) {
+          const tierText = caps.tier ? caps.tier.toUpperCase() : 'UNKNOWN';
+          const tierColor = caps.tier === 'high' ? '#4CAF50' : caps.tier === 'medium' ? '#FF9800' : '#F44336';
+          $gpuTier.textContent = tierText;
+          $gpuTier.style.color = tierColor;
+          $gpuTier.style.fontWeight = 'bold';
+        }
+        if ($gpuWebGL) $gpuWebGL.textContent = caps.webgl2 ? 'WebGL2 ✓' : 'WebGL1';
+        if ($gpuMemory) $gpuMemory.textContent = `~${round(caps.estimatedMemoryMB / 1024, 1)} GB`;
+        if ($gpuMaxTexture) $gpuMaxTexture.textContent = caps.maxTextureSize ? `${caps.maxTextureSize}px` : 'Unknown';
+        
+        // Display warnings if any
+        const warnings = gpuDetector.getWarnings();
+        if (warnings && warnings.length > 0 && $gpuWarnings && $gpuWarningsList) {
+          $gpuWarnings.style.display = 'block';
+          $gpuWarningsList.innerHTML = warnings.map(w => {
+            const icon = w.level === 'critical' ? '🚫' : w.level === 'warning' ? '⚠️' : 'ℹ️';
+            return `<div style="margin-bottom:4px;">${icon} <b>${w.message}</b>${w.suggestion ? `<br>&nbsp;&nbsp;&nbsp;→ ${w.suggestion}` : ''}</div>`;
+          }).join('');
+        }
+      } else {
+        if ($gpuRenderer) $gpuRenderer.textContent = 'Not supported';
+        if ($gpuVendor) $gpuVendor.textContent = 'N/A';
+        if ($gpuTier) {
+          $gpuTier.textContent = 'NONE';
+          $gpuTier.style.color = '#F44336';
+        }
+        if ($gpuWebGL) $gpuWebGL.textContent = 'Not available';
+      }
+    } catch (err) {
+      console.warn('[Info] GPU detection failed:', err);
+    }
+  }
 
   // Static WebGL capability info
   try {
@@ -160,6 +214,22 @@ export function renderInfoTab(panelEl, ctx = {}) {
         const devMem = (typeof navigator !== "undefined" && navigator && typeof navigator.deviceMemory === "number") ? navigator.deviceMemory : null;
         if ($deviceMemory) $deviceMemory.textContent = devMem ? `${devMem} GB` : "—";
       } catch (_) {}
+
+      // GPU usage estimation
+      if (gpuDetector && $gpuUsage) {
+        try {
+          const frameTime = perf ? (perf.ms || perf.avgMs || 16.67) : 16.67;
+          const gpuUtil = gpuDetector.getGPUUtilization(frameTime);
+          if (gpuUtil && gpuUtil.estimated) {
+            $gpuUsage.textContent = `~${round(gpuUtil.usage, 1)}% (est.)`;
+            $gpuUsage.title = gpuUtil.note || '';
+          } else {
+            $gpuUsage.textContent = '—';
+          }
+        } catch (_) {
+          if ($gpuUsage) $gpuUsage.textContent = '—';
+        }
+      }
     } catch (_) {}
   }
 
