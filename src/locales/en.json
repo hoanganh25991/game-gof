@@ -27,6 +27,12 @@
       "reloadPrompt": "Changing graphics quality requires a reload. Reload now?",
       "reloadTitle": "Reload required",
       "reloadDesc": "Changing graphics quality requires a reload."
+    },
+    "factoryReset": {
+      "button": "Factory Reset",
+      "title": "Factory Reset Warning",
+      "desc": "This will reset ALL game data including progress, skills, maps, and villages. Only language and fullscreen settings will be preserved. This action cannot be undone!",
+      "confirm": "Are you sure you want to reset everything?"
     }
   },
   "instructions": {

@@ -27,6 +27,12 @@
       "reloadPrompt": "Thay đổi chất lượng đồ họa cần tải lại. Tải lại ngay?",
       "reloadTitle": "Cần tải lại",
       "reloadDesc": "Thay đổi chất lượng đồ họa cần tải lại."
+    },
+    "factoryReset": {
+      "button": "Khôi phục gốc",
+      "title": "Cảnh báo khôi phục gốc",
+      "desc": "Hành động này sẽ xóa TẤT CẢ dữ liệu game bao gồm tiến trình, kỹ năng, bản đồ và làng mạc. Chỉ giữ lại cài đặt ngôn ngữ và toàn màn hình. Không thể hoàn tác!",
+      "confirm": "Bạn có chắc muốn xóa tất cả không?"
     }
   },
   "instructions": {

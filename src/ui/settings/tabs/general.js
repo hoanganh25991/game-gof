@@ -23,6 +23,9 @@ export function renderGeneralTab(panelEl, ctx = {}) {
   try {
     initLanguageControls();
   } catch (_) {}
+  try {
+    initFactoryResetButton(t);
+  } catch (_) {}
 
   panelEl.dataset.rendered = "1";
 }
@@ -386,6 +389,103 @@ function initLanguageControls() {
     langEn.dataset.bound = "1";
   }
   try { update(); } catch (_) {}
+}
+
+/* ---------------- Factory Reset ---------------- */
+function initFactoryResetButton(t) {
+  const btn = document.getElementById("factoryResetBtn");
+  if (!btn) return;
+
+  const tt = typeof t === "function" ? t : (x) => x;
+
+  // Update button text
+  try {
+    btn.textContent = tt("settings.factoryReset.button") || "Factory Reset";
+  } catch (_) {}
+
+  if (!btn.dataset.bound) {
+    btn.addEventListener("click", () => {
+      showFactoryResetConfirm(tt).then((confirmed) => {
+        if (confirmed) {
+          performFactoryReset();
+        }
+      });
+    });
+    btn.dataset.bound = "1";
+  }
+}
+
+function showFactoryResetConfirm(t) {
+  return new Promise((resolve) => {
+    const tt = typeof t === "function" ? t : (x) => x;
+    
+    // Try to use a confirmation dialog
+    const message = [
+      tt("settings.factoryReset.title") || "Factory Reset Warning",
+      "",
+      tt("settings.factoryReset.desc") || "This will reset ALL game data including progress, skills, maps, and villages. Only language and fullscreen settings will be preserved. This action cannot be undone!",
+      "",
+      tt("settings.factoryReset.confirm") || "Are you sure you want to reset everything?"
+    ].join("\n");
+
+    try {
+      const confirmed = window.confirm(message);
+      resolve(!!confirmed);
+    } catch (_) {
+      resolve(false);
+    }
+  });
+}
+
+function performFactoryReset() {
+  try {
+    // Save language and fullscreen settings
+    let savedLang = null;
+    let savedFullscreen = null;
+
+    try {
+      savedLang = localStorage.getItem("gof.lang");
+    } catch (_) {}
+
+    try {
+      const uiPrefs = JSON.parse(localStorage.getItem("gof.uiPrefs") || "{}");
+      savedFullscreen = uiPrefs.fullscreen;
+    } catch (_) {}
+
+    // Clear all localStorage items with "gof" prefix
+    try {
+      const keys = Object.keys(localStorage);
+      for (const key of keys) {
+        if (key.startsWith("gof")) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (_) {}
+
+    // Restore language and fullscreen settings
+    try {
+      if (savedLang !== null) {
+        localStorage.setItem("gof.lang", savedLang);
+      }
+    } catch (_) {}
+
+    try {
+      if (savedFullscreen !== null && savedFullscreen !== undefined) {
+        localStorage.setItem("gof.uiPrefs", JSON.stringify({ fullscreen: savedFullscreen }));
+      }
+    } catch (_) {}
+
+    // Reload the page to apply reset
+    try {
+      window.location.reload();
+    } catch (_) {
+      try {
+        location.reload();
+      } catch (_) {}
+    }
+  } catch (err) {
+    console.error("Factory reset failed:", err);
+  }
 }
 
 /* ---------------- Utils ---------------- */
