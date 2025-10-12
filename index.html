@@ -525,17 +525,29 @@
     </div>
   </div>
 
-  <!-- Quality reload confirm modal (static, JS-managed) -->
-  <div id="qualityReloadConfirm" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="qualityReloadTitle">
-    <div class="modal-box">
-      <button id="qualityReloadClose" class="modal-close-btn" aria-label="Close">✕</button>
+  <!-- Quality reload confirm modal (native dialog) -->
+  <dialog id="qualityReloadConfirm" aria-labelledby="qualityReloadTitle">
+    <form method="dialog">
+      <button id="qualityReloadClose" class="modal-close-btn" aria-label="Close" value="cancel">✕</button>
       <h3 id="qualityReloadTitle" data-i18n="settings.render.reloadTitle">Reload required</h3>
       <div class="modal-desc" data-i18n="settings.render.reloadDesc">Changing graphics quality requires a reload.</div>
       <div class="modal-actions">
-        <button id="qualityReloadOk" class="primary" data-i18n="btn.yes">Yes</button>
+        <button id="qualityReloadOk" class="primary" data-i18n="btn.yes" value="ok">Yes</button>
       </div>
-    </div>
-  </div>
+    </form>
+  </dialog>
+
+  <!-- Factory reset confirm modal (native dialog) -->
+  <dialog id="factoryResetConfirm" aria-labelledby="factoryResetTitle">
+    <form method="dialog">
+      <button id="factoryResetClose" class="modal-close-btn" aria-label="Close" value="cancel">✕</button>
+      <h3 id="factoryResetTitle" data-i18n="settings.factoryReset.title">Factory Reset Warning</h3>
+      <div class="modal-desc" id="factoryResetDesc"></div>
+      <div class="modal-actions">
+        <button id="factoryResetOk" class="primary" data-i18n="btn.ok" value="ok">OK</button>
+      </div>
+    </form>
+  </dialog>
 
   <!-- Uplift popup (DOM placed here so JS can just show/hide and populate) -->
   <div id="upliftPopup" aria-hidden="true" role="dialog" aria-modal="true">

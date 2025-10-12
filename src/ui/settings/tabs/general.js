@@ -196,46 +196,36 @@ function initZoomControl(render) {
 function showReloadConfirm(t) {
   return new Promise((resolve) => {
     const tt = typeof t === "function" ? t : (x) => x;
-    const modal = document.getElementById("qualityReloadConfirm");
+    const dialog = document.getElementById("qualityReloadConfirm");
 
-    if (modal) {
-      const titleEl = modal.querySelector("#qualityReloadTitle");
-      const descEl = modal.querySelector(".modal-desc");
-      const btnClose = document.getElementById("qualityReloadClose");
-      const btnOk = document.getElementById("qualityReloadOk") || modal.querySelector(".primary");
+    if (dialog && typeof dialog.showModal === "function") {
+      const titleEl = dialog.querySelector("#qualityReloadTitle");
+      const descEl = dialog.querySelector(".modal-desc");
 
       // Localize
       try {
         if (titleEl) titleEl.textContent = tt("settings.render.reloadTitle") || "Reload required";
         if (descEl) descEl.textContent =
           tt("settings.render.reloadDesc") || (tt("settings.render.reloadPrompt") || "Changing graphics quality requires a reload.");
-        if (btnOk) btnOk.textContent = tt("btn.yes") || "Yes";
       } catch (_) {}
 
-      function cleanup() {
-        document.removeEventListener("keydown", onKey, true);
-        modal.removeEventListener("click", onClickBackdrop, true);
-        try { modal.classList.add("hidden"); } catch (_) {}
-      }
-      function onKey(ev) {
-        const k = String(ev.key || "").toUpperCase();
-        if (k === "ESCAPE") { ev.preventDefault?.(); cleanup(); resolve(false); }
-        else if (k === "ENTER") { ev.preventDefault?.(); cleanup(); resolve(true); }
-      }
-      function onClickBackdrop(ev) {
-        if (ev.target === modal) { cleanup(); resolve(false); }
+      // Show the native dialog
+      try {
+        dialog.showModal();
+      } catch (_) {}
+
+      // Handle dialog close
+      function onClose() {
+        const returnValue = dialog.returnValue;
+        dialog.removeEventListener("close", onClose);
+        resolve(returnValue === "ok");
       }
 
-      document.addEventListener("keydown", onKey, true);
-      modal.addEventListener("click", onClickBackdrop, true);
-      try { modal.classList.remove("hidden"); } catch (_) {}
-
-      btnClose?.addEventListener("click", function onX() { cleanup(); resolve(false); }, { once: true });
-      btnOk?.addEventListener("click", function onO() { cleanup(); resolve(true); }, { once: true });
+      dialog.addEventListener("close", onClose, { once: true });
       return;
     }
 
-    // Fallback: native confirm if static modal not present
+    // Fallback: window.confirm if dialog not supported
     try {
       const ok = window.confirm(tt("settings.render.reloadPrompt") || "Changing graphics quality requires a reload. Proceed?");
       resolve(!!ok);
@@ -245,7 +235,7 @@ function showReloadConfirm(t) {
   });
 }
 
-/* ---------------- Slider value badge ---------------- */
+/* ---------------- Slider value badge (for remaining sliders) ---------------- */
 function attachSliderValueDisplay(inputEl, format) {
   if (!inputEl || inputEl.dataset.valueBadgeBound === "1") return;
   const fmt = typeof format === "function" ? format : (v) => String(v);
@@ -418,8 +408,48 @@ function initFactoryResetButton(t) {
 function showFactoryResetConfirm(t) {
   return new Promise((resolve) => {
     const tt = typeof t === "function" ? t : (x) => x;
-    
-    // Try to use a confirmation dialog
+    const dialog = document.getElementById("factoryResetConfirm");
+
+    if (dialog && typeof dialog.showModal === "function") {
+      const titleEl = dialog.querySelector("#factoryResetTitle");
+      const descEl = dialog.querySelector("#factoryResetDesc");
+
+      // Build the full description message
+      const message = [
+        tt("settings.factoryReset.desc") || "This will reset ALL game data including progress, skills, maps, and villages. Only language and fullscreen settings will be preserved. This action cannot be undone!",
+        "",
+        tt("settings.factoryReset.confirm") || "Are you sure you want to reset everything?"
+      ].join("\n\n");
+
+      // Localize
+      try {
+        if (titleEl) titleEl.textContent = tt("settings.factoryReset.title") || "Factory Reset Warning";
+        if (descEl) descEl.textContent = message;
+      } catch (_) {}
+
+      // Localize button text
+      try {
+        const btnOk = dialog.querySelector("#factoryResetOk");
+        if (btnOk) btnOk.textContent = tt("btn.ok") || "OK";
+      } catch (_) {}
+
+      // Show the native dialog
+      try {
+        dialog.showModal();
+      } catch (_) {}
+
+      // Handle dialog close
+      function onClose() {
+        const returnValue = dialog.returnValue;
+        dialog.removeEventListener("close", onClose);
+        resolve(returnValue === "ok");
+      }
+
+      dialog.addEventListener("close", onClose, { once: true });
+      return;
+    }
+
+    // Fallback: window.confirm if dialog not supported
     const message = [
       tt("settings.factoryReset.title") || "Factory Reset Warning",
       "",
