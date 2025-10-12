@@ -66,7 +66,7 @@ function createOptimizedMaterial(options = {}) {
   // Use MeshStandardMaterial for high-end devices
   return new THREE.MeshStandardMaterial({
     color,
-    emissive,
+    emissive: emissive || 0x000000,
     metalness,
     roughness,
     ...rest
