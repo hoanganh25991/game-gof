@@ -60,7 +60,7 @@ export function renderInfoTab(panelEl, ctx = {}) {
 /**
  * Build the 3D model preview and controls
  */
-function build3DModelPreview(container) {
+async function build3DModelPreview(container) {
   // Title
   const title = document.createElement("div");
   title.className = "items-title";
@@ -86,8 +86,8 @@ function build3DModelPreview(container) {
   canvasContainer.appendChild(canvas);
   container.appendChild(canvasContainer);
 
-  // Initialize 3D preview
-  init3DPreview(canvas);
+  // Initialize 3D preview and wait for it to complete
+  await init3DPreview(canvas);
 
   // Model selection dropdown
   const selectLabel = document.createElement("div");
@@ -175,7 +175,7 @@ function build3DModelPreview(container) {
   container.appendChild(urlInput);
   container.appendChild(loadButton);
 
-  // Load initial model
+  // Load initial model after scene is ready
   load3DModel(savedUrl);
 }
 
@@ -185,6 +185,17 @@ function build3DModelPreview(container) {
 async function init3DPreview(canvas) {
   // Clean up previous scene
   cleanup3DPreview();
+
+  // Wait for canvas to have dimensions
+  await new Promise(resolve => {
+    if (canvas.clientWidth > 0 && canvas.clientHeight > 0) {
+      resolve();
+    } else {
+      requestAnimationFrame(() => resolve());
+    }
+  });
+
+  console.log('[3D Preview] Canvas size:', canvas.clientWidth, 'x', canvas.clientHeight);
 
   // Scene setup
   previewScene = new THREE.Scene();
@@ -200,6 +211,8 @@ async function init3DPreview(canvas) {
   previewRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   previewRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
   previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  console.log('[3D Preview] Renderer initialized');
 
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -221,6 +234,8 @@ async function init3DPreview(canvas) {
   previewControls.target.set(0, 1, 0);
   previewControls.update();
 
+  console.log('[3D Preview] OrbitControls initialized');
+
   // Animation loop
   function animate() {
     previewAnimationId = requestAnimationFrame(animate);
@@ -230,6 +245,8 @@ async function init3DPreview(canvas) {
     }
   }
   animate();
+
+  console.log('[3D Preview] Animation loop started');
 
   // Handle resize
   const resizeObserver = new ResizeObserver(() => {
@@ -247,7 +264,13 @@ async function init3DPreview(canvas) {
  * Load 3D model into preview
  */
 async function load3DModel(url) {
-  if (!previewScene) return;
+  console.log('[3D Preview] load3DModel called with URL:', url);
+  console.log('[3D Preview] previewScene exists:', !!previewScene);
+  
+  if (!previewScene) {
+    console.warn('[3D Preview] Scene not ready, skipping model load');
+    return;
+  }
 
   // Remove previous model
   if (previewModel) {
@@ -257,17 +280,20 @@ async function load3DModel(url) {
 
   // If no URL, show default built-in mesh (simplified version)
   if (!url) {
+    console.log('[3D Preview] No URL, creating default mesh');
     createDefaultPreviewMesh();
     return;
   }
 
   try {
+    console.log('[3D Preview] Loading GLTF model from:', url);
     const { GLTFLoader } = await import("../../../../vendor/three/examples/jsm/loaders/GLTFLoader.js");
     const loader = new GLTFLoader();
 
     loader.load(
       url,
       (gltf) => {
+        console.log('[3D Preview] Model loaded successfully:', gltf);
         const model = gltf.scene || (gltf.scenes && gltf.scenes[0]);
         if (model) {
           // Center and scale model
@@ -281,6 +307,8 @@ async function load3DModel(url) {
           model.scale.setScalar(scale);
           model.position.y = 1;
 
+          console.log('[3D Preview] Model centered and scaled. Size:', size, 'Scale:', scale);
+
           // Enable shadows
           model.traverse((child) => {
             if (child.isMesh) {
@@ -291,16 +319,19 @@ async function load3DModel(url) {
 
           previewModel = model;
           previewScene.add(previewModel);
+          console.log('[3D Preview] Model added to scene');
         }
       },
-      undefined,
+      (progress) => {
+        console.log('[3D Preview] Loading progress:', (progress.loaded / progress.total * 100).toFixed(2) + '%');
+      },
       (error) => {
-        console.warn("Failed to load model:", url, error);
+        console.warn("[3D Preview] Failed to load model:", url, error);
         createDefaultPreviewMesh();
       }
     );
   } catch (error) {
-    console.warn("Error loading model:", url, error);
+    console.warn("[3D Preview] Error loading model:", url, error);
     createDefaultPreviewMesh();
   }
 }
@@ -309,7 +340,11 @@ async function load3DModel(url) {
  * Create default preview mesh (simplified hero)
  */
 function createDefaultPreviewMesh() {
-  if (!previewScene) return;
+  console.log('[3D Preview] Creating default mesh');
+  if (!previewScene) {
+    console.warn('[3D Preview] Scene not ready for default mesh');
+    return;
+  }
 
   const group = new THREE.Group();
 
@@ -337,6 +372,7 @@ function createDefaultPreviewMesh() {
   group.position.y = 1;
   previewModel = group;
   previewScene.add(previewModel);
+  console.log('[3D Preview] Default mesh added to scene');
 }
 
 /**
