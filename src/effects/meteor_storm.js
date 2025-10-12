@@ -31,13 +31,7 @@ class MeteorStormEffect {
 
     // Get skill colors
     const fx = SKILL_FX.meteor_storm || {};
-    this.colors = {
-      core: fx.colors?.core || 0xffff66,
-      ember: fx.colors?.ember || 0xffa050,
-      impact: fx.colors?.impact || 0xff4500,
-      ring: fx.colors?.ring || 0xff6347,
-      smoke: fx.colors?.smoke || 0x2a2a2a
-    };
+    this.colors = fx.colors;
 
     // Quality settings
     this.quality = baseEffects?.quality || "high";

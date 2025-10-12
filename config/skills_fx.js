@@ -172,10 +172,12 @@ export const SKILL_FX = Object.freeze({
   // ===== STORM SKILLS =====
   meteor_storm: {
     colors: {
-      primary: "#ff4500",      // Orange-red meteor
-      secondary: "#ff6347",    // Tomato trail
-      accent: "#8b0000",       // Dark red
-      impact: "#ffff00"        // Yellow impact flash
+      impact: "#ff4500",   // Orange-red meteor
+      ember: "#ffa050",    // Tomato trail
+      accent: "#8b0000",   // Dark red
+      core: "#ffff00",     // Yellow impact flash
+      ring: "#ff6347",
+      smoke: "#2a2a2a"
     },
     size: {
       meteor: 1.2,             // Meteor size
