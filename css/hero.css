@@ -601,6 +601,16 @@
 }
 
 /* ====== Hero Model Preview ====== */
+.hero-model-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-model-control {
+  width: 100%;
+}
+
 .model-canvas-container {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -649,7 +659,7 @@
   background-color: var(--system-bg);
   color: var(--system-text);
   cursor: pointer;
-  width: 100px;
+  min-width: 0;
 }
 
 .model-scale-container {
@@ -684,6 +694,8 @@
   background-color: var(--system-bg);
   color: var(--system-text);
   height: 2rem;
+  min-width: 0;
+  padding: 0 8px;
 }
 
 .model-load-btn {

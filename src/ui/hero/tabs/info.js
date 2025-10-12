@@ -171,17 +171,49 @@ async function init3DPreview(canvas) {
 
   console.log('[3D Preview] Renderer initialized');
 
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  // Enhanced Lighting Setup for better model visualization
+  
+  // Ambient light - provides base illumination
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
   previewScene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  directionalLight.position.set(5, 5, 5);
+  // Main directional light (key light) - primary light source
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  directionalLight.position.set(5, 8, 5);
+  directionalLight.castShadow = true;
   previewScene.add(directionalLight);
 
-  const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-  fillLight.position.set(-5, 0, -5);
+  // Fill light - softens shadows from the opposite side
+  const fillLight = new THREE.DirectionalLight(0xffd9b3, 0.5);
+  fillLight.position.set(-5, 3, -5);
   previewScene.add(fillLight);
+
+  // Rim light - creates edge highlights for better depth perception
+  const rimLight = new THREE.DirectionalLight(0xff9966, 0.6);
+  rimLight.position.set(0, 2, -8);
+  previewScene.add(rimLight);
+
+  // Top light - illuminates from above
+  const topLight = new THREE.DirectionalLight(0xffffff, 0.4);
+  topLight.position.set(0, 10, 0);
+  previewScene.add(topLight);
+
+  // Hemisphere light - simulates sky and ground bounce light
+  const hemisphereLight = new THREE.HemisphereLight(
+    0xffffff, // sky color
+    0x444444, // ground color
+    0.5       // intensity
+  );
+  previewScene.add(hemisphereLight);
+
+  // Add subtle point lights for accent
+  const accentLight1 = new THREE.PointLight(0xff6b35, 0.3, 10);
+  accentLight1.position.set(3, 2, 0);
+  previewScene.add(accentLight1);
+
+  const accentLight2 = new THREE.PointLight(0x3b8bff, 0.2, 10);
+  accentLight2.position.set(-3, 1, 2);
+  previewScene.add(accentLight2);
 
   // OrbitControls
   const { OrbitControls } = await import("../../../../vendor/three/examples/jsm/controls/OrbitControls.js");
@@ -229,16 +261,13 @@ async function load3DModel(url, loadingIndicator) {
     return;
   }
 
-  // Remove previous model
-  if (previewModel) {
-    previewScene.remove(previewModel);
-    previewModel = null;
-  }
+  // Clear ALL models from the scene (in case of overlapping async loads)
+  clearAllModelsFromScene();
 
   // If no URL, show default built-in mesh (simplified version)
   if (!url) {
     console.log('[3D Preview] No URL, creating default mesh');
-    createDefaultPreviewMesh();
+    createDefaultPreviewMesh(loadingIndicator);
     if (loadingIndicator) {
       loadingIndicator.style.display = "none";
     }
@@ -365,6 +394,39 @@ function createDefaultPreviewMesh(loadingIndicator) {
   if (loadingIndicator) {
     loadingIndicator.style.display = "none";
   }
+}
+
+/**
+ * Clear all models from the scene (prevents overlapping when rapidly switching)
+ */
+function clearAllModelsFromScene() {
+  if (!previewScene) return;
+  
+  // Remove the current tracked model
+  if (previewModel) {
+    previewScene.remove(previewModel);
+    previewModel = null;
+  }
+  
+  // Remove ALL mesh objects from scene (in case some weren't tracked)
+  const objectsToRemove = [];
+  previewScene.traverse((object) => {
+    // Don't remove lights or camera
+    if (object.isMesh || object.isGroup || object.isObject3D) {
+      // Skip lights and camera
+      if (!object.isLight && !object.isCamera) {
+        objectsToRemove.push(object);
+      }
+    }
+  });
+  
+  objectsToRemove.forEach(obj => {
+    if (obj.parent) {
+      obj.parent.remove(obj);
+    }
+  });
+  
+  console.log('[3D Preview] Cleared', objectsToRemove.length, 'objects from scene');
 }
 
 /**
