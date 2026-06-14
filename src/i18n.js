@@ -11,10 +11,34 @@ import { STORAGE_KEYS } from "../config/storage.js";
  *   are re-applied.
  */
 
-const DEFAULT_LANG = "vi";
+const FALLBACK_LANG = "en";
+const SUPPORTED_LANGS = new Set(["en", "vi"]);
+/** Non-English locale bundles we ship (English is the default fallback). */
+const LOCALIZED_LANGS = new Set(["vi"]);
+
+/**
+ * Pick language from device settings. Vietnamese when the device locale is vi*;
+ * otherwise English.
+ */
+export function detectDeviceLanguage() {
+  try {
+    if (typeof navigator === "undefined") return FALLBACK_LANG;
+    const candidates = navigator.languages?.length
+      ? navigator.languages
+      : [navigator.language];
+    for (const raw of candidates) {
+      if (!raw) continue;
+      const code = String(raw).split("-")[0].toLowerCase();
+      if (LOCALIZED_LANGS.has(code)) return code;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return FALLBACK_LANG;
+}
 
 export class I18n {
-  constructor(defaultLang = DEFAULT_LANG) {
+  constructor(defaultLang = FALLBACK_LANG) {
     this.defaultLang = defaultLang;
     this.currentLang = this._loadSavedLanguage();
     
@@ -29,15 +53,16 @@ export class I18n {
   }
 
   /**
-   * Load saved language from localStorage
+   * Load saved language from localStorage, else detect from device locale.
    */
   _loadSavedLanguage() {
     try {
       const saved = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEYS.lang) : null;
-      return saved || this.defaultLang;
+      if (saved && SUPPORTED_LANGS.has(saved)) return saved;
     } catch (e) {
-      return this.defaultLang;
+      // ignore
     }
+    return detectDeviceLanguage();
   }
 
   /**
@@ -165,14 +190,18 @@ export class I18n {
   }
 
   /**
-   * Initialize i18n. Default language is Vietnamese.
+   * Initialize i18n. Uses saved preference, else device locale (vi → Vietnamese, else English).
    * Ensures localStorage has a value and starts loading the selected locale.
    */
   async init() {
     try {
       const saved = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEYS.lang) : null;
-      if (saved) this.currentLang = saved;
-      else localStorage.setItem(STORAGE_KEYS.lang, this.currentLang);
+      if (saved && SUPPORTED_LANGS.has(saved)) {
+        this.currentLang = saved;
+      } else {
+        this.currentLang = detectDeviceLanguage();
+        localStorage.setItem(STORAGE_KEYS.lang, this.currentLang);
+      }
     } catch (e) {
       // ignore
     }
@@ -296,6 +325,6 @@ export function getI18n() {
  * Create a new independent i18n instance
  * Useful for testing or isolated translation systems
  */
-export function createI18n(defaultLang = DEFAULT_LANG) {
+export function createI18n(defaultLang = FALLBACK_LANG) {
   return new I18n(defaultLang);
 }
