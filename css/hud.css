@@ -138,11 +138,11 @@
   #hud { width: 90vw; left: 6px; top: 8px; padding: 8px; }
   #minimap { right: 8px; top: 8px; width: 160px; height: 160px; }
   #topRightRow { gap: 6px; }
-  .fps-btn { width: 48px; height: 48px; }
-  .fps-btn span { font-size: 15px; }
+  .fps-badge { width: 48px; height: 48px; }
+  .fps-badge span { font-size: 14px; }
 }
 
-/* Minimap row: FPS button left of minimap */
+/* Minimap row: FPS readout left of minimap */
 #topRightRow{
   display: flex;
   flex-direction: row;
@@ -151,30 +151,29 @@
   gap: 8px;
 }
 
-.fps-btn{
+/* Matches skill-btn / minimap fire theme — display-only */
+.fps-badge{
   position: static;
   flex: 0 0 auto;
   width: 56px;
   height: 56px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  border: 1px solid rgba(124, 196, 255, 0.35);
-  background: linear-gradient(180deg, rgba(22, 44, 78, 0.92), rgba(10, 25, 48, 0.9));
-  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+  border-radius: 10px;
+  border: 1px solid var(--border-orange);
+  background: linear-gradient(180deg, rgba(40,20,10,0.92), rgba(26,13,8,0.9));
+  box-shadow: inset 0 0 0 1px var(--border-orange-subtle), 0 6px 14px rgba(0,0,0,0.4);
   pointer-events: none;
   user-select: none;
-  padding: 0;
-  margin: 0;
-  cursor: default;
+  overflow: hidden;
 }
 
-.fps-btn span{
-  font-size: 17px;
+.fps-badge span{
+  font-size: 16px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: #7dffb0;
-  text-shadow: 0 0 8px rgba(125, 255, 176, 0.45), 0 1px 0 rgba(0, 0, 0, 0.5);
+  color: var(--theme-yellow);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6), 0 0 10px rgba(255, 217, 74, 0.35);
   line-height: 1;
   pointer-events: none;
 }
@@ -202,7 +201,7 @@
   order: 1;
 }
 
-#topRightGroup .fps-btn{
+#topRightGroup .fps-badge{
   order: 0;
 }
 

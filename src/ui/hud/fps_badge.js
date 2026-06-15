@@ -1,5 +1,5 @@
 /**
- * Live FPS badge — circular skill-button style, green number only, left of minimap.
+ * Live FPS badge — fire-theme readout, left of minimap (matches skill / HUD styling).
  */
 export class FpsBadgeUI {
   constructor() {

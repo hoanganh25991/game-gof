@@ -105,7 +105,7 @@ export class UIController {
   }
 
   /**
-   * Update live FPS badge (skill-button style, green number only)
+   * Update live FPS badge (fire-theme readout, left of minimap)
    */
   updateFpsBadge(fps) {
     const nowMs = performance.now();
