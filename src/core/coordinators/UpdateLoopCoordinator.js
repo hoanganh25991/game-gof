@@ -3,10 +3,20 @@
  */
 
 import * as THREE from "../../../vendor/three/build/three.module.js";
-import { now } from "../../utils.js";
+import { now, clamp01 } from "../../utils.js";
 import { updateEnvironmentFollow } from "../../environment.js";
+import { isMobile, MOBILE_OPTIMIZATIONS } from "../../mobile.js";
 
 const MOVE_PING_INTERVAL = 0.3;
+const FPS_BADGE_UPDATE_MS = 100;
+const PERF_INFO_THROTTLE_MS = 1000;
+
+const __PROFILE = (() => {
+  try { return new URLSearchParams(location.search).get("profile") === "1"; } catch (_) { return false; }
+})();
+if (__PROFILE) console.info("[IMP0001] Frame profiling enabled (?profile=1)");
+
+const __vfxCullBase = isMobile ? (MOBILE_OPTIMIZATIONS.vfxDistanceCull ?? 120) : 140;
 
 export class UpdateLoopCoordinator {
   constructor({
@@ -59,6 +69,7 @@ export class UpdateLoopCoordinator {
     this.adaptNextT = 0;
     this.aiStride = 1;
     this.bbStride = 2;
+    this.joyMoveTarget = new THREE.Vector3();
     
     // Cached references (initialized lazily on first update)
     this._cachedRefs = null;
@@ -95,6 +106,10 @@ export class UpdateLoopCoordinator {
    * Main update function called by GameLoop
    */
   update(dt, t, { isOverBudget }) {
+    if (__PROFILE) {
+      try { performance.mark("frame-start"); } catch (_) {}
+    }
+
     // Initialize cached references on first update
     if (!this._cachedRefs) {
       this._initCachedRefs();
@@ -103,8 +118,7 @@ export class UpdateLoopCoordinator {
     // Use cached references (no method calls per frame!)
     const { player, enemies, selectedUnit, portals, villages, spawner, chunkMgr, env, inputService, touch } = this._cachedRefs;
 
-    // Performance tracking
-    this._updatePerformance();
+    // Performance auto-adjust runs after render with fresh metrics
 
     // Input
     inputService.update(t, dt);
@@ -182,14 +196,43 @@ export class UpdateLoopCoordinator {
     // Game ready event
     this._dispatchGameReadyEvent();
 
+    // Perf metrics + FPS badge (after render, metrics must be current)
+    this._postRenderPerf();
+
     // Adaptive performance
     this._adaptivePerformance(t, spawner);
+
+    if (__PROFILE) {
+      try {
+        performance.mark("frame-end");
+        performance.measure("animate-frame", "frame-start", "frame-end");
+        const entries = performance.getEntriesByName("animate-frame");
+        const last = entries[entries.length - 1];
+        if (last && last.duration > 14) console.warn(`[profile] slow frame ${last.duration.toFixed(1)}ms`);
+        if (entries.length > 120) performance.clearMeasures("animate-frame");
+      } catch (_) {}
+    }
   }
 
-  _updatePerformance() {
+  _postRenderPerf() {
     try {
       this.perfTracker.update(performance.now());
       this.perfTracker.maybeAutoAdjustVfxQuality();
+      const fps = this.perfTracker.getFPS?.() || 0;
+      const nowMs = performance.now();
+      if ((nowMs - (window.__lastFpsBadgeT || 0)) >= FPS_BADGE_UPDATE_MS) {
+        window.__lastFpsBadgeT = nowMs;
+        this.uiController.updateFpsBadge(fps);
+      }
+      const throttle = window.__PERF_INFO_THROTTLE_MS || PERF_INFO_THROTTLE_MS;
+      if (!window.__lastPerfInfoT) window.__lastPerfInfoT = 0;
+      if ((nowMs - window.__lastPerfInfoT) >= throttle) {
+        window.__lastPerfInfoT = nowMs;
+        try { window.__perfMetrics = this.perfTracker.getPerf(); } catch (_) {}
+      }
+      const baseCull = __vfxCullBase;
+      const fpsMul = clamp01(fps / 30);
+      window.__vfxDistanceCull = Math.max(baseCull * 0.5, Math.min(baseCull * 1.2, baseCull * fpsMul));
     } catch (_) {}
   }
 
@@ -202,7 +245,8 @@ export class UpdateLoopCoordinator {
           const base = player.pos();
           const px = base.x + joy.x * speed;
           const pz = base.z + joy.y * speed;
-          player.moveTarget = new THREE.Vector3(px, 0, pz);
+          this.joyMoveTarget.set(px, 0, pz);
+          player.moveTarget = this.joyMoveTarget;
           player.attackMove = false;
           player.target = null;
 

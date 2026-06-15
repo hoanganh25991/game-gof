@@ -1,7 +1,7 @@
 import * as THREE from "../vendor/three/build/three.module.js";
 import { THEME_COLORS, WORLD, STATS_BASE, SCALING, STORAGE_KEYS } from "../config/index.js";
 import { createHeroMesh, createEnemyMesh, createBillboardHPBar } from "./meshes.js";
-import { distance2D, now, parseThreeColor } from "./utils.js";
+import { distance2D, distanceSq2D, now, parseThreeColor } from "./utils.js";
 import { getSkillUpgradeManager } from "./skills_upgrade.js";
 import { t } from "./i18n.js";
 
@@ -438,11 +438,12 @@ function randBetween(min, max) {
 export function getNearestEnemy(origin, maxDist, enemies) {
   let nearest = null;
   let best = Infinity;
+  const maxDistSq = maxDist * maxDist;
   for (const en of enemies) {
     if (!en.alive) continue;
-    const d = distance2D(origin, en.pos());
-    if (d <= maxDist && d < best) {
-      best = d;
+    const d2 = distanceSq2D(origin, en.pos());
+    if (d2 <= maxDistSq && d2 < best) {
+      best = d2;
       nearest = en;
     }
   }

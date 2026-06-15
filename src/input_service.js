@@ -13,7 +13,7 @@
  */
 
 import * as THREE from "../vendor/three/build/three.module.js";
-import { distance2D, now } from "./utils.js";
+import { distance2D, distanceSq2D, now } from "./utils.js";
 
 export class InputService {
   constructor({
@@ -103,11 +103,12 @@ export class InputService {
   getNearestEnemy(origin, maxDist, list) {
     let best = null;
     let bestD = Infinity;
+    const maxDistSq = maxDist * maxDist;
     for (const en of list) {
       if (!en.alive) continue;
-      const d = distance2D(origin, en.pos());
-      if (d <= maxDist && d < bestD) {
-        best = en; bestD = d;
+      const d2 = distanceSq2D(origin, en.pos());
+      if (d2 <= maxDistSq && d2 < bestD) {
+        best = en; bestD = d2;
       }
     }
     return best;
@@ -266,6 +267,10 @@ export class InputService {
   onMouseMoveCapture(e) {
     if (!this.isEventOverRenderer(e)) return;
     try { this.raycast.updateMouseNDC(e); } catch (_) { }
+    const nowMs = performance.now();
+    if (!this._lastMouseRayT) this._lastMouseRayT = 0;
+    if (nowMs - this._lastMouseRayT < 32) return;
+    this._lastMouseRayT = nowMs;
     const p = this.raycast.raycastGround?.();
     if (p) {
       this._state.lastMouseGroundPoint.copy(p);

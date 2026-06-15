@@ -25,11 +25,29 @@ export function distance2D(a, b) {
   return Math.hypot(dx, dz);
 }
 
+/** Squared XZ distance — use for range/order comparisons (no sqrt). */
+export function distanceSq2D(a, b) {
+  const dx = a.x - b.x;
+  const dz = a.z - b.z;
+  return dx * dx + dz * dz;
+}
+
 export function dir2D(from, to) {
   const dx = to.x - from.x;
   const dz = to.z - from.z;
   const len = Math.hypot(dx, dz) || 1;
   return { x: dx / len, z: dz / len };
+}
+
+/** Writes normalized XZ direction into `out`; returns out. */
+export function dir2DFast(from, to, out) {
+  const dx = to.x - from.x;
+  const dz = to.z - from.z;
+  const len = Math.hypot(dx, dz) || 1;
+  out.x = dx / len;
+  if (out.z !== undefined) out.z = dz / len;
+  else if (out.y !== undefined) out.y = dz / len;
+  return out;
 }
 
 export function now() {

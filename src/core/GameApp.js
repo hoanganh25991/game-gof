@@ -163,8 +163,17 @@ export class GameApp {
     this.cameraOffset = world.cameraOffset;
     this.cameraShake = world.cameraShake;
 
-    // Effects
     const renderQuality = this.settingsManager.getRenderQuality();
+    const worldMod = await import("../world.js");
+    try { worldMod.applySceneOptimizations(this.scene, renderQuality); } catch (_) {}
+    try {
+      worldMod.attachWebGLContextHandlers(this.renderer, {
+        onLost: () => { try { this.gameLoop?.stop(); } catch (_) {} },
+        onRestored: () => { try { this.gameLoop?.start(); } catch (_) {} },
+      });
+    } catch (_) {}
+
+    // Effects
     this.effects = new EffectsManager(this.scene, { quality: renderQuality });
 
     // Mobile optimizations

@@ -25,8 +25,10 @@ export class UIController {
   // Throttling configuration
   #HUD_UPDATE_MS;
   #MINIMAP_UPDATE_MS;
+  #FPS_BADGE_UPDATE_MS = 100;
   #lastHudT = 0;
   #lastMinimapT = 0;
+  #lastFpsBadgeT = 0;
 
   constructor({ 
     ui, 
@@ -99,6 +101,20 @@ export class UIController {
       this.#ui?.updateMinimap?.(this.#player, enemies, portals, villages, structures);
     } catch (err) {
       console.error('[UIController] Minimap update failed:', err);
+    }
+  }
+
+  /**
+   * Update live FPS badge (skill-button style, green number only)
+   */
+  updateFpsBadge(fps) {
+    const nowMs = performance.now();
+    if ((nowMs - this.#lastFpsBadgeT) < this.#FPS_BADGE_UPDATE_MS) return;
+    this.#lastFpsBadgeT = nowMs;
+    try {
+      this.#ui?.updateFpsBadge?.(fps);
+    } catch (err) {
+      console.error('[UIController] FPS badge update failed:', err);
     }
   }
 
